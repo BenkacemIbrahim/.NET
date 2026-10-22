@@ -18,4 +18,8 @@
     <ProjectReference Include="..\Slotly.Infrastructure\Slotly.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Slotly.Api.IntegrationTests" />
+  </ItemGroup>
+
 </Project>
