@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "sprint-*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Slotly.sln
+
+      - name: Build
+        run: dotnet build Slotly.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Slotly.sln --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Validate Compose configuration
+        run: docker compose -f docker/compose.yml config --quiet
+
+      - name: Build API image
+        run: docker build --file docker/Dockerfile --tag slotly-api:ci .
