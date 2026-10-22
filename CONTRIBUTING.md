@@ -2,11 +2,11 @@
 
 ## Development workflow
 
-1. Create a branch named `sprint-N-short-name` from `main`.
+1. Pull the latest `main` branch and commit all work directly to it.
 2. Keep changes focused and use Conventional Commit messages.
 3. Add or update tests alongside production code.
 4. Update documentation and `.env.example` when behavior or configuration changes.
-5. Open a pull request using the repository template.
+5. Push each verified commit to `main`.
 
 ## Required checks
 
