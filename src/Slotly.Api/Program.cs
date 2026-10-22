@@ -1,6 +1,7 @@
 using Serilog;
 using Slotly.Api.Infrastructure;
 using Slotly.Infrastructure;
+using Slotly.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,14 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    await app.Services.InitializeDatabaseAsync();
+}
+
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
