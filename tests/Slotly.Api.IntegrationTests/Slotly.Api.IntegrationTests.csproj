@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Slotly.Api\Slotly.Api.csproj" />
+    <ProjectReference Include="..\..\src\Slotly.Infrastructure\Slotly.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

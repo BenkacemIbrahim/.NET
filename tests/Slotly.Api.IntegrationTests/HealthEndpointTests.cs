@@ -1,14 +1,13 @@
 using System.Net;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Slotly.Api.IntegrationTests;
 
-public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+public sealed class HealthEndpointTests : IClassFixture<SlotlyWebApplicationFactory>, IDisposable
 {
     private readonly HttpClient _client;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointTests(SlotlyWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
