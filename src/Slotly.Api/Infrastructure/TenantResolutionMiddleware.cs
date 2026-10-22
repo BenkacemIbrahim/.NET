@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Api.Infrastructure;
@@ -15,13 +14,11 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
                 || !Guid.TryParse(values[0], out var tenantId)
                 || tenantId == Guid.Empty)
             {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await context.Response.WriteAsJsonAsync(new ProblemDetails
-                {
-                    Status = StatusCodes.Status400BadRequest,
-                    Title = "Invalid tenant identifier",
-                    Detail = $"The {HeaderName} header must contain one non-empty GUID.",
-                });
+                await Results.Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Invalid tenant identifier",
+                        detail: $"The {HeaderName} header must contain one non-empty GUID.")
+                    .ExecuteAsync(context);
                 return;
             }
 
