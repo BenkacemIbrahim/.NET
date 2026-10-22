@@ -1,0 +1,31 @@
+## .NET build outputs
+[Bb]in/
+[Oo]bj/
+artifacts/
+TestResults/
+
+## IDE and user settings
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Local configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+secrets.json
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Tooling
+.coverage
+coverage/
+*.nupkg
+*.snupkg
