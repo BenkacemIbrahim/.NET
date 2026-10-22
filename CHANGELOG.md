@@ -12,3 +12,10 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - ASP.NET Core API with health checks, Swagger, Serilog, and RFC 7807 errors.
 - Docker Compose development infrastructure for PostgreSQL and Mailpit.
 - Automated build and test foundation.
+- Rich tenant, user, service, staff schedule, customer, booking, and payment
+  domain models with validated value objects and lifecycle rules.
+- PostgreSQL domain schema with snake_case naming, tenant-aware composite
+  relationships, booking concurrency control, indexes, and audit timestamps.
+- Global tenant query filters and cross-tenant write protection.
+- Safe Development migration and realistic two-tenant seed data.
+- Testcontainers coverage for tenant read and write isolation.

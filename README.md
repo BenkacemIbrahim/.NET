@@ -53,14 +53,19 @@ PowerShell shortcuts are available through `scripts/slotly.ps1`; run it with
 
 Dependencies point inward: Domain has no project dependencies, Application
 depends only on Domain, Infrastructure depends on Application, and Api composes
-Application and Infrastructure. Architecture details and tenant-boundary design
-will be expanded as those components are implemented.
+Application and Infrastructure. See [docs/architecture.md](docs/architecture.md)
+for the tenant-boundary design and entity relationship model.
 
 ## Features
 
-The foundation provides a production-shaped API host, health endpoint, RFC 7807 error
-handling, structured console logging, Swagger, and local PostgreSQL and Mailpit
-infrastructure. Product features will be documented here as they ship.
+The current foundation includes a production-shaped API host, rich scheduling
+domain model, migrated PostgreSQL persistence, automatic Development seed data,
+tenant-isolated EF Core reads and writes, RFC 7807 error handling, structured
+logging, Swagger, and local PostgreSQL and Mailpit infrastructure.
+
+Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
+each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API
+requests use an `X-Tenant-Id` header containing a tenant UUID.
 
 ## Deployment
 
