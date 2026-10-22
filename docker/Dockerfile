@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /source
 
-COPY global.json Directory.Build.props Directory.Packages.props Slotly.sln ./
+COPY .editorconfig global.json Directory.Build.props Directory.Packages.props Slotly.sln ./
 COPY src/Slotly.Domain/Slotly.Domain.csproj src/Slotly.Domain/
 COPY src/Slotly.Application/Slotly.Application.csproj src/Slotly.Application/
 COPY src/Slotly.Infrastructure/Slotly.Infrastructure.csproj src/Slotly.Infrastructure/

@@ -19,6 +19,9 @@ csharp_style_var_for_built_in_types = false:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = false:suggestion
 
+[src/Slotly.Infrastructure/Persistence/Migrations/*.cs]
+generated_code = true
+
 [*.{json,yml,yaml,props,targets,csproj,sln}]
 indent_style = space
 indent_size = 2
