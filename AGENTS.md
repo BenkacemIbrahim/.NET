@@ -22,7 +22,7 @@ Repository rules (the repo must be GitHub-ready at all times):
 - Structure: /src (projects), /tests, /docs, /build or /scripts, /.github (workflows, issue and PR templates), /docker (Dockerfiles, compose files).
 - Root files: README.md, LICENSE (MIT), .gitignore, .gitattributes, .editorconfig, global.json, Directory.Build.props, Directory.Packages.props (central package management), CONTRIBUTING.md, CHANGELOG.md, .env.example, AGENTS.md.
 - Never commit secrets. Local secrets live in .env (git-ignored) or dotnet user-secrets. Keep .env.example up to date with every variable and a short comment.
-- Git workflow: one branch per sprint (sprint-N-short-name), small commits using Conventional Commits (feat:, fix:, test:, docs:, chore:, ci:), and a pull request description summarizing the sprint. Never commit directly to main after Sprint 0.
+- Git workflow: commit all work directly to main using small commits with Conventional Commit messages (feat:, fix:, test:, docs:, chore:, ci:). Do not create sprint branches.
 - Commit part by part, never all at once. After each finished task or logical piece (a feature, a migration, a test suite, a doc), build and run the tests, then make a separate commit with a proper Conventional Commit message. Never leave all changes uncommitted until the end of a sprint, and never squash a whole sprint into one commit. Aim for many small, focused, meaningful commits.
 - Treat warnings as errors. Enable nullable reference types and analyzers.
 
