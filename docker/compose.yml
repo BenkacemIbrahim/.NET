@@ -1,0 +1,49 @@
+name: slotly
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-slotly}
+      POSTGRES_USER: ${POSTGRES_USER:-slotly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-slotly_local_only}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    restart: unless-stopped
+    ports:
+      - "${SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+
+  api:
+    profiles: ["api"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SlotlyDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB:-slotly};Username=${POSTGRES_USER:-slotly};Password=${POSTGRES_PASSWORD:-slotly_local_only}
+      Email__Host: mailpit
+      Email__Port: 1025
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+volumes:
+  postgres-data:
