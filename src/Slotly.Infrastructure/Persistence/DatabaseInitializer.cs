@@ -80,10 +80,17 @@ public static class DatabaseInitializer
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
-        var user = User.Create(tenant.Id, staffEmail, staffName, UserRole.Owner);
+        var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
+        var user = User.Create(
+            tenant.Id,
+            staffEmail,
+            staffName,
+            UserRole.TenantOwner,
+            passwordHasher.HashPassword(null!, "Password123!"));
         var staff = Staff.Create(tenant.Id, user.Id, staffName, staffEmail);
         context.Users.Add(user);
         context.Staff.Add(staff);
+
 
         foreach (var service in services)
         {
