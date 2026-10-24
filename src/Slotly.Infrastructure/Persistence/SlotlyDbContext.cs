@@ -37,14 +37,19 @@ public sealed class SlotlyDbContext(
 
     public DbSet<Payment> Payments => Set<Payment>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SlotlyDbContext).Assembly);
 
         modelBuilder.Entity<User>().HasQueryFilter(entity =>
             tenantContext.TenantId.HasValue && entity.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<RefreshToken>().HasQueryFilter(entity =>
+            tenantContext.TenantId.HasValue && entity.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<Service>().HasQueryFilter(entity =>
             tenantContext.TenantId.HasValue && entity.TenantId == tenantContext.TenantId.Value);
+
         modelBuilder.Entity<Staff>().HasQueryFilter(entity =>
             tenantContext.TenantId.HasValue && entity.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<WorkingHours>().HasQueryFilter(entity =>
