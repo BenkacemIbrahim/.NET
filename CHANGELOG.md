@@ -19,3 +19,11 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Global tenant query filters and cross-tenant write protection.
 - Safe Development migration and realistic two-tenant seed data.
 - Testcontainers coverage for tenant read and write isolation.
+- Tenant-aware authentication system with JWT bearer tokens and claims.
+- Refresh token rotation with cryptographic SHA-256 storage and reuse detection.
+- Account lockout policy after 5 consecutive failed login attempts.
+- Password change and session revocation flow.
+- Staff invitation endpoint protected by TenantOwner role and tenant isolation policies.
+- Fixed-window rate limiting on authentication endpoints (30 req/min).
+- Comprehensive integration test suite using Testcontainers PostgreSQL verifying
+  the full authentication lifecycle, lockout, token reuse detection, and tenant boundaries.
