@@ -2,7 +2,9 @@ namespace Slotly.Domain.Users;
 
 public enum UserRole
 {
-    Owner = 1,
-    Administrator = 2,
+    PlatformAdmin = 1,
+    TenantOwner = 2,
     Staff = 3,
+    Customer = 4,
 }
+
