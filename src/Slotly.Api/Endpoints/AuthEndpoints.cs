@@ -12,6 +12,7 @@ using Slotly.Domain.Tenants;
 using Slotly.Domain.Users;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
+using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Api.Endpoints;
 
@@ -67,6 +68,7 @@ public static class AuthEndpoints
         SlotlyDbContext dbContext,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
+        TenantContext tenantContext,
         TimeProvider timeProvider,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -91,6 +93,10 @@ public static class AuthEndpoints
 
         var tenant = Tenant.Create(command.TenantName.Trim(), normalizedSlug);
         dbContext.Tenants.Add(tenant);
+
+        // Must set tenant context before saving so PrepareTrackedEntities can stamp
+        // tenant-owned entities (User, Staff, RefreshToken) with the correct TenantId.
+        tenantContext.SetTenant(tenant.Id);
 
         var passwordHash = passwordHasher.HashPassword(null!, command.Password);
         var owner = User.Create(
@@ -139,7 +145,7 @@ public static class AuthEndpoints
         SlotlyDbContext dbContext,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        ITenantContext tenantContext,
+        TenantContext tenantContext,
         TimeProvider timeProvider,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -170,6 +176,8 @@ public static class AuthEndpoints
                 title: "Tenant context required",
                 detail: "A tenant must be specified via subdomain, X-Tenant header, or in the login request body.");
         }
+
+        tenantContext.SetTenant(targetTenantId.Value);
 
         var normalizedEmail = command.Email.Trim().ToLowerInvariant();
         var user = await dbContext.Users
@@ -256,6 +264,7 @@ public static class AuthEndpoints
         IValidator<RefreshTokenCommand> validator,
         SlotlyDbContext dbContext,
         ITokenService tokenService,
+        TenantContext tenantContext,
         TimeProvider timeProvider,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -278,6 +287,8 @@ public static class AuthEndpoints
                 title: "Invalid refresh token",
                 detail: "The refresh token was not recognized.");
         }
+
+        tenantContext.SetTenant(token.TenantId);
 
         var now = timeProvider.GetUtcNow();
         var ip = httpContext.Connection.RemoteIpAddress?.ToString();
@@ -355,6 +366,7 @@ public static class AuthEndpoints
         IValidator<RefreshTokenCommand> validator,
         SlotlyDbContext dbContext,
         ITokenService tokenService,
+        TenantContext tenantContext,
         ICurrentUserService currentUserService,
         TimeProvider timeProvider,
         HttpContext httpContext,
@@ -380,6 +392,7 @@ public static class AuthEndpoints
 
         if (token is not null && !token.IsRevoked)
         {
+            tenantContext.SetTenant(token.TenantId);
             var now = timeProvider.GetUtcNow();
             var ip = httpContext.Connection.RemoteIpAddress?.ToString();
             token.Revoke(now, ip, "User logout");
@@ -394,6 +407,7 @@ public static class AuthEndpoints
         IValidator<ChangePasswordCommand> validator,
         SlotlyDbContext dbContext,
         IPasswordHasher passwordHasher,
+        TenantContext tenantContext,
         ICurrentUserService currentUserService,
         TimeProvider timeProvider,
         HttpContext httpContext,
@@ -418,6 +432,8 @@ public static class AuthEndpoints
         {
             return Results.NotFound();
         }
+
+        tenantContext.SetTenant(user.TenantId);
 
         var isCurrentValid = passwordHasher.VerifyPassword(user, user.PasswordHash, command.CurrentPassword);
         if (!isCurrentValid)
