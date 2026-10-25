@@ -44,6 +44,7 @@ public sealed class AuthTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("Jwt:SigningKey", "integration-tests-super-secret-signing-key-minimum-32-chars!");
         builder.UseSetting("Jwt:Issuer", "slotly-test");
         builder.UseSetting("Jwt:Audience", "slotly-test-clients");
+        builder.UseSetting("Stripe:WebhookSecret", "whsec_slotly_integration_tests");
     }
 }
 
