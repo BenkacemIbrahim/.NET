@@ -30,10 +30,27 @@ public sealed class Payment : Entity, ITenantOwned
 
     public string? ProviderReference { get; private set; }
 
+    public string? CheckoutSessionId { get; private set; }
+
+    public string? PaymentIntentId { get; private set; }
+
     public DateTimeOffset? PaidAt { get; private set; }
 
     public static Payment Create(Guid tenantId, Guid bookingId, Money amount)
         => new(tenantId, bookingId, amount);
+
+    public void AttachCheckoutSession(string sessionId, string? paymentIntentId)
+    {
+        if (Status != PaymentStatus.Pending)
+        {
+            throw new InvalidOperationException("A checkout session can only be attached to a pending payment.");
+        }
+
+        CheckoutSessionId = DomainGuard.NotBlank(sessionId, nameof(sessionId), 200);
+        PaymentIntentId = string.IsNullOrWhiteSpace(paymentIntentId)
+            ? null
+            : DomainGuard.NotBlank(paymentIntentId, nameof(paymentIntentId), 200);
+    }
 
     public void MarkSucceeded(string providerReference, DateTimeOffset paidAt)
     {
@@ -47,6 +64,7 @@ public sealed class Payment : Entity, ITenantOwned
             nameof(providerReference),
             200);
         PaidAt = paidAt.ToUniversalTime();
+        PaymentIntentId = ProviderReference;
         Status = PaymentStatus.Succeeded;
     }
 
@@ -68,6 +86,16 @@ public sealed class Payment : Entity, ITenantOwned
         }
 
         Status = PaymentStatus.Refunded;
+    }
+
+    public void MarkRefunded()
+    {
+        if (Status == PaymentStatus.Refunded)
+        {
+            return;
+        }
+
+        Refund();
     }
 
     private void SetAmount(Money amount)

@@ -28,7 +28,6 @@ public sealed class Booking : Entity, ITenantOwned
         SetSlot(slot, bufferTime);
         Status = BookingStatus.Pending;
         Version = Guid.NewGuid();
-        RaiseDomainEvent(new BookingCreated(TenantId, Id, slot.StartsAt));
     }
 
     public Guid TenantId { get; private set; }
@@ -62,6 +61,7 @@ public sealed class Booking : Entity, ITenantOwned
     {
         EnsureStatus(BookingStatus.Pending, "Only pending bookings can be confirmed.");
         Status = BookingStatus.Confirmed;
+        RaiseDomainEvent(new BookingCreated(TenantId, Id, Slot.StartsAt));
     }
 
     public void Cancel(string reason)

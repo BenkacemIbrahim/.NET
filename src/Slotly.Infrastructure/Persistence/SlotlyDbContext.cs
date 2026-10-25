@@ -45,6 +45,8 @@ public sealed class SlotlyDbContext(
 
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
 
+    public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SlotlyDbContext).Assembly);

@@ -27,6 +27,10 @@ public sealed class Tenant : Entity
 
     public int CancellationWindowHours { get; private set; }
 
+    public bool OnlinePaymentsEnabled { get; private set; }
+
+    public decimal? DepositPercentage { get; private set; }
+
     public static Tenant Create(string name, string slug) => new(name, slug);
 
     public void Rename(string name)
@@ -50,6 +54,25 @@ public sealed class Tenant : Entity
 
         CancellationWindowHours = cancellationWindowHours;
     }
+
+    public void ConfigurePaymentPolicy(bool enabled, decimal? depositPercentage)
+    {
+        if (depositPercentage is <= 0 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(depositPercentage),
+                "A deposit percentage must be greater than zero and no more than 100.");
+        }
+
+        OnlinePaymentsEnabled = enabled;
+        DepositPercentage = enabled ? depositPercentage : null;
+    }
+
+    public decimal CalculatePaymentAmount(decimal servicePrice)
+        => decimal.Round(
+            servicePrice * (DepositPercentage ?? 100m) / 100m,
+            2,
+            MidpointRounding.ToEven);
 
     private static string NormalizeSlug(string slug)
     {
