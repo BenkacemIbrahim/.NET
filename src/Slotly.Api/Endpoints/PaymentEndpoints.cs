@@ -17,7 +17,9 @@ public static class PaymentEndpoints
 {
     public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/v1/payments").WithTags("Payments");
+        var group = routes.MapGroup("/api/v1/payments")
+            .WithTags("Payments")
+            .RequireRateLimiting("tenant-write");
         group.MapPut("/policy", UpdatePolicyAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
             .WithName("UpdatePaymentPolicy")

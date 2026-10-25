@@ -29,6 +29,7 @@ public static class ManagementEndpoints
     {
         var group = routes.MapGroup("/api/v1/services")
             .WithTags("Services")
+            .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListServicesAsync)
@@ -60,6 +61,7 @@ public static class ManagementEndpoints
     {
         var group = routes.MapGroup("/api/v1/staff")
             .WithTags("Staff")
+            .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListStaffAsync).WithName("ListStaff").WithSummary("Lists staff with pagination.")
@@ -87,6 +89,7 @@ public static class ManagementEndpoints
     {
         var group = routes.MapGroup("/api/v1/staff/{staffId:guid}/working-hours")
             .WithTags("Working Hours")
+            .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListWorkingHoursAsync)
@@ -114,6 +117,7 @@ public static class ManagementEndpoints
     {
         var group = routes.MapGroup("/api/v1/staff/{staffId:guid}/time-off")
             .WithTags("Time Off")
+            .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListTimeOffAsync)

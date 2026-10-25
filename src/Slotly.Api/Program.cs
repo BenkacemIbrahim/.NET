@@ -84,10 +84,15 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
     {
+        context.HttpContext.Response.ContentType = "application/problem+json";
         await Results.Problem(
             statusCode: StatusCodes.Status429TooManyRequests,
             title: "Too Many Requests",
-            detail: "Rate limit exceeded. Please try again later.")
+            detail: "Rate limit exceeded. Please try again later.",
+            extensions: new Dictionary<string, object?>
+            {
+                ["traceId"] = context.HttpContext.TraceIdentifier,
+            })
             .ExecuteAsync(context.HttpContext);
     };
 
@@ -98,6 +103,32 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 30,
                 Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+
+    options.AddPolicy("tenant-api", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.FindFirst("tenant_id")?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+
+    options.AddPolicy("tenant-write", httpContext =>
+        RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: httpContext.User.FindFirst("tenant_id")?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "anonymous",
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 80,
+                TokensPerPeriod = 40,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                AutoReplenishment = true,
                 QueueLimit = 0,
             }));
 });
