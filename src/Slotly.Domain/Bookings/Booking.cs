@@ -28,6 +28,7 @@ public sealed class Booking : Entity, ITenantOwned
         SetSlot(slot, bufferTime);
         Status = BookingStatus.Pending;
         Version = Guid.NewGuid();
+        RaiseDomainEvent(new BookingCreated(TenantId, Id, slot.StartsAt));
     }
 
     public Guid TenantId { get; private set; }
@@ -72,6 +73,7 @@ public sealed class Booking : Entity, ITenantOwned
 
         CancellationReason = DomainGuard.NotBlank(reason, nameof(reason), 500);
         Status = BookingStatus.Cancelled;
+        RaiseDomainEvent(new BookingCancelled(TenantId, Id, Slot.StartsAt, CancellationReason));
     }
 
     public void Complete()
@@ -93,7 +95,9 @@ public sealed class Booking : Entity, ITenantOwned
             throw new InvalidOperationException("Only active bookings can be rescheduled.");
         }
 
+        var previousStartsAt = Slot.StartsAt;
         SetSlot(slot, bufferTime);
+        RaiseDomainEvent(new BookingRescheduled(TenantId, Id, previousStartsAt, slot.StartsAt));
     }
 
     public void Reschedule(Guid staffId, TimeSlot slot, TimeSpan bufferTime = default)

@@ -57,6 +57,22 @@ public sealed class BookingTests
         act.Should().Throw<InvalidOperationException>();
     }
 
+    [Fact]
+    public void LifecycleChangesRaiseNotificationDomainEvents()
+    {
+        var booking = CreateBooking();
+        var originalStart = booking.Slot.StartsAt;
+        var newSlot = new TimeSlot(originalStart.AddDays(1), originalStart.AddDays(1).AddMinutes(30));
+
+        booking.Reschedule(newSlot);
+        booking.Cancel("Schedule changed.");
+
+        booking.DomainEvents.Should().ContainInOrder(
+            new BookingCreated(booking.TenantId, booking.Id, originalStart),
+            new BookingRescheduled(booking.TenantId, booking.Id, originalStart, newSlot.StartsAt),
+            new BookingCancelled(booking.TenantId, booking.Id, newSlot.StartsAt, "Schedule changed."));
+    }
+
     private static Booking CreateBooking()
     {
         var start = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero);

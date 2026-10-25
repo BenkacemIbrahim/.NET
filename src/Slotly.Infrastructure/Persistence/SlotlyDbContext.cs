@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Domain.Bookings;
 using Slotly.Domain.Common;
@@ -38,6 +39,8 @@ public sealed class SlotlyDbContext(
     public DbSet<Payment> Payments => Set<Payment>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +87,8 @@ public sealed class SlotlyDbContext(
     {
         var now = timeProvider.GetUtcNow();
 
+        CaptureDomainEvents(now);
+
         foreach (var entry in ChangeTracker.Entries<Entity>())
         {
             if (entry.State == EntityState.Added)
@@ -127,6 +132,28 @@ public sealed class SlotlyDbContext(
                      .Where(entry => entry.State == EntityState.Modified))
         {
             entry.Property(booking => booking.Version).CurrentValue = Guid.NewGuid();
+        }
+    }
+
+    private void CaptureDomainEvents(DateTimeOffset occurredAt)
+    {
+        var entities = ChangeTracker.Entries<Entity>()
+            .Select(entry => entry.Entity)
+            .Where(entity => entity.DomainEvents.Count > 0)
+            .ToArray();
+
+        foreach (var entity in entities)
+        {
+            foreach (var domainEvent in entity.DomainEvents)
+            {
+                OutboxMessages.Add(OutboxMessage.Create(
+                    domainEvent,
+                    JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
+                    Guid.NewGuid().ToString("N"),
+                    occurredAt));
+            }
+
+            entity.ClearDomainEvents();
         }
     }
 }

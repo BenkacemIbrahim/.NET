@@ -13,6 +13,7 @@ internal static class EntityConfigurationExtensions
         builder.HasKey(entity => entity.Id);
         builder.Property(entity => entity.CreatedAt).IsRequired();
         builder.Property(entity => entity.UpdatedAt).IsRequired();
+        builder.Ignore(entity => entity.DomainEvents);
     }
 
     public static void ConfigureTenantOwned<TEntity>(this EntityTypeBuilder<TEntity> builder)
