@@ -44,6 +44,10 @@ services:
       Smtp__FromName: ${SMTP_FROM_NAME:-Slotly}
       BackgroundJobs__PendingBookingExpiryMinutes: ${PENDING_BOOKING_EXPIRY_MINUTES:-15}
       BackgroundJobs__RetentionDays: ${BACKGROUND_JOB_RETENTION_DAYS:-30}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-http://localhost:8080/payments/success}
+      Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-http://localhost:8080/payments/cancel}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
       Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
       Jwt__Audience: ${JWT_AUDIENCE:-slotly-clients}

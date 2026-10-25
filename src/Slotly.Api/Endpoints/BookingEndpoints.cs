@@ -12,6 +12,7 @@ using Slotly.Domain.Services;
 using Slotly.Domain.Staff;
 using Slotly.Domain.Tenants;
 using Slotly.Domain.ValueObjects;
+using Slotly.Domain.Payments;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 
@@ -138,6 +139,7 @@ public static class BookingEndpoints
         IValidator<CreateBookingRequest> validator,
         SlotlyDbContext dbContext,
         ITenantContext tenantContext,
+        IPaymentGateway paymentGateway,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
@@ -195,11 +197,44 @@ public static class BookingEndpoints
             request.StaffId,
             slot,
             service.BufferTime);
-        booking.Confirm();
+        Payment? payment = null;
+        if (!tenant.OnlinePaymentsEnabled || service.Price.Amount == 0)
+        {
+            booking.Confirm();
+        }
+        else
+        {
+            payment = Payment.Create(
+                tenantId,
+                booking.Id,
+                new Money(tenant.CalculatePaymentAmount(service.Price.Amount), service.Price.Currency));
+            dbContext.Payments.Add(payment);
+        }
+
         dbContext.Bookings.Add(booking);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return Results.Created($"/api/v1/bookings/{booking.Id}", ToDto(booking));
+
+        if (payment is null)
+        {
+            return Results.Created($"/api/v1/bookings/{booking.Id}", ToDto(booking));
+        }
+
+        var checkout = await paymentGateway.CreateCheckoutAsync(
+            new CheckoutRequest(
+                tenantId,
+                booking.Id,
+                payment.Id,
+                service.Name,
+                payment.Amount.Amount,
+                payment.Amount.Currency,
+                customer.Email),
+            cancellationToken);
+        payment.AttachCheckoutSession(checkout.SessionId, checkout.PaymentIntentId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Created(
+            $"/api/v1/bookings/{booking.Id}",
+            ToDto(booking) with { PaymentId = payment.Id, CheckoutUrl = checkout.Url });
     }
 
     private static async Task<IResult> GetBookingAsync(
