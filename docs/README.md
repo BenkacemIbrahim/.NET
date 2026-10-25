@@ -12,3 +12,4 @@ development and current service endpoints.
 - [Authentication and authorization](auth.md)
 - [Availability and booking engine](booking-engine.md)
 - [Background jobs and notifications](background-jobs.md)
+- [Stripe payments](payments.md)

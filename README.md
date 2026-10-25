@@ -60,6 +60,8 @@ The availability algorithm and database-level overlap guarantees are described
 in [docs/booking-engine.md](docs/booking-engine.md).
 Reliable job processing, notification delivery, and operational settings are
 documented in [docs/background-jobs.md](docs/background-jobs.md).
+Stripe Checkout, webhook processing, refunds, and the manual test-mode workflow
+are documented in [docs/payments.md](docs/payments.md).
 
 ## Features
 
@@ -77,6 +79,9 @@ Booking lifecycle notifications and reminders are delivered through a
 transactional outbox, Hangfire PostgreSQL jobs, and configurable SMTP with
 idempotency protection. The PlatformAdmin-only Hangfire dashboard is exposed at
 `/hangfire`.
+Optional per-tenant online payments support full-price or deposit collection
+through Stripe Checkout. Signed, idempotent webhooks drive booking confirmation,
+failure release, and refund state.
 
 Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
 each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API
