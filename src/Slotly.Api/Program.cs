@@ -107,6 +107,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
+app.MapManagementEndpoints();
 
 app.Run();
 
