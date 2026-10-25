@@ -10,6 +10,7 @@ using Slotly.Application;
 using Slotly.Infrastructure;
 using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Jobs;
+using Slotly.Api.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<BookingChangePublisher>();
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -143,6 +146,7 @@ app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapBookingEndpoints();
 app.MapPaymentEndpoints();
+app.MapHub<AvailabilityHub>("/hubs/availability");
 
 app.Run();
 
