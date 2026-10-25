@@ -58,6 +58,8 @@ for the tenant-boundary design and entity relationship model, and
 [docs/auth.md](docs/auth.md) for the authentication and authorization design.
 The availability algorithm and database-level overlap guarantees are described
 in [docs/booking-engine.md](docs/booking-engine.md).
+Reliable job processing, notification delivery, and operational settings are
+documented in [docs/background-jobs.md](docs/background-jobs.md).
 
 ## Features
 
@@ -71,6 +73,10 @@ off through validated, paginated APIs. Customers can search daylight-saving-safe
 availability and manage bookings; staff can complete bookings or mark no-shows.
 Serializable writes, optimistic concurrency, and a PostgreSQL GiST exclusion
 constraint guarantee that a staff member cannot be double-booked.
+Booking lifecycle notifications and reminders are delivered through a
+transactional outbox, Hangfire PostgreSQL jobs, and configurable SMTP with
+idempotency protection. The PlatformAdmin-only Hangfire dashboard is exposed at
+`/hangfire`.
 
 Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
 each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API

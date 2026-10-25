@@ -11,3 +11,4 @@ development and current service endpoints.
 - [Architecture and tenant isolation](architecture.md)
 - [Authentication and authorization](auth.md)
 - [Availability and booking engine](booking-engine.md)
+- [Background jobs and notifications](background-jobs.md)

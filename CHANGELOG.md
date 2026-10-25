@@ -34,3 +34,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Defense-in-depth overlap protection with transactional availability checks,
   optimistic concurrency, and a PostgreSQL GiST exclusion constraint.
 - Endpoint and parallel-booking integration coverage against real PostgreSQL.
+- Hangfire processing with PostgreSQL storage, retry policies, recurring
+  maintenance jobs, and a PlatformAdmin-only dashboard.
+- Transactional booking outbox with correlation-aware structured logging.
+- Configurable SMTP confirmation, cancellation, reschedule, and reminder emails
+  in HTML and plain text with idempotent delivery tracking.
+- Real PostgreSQL and Mailpit integration coverage proving retries do not send duplicates.
