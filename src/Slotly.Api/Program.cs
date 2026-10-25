@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.OpenApi;
+using Hangfire;
 using Serilog;
 
 using Slotly.Api.Endpoints;
@@ -61,6 +62,10 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.Configure<TenancyOptions>(builder.Configuration.GetSection(TenancyOptions.SectionName));
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHangfireServer(options => options.WorkerCount = Math.Max(2, Environment.ProcessorCount));
+}
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -93,11 +98,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
+
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = [new PlatformAdminDashboardAuthorizationFilter()],
+        DashboardTitle = "Slotly background jobs",
+    });
+}
 
 if (app.Environment.IsDevelopment())
 {
