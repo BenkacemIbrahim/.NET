@@ -37,4 +37,17 @@ public sealed class PaymentTests
 
         act.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void CheckoutAndPaymentIntentReferencesAreRetained()
+    {
+        var payment = Payment.Create(Guid.NewGuid(), Guid.NewGuid(), new Money(50, "EUR"));
+
+        payment.AttachCheckoutSession("cs_test_123", null);
+        payment.MarkSucceeded("pi_test_123", DateTimeOffset.UtcNow);
+
+        payment.CheckoutSessionId.Should().Be("cs_test_123");
+        payment.PaymentIntentId.Should().Be("pi_test_123");
+        payment.Status.Should().Be(PaymentStatus.Succeeded);
+    }
 }

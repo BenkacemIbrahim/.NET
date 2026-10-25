@@ -6,6 +6,15 @@ namespace Slotly.Domain.Tests.Tenants;
 public sealed class TenantTests
 {
     [Fact]
+    public void DepositPolicyCalculatesTenantSpecificAmount()
+    {
+        var tenant = Tenant.Create("Clinic", "clinic");
+
+        tenant.ConfigurePaymentPolicy(true, 25m);
+
+        tenant.CalculatePaymentAmount(199.99m).Should().Be(50m);
+    }
+    [Fact]
     public void ConfiguresBookingPolicy()
     {
         var tenant = Tenant.Create("Atlas Clinic", "atlas-clinic");

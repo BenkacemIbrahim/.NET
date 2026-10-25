@@ -162,6 +162,11 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("booking_id");
 
+                    b.Property<string>("CheckoutSessionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("checkout_session_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -169,6 +174,11 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("paid_at");
+
+                    b.Property<string>("PaymentIntentId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("payment_intent_id");
 
                     b.Property<string>("ProviderReference")
                         .HasMaxLength(200)
@@ -205,6 +215,16 @@ namespace Slotly.Infrastructure.Persistence.Migrations
 
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_payments_tenant_id_id");
+
+                    b.HasIndex("CheckoutSessionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_checkout_session_id")
+                        .HasFilter("checkout_session_id IS NOT NULL");
+
+                    b.HasIndex("PaymentIntentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_payment_intent_id")
+                        .HasFilter("payment_intent_id IS NOT NULL");
 
                     b.HasIndex("TenantId", "ProviderReference")
                         .IsUnique()
@@ -491,6 +511,11 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<decimal?>("DepositPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("deposit_percentage");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
@@ -500,6 +525,10 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<bool>("OnlinePaymentsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("online_payments_enabled");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -788,6 +817,29 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_messages_processed_at_occurred_at");
 
                     b.ToTable("outbox_messages", (string)null);
+                });
+
+            modelBuilder.Entity("Slotly.Infrastructure.Persistence.ProcessedWebhookEvent", b =>
+                {
+                    b.Property<string>("EventId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("event_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("event_type");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.HasKey("EventId")
+                        .HasName("pk_processed_webhook_events");
+
+                    b.ToTable("processed_webhook_events", (string)null);
                 });
 
             modelBuilder.Entity("Slotly.Domain.Bookings.Booking", b =>

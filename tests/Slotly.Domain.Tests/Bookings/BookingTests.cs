@@ -64,6 +64,7 @@ public sealed class BookingTests
         var originalStart = booking.Slot.StartsAt;
         var newSlot = new TimeSlot(originalStart.AddDays(1), originalStart.AddDays(1).AddMinutes(30));
 
+        booking.Confirm();
         booking.Reschedule(newSlot);
         booking.Cancel("Schedule changed.");
 

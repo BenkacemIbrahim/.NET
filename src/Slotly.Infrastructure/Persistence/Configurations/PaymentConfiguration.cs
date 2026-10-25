@@ -14,11 +14,17 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property<string>("_currency").HasColumnName("currency").HasMaxLength(3).IsRequired();
         builder.Property(payment => payment.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(payment => payment.ProviderReference).HasMaxLength(200);
+        builder.Property(payment => payment.CheckoutSessionId).HasMaxLength(200);
+        builder.Property(payment => payment.PaymentIntentId).HasMaxLength(200);
         builder.Ignore(payment => payment.Amount);
         builder.HasIndex(payment => new { payment.TenantId, payment.BookingId, payment.Status });
         builder.HasIndex(payment => new { payment.TenantId, payment.ProviderReference })
             .IsUnique()
             .HasFilter("provider_reference IS NOT NULL");
+        builder.HasIndex(payment => payment.CheckoutSessionId).IsUnique()
+            .HasFilter("checkout_session_id IS NOT NULL");
+        builder.HasIndex(payment => payment.PaymentIntentId).IsUnique()
+            .HasFilter("payment_intent_id IS NOT NULL");
         builder.HasOne<Booking>()
             .WithMany()
             .HasForeignKey(payment => new { payment.TenantId, payment.BookingId })
