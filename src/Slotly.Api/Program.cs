@@ -9,6 +9,7 @@ using Slotly.Api.Infrastructure;
 using Slotly.Application;
 using Slotly.Infrastructure;
 using Slotly.Infrastructure.Persistence;
+using Slotly.Infrastructure.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,6 +113,23 @@ if (!app.Environment.IsEnvironment("Testing"))
         Authorization = [new PlatformAdminDashboardAuthorizationFilter()],
         DashboardTitle = "Slotly background jobs",
     });
+
+    RecurringJob.AddOrUpdate<OutboxProcessorJob>(
+        "outbox-processor",
+        job => job.ProcessAsync(CancellationToken.None),
+        Cron.Minutely);
+    RecurringJob.AddOrUpdate<BookingMaintenanceJobs>(
+        "booking-reminders",
+        job => job.SendRemindersAsync(CancellationToken.None),
+        Cron.Minutely);
+    RecurringJob.AddOrUpdate<BookingMaintenanceJobs>(
+        "expire-pending-bookings",
+        job => job.ExpirePendingBookingsAsync(CancellationToken.None),
+        Cron.Minutely);
+    RecurringJob.AddOrUpdate<BookingMaintenanceJobs>(
+        "cleanup-old-job-data",
+        job => job.CleanupAsync(CancellationToken.None),
+        Cron.Daily);
 }
 
 if (app.Environment.IsDevelopment())

@@ -35,8 +35,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__SlotlyDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB:-slotly};Username=${POSTGRES_USER:-slotly};Password=${POSTGRES_PASSWORD:-slotly_local_only}
-      Email__Host: mailpit
-      Email__Port: 1025
+      Smtp__Host: ${SMTP_HOST:-mailpit}
+      Smtp__Port: ${SMTP_CONTAINER_PORT:-1025}
+      Smtp__UseSsl: ${SMTP_USE_SSL:-false}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-notifications@slotly.local}
+      Smtp__FromName: ${SMTP_FROM_NAME:-Slotly}
+      BackgroundJobs__PendingBookingExpiryMinutes: ${PENDING_BOOKING_EXPIRY_MINUTES:-15}
+      BackgroundJobs__RetentionDays: ${BACKGROUND_JOB_RETENTION_DAYS:-30}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
       Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
       Jwt__Audience: ${JWT_AUDIENCE:-slotly-clients}

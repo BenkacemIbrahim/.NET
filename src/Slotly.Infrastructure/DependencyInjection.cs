@@ -12,6 +12,8 @@ using Slotly.Domain.Users;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Observability;
+using Slotly.Infrastructure.Jobs;
+using Slotly.Infrastructure.Notifications;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Infrastructure;
@@ -95,6 +97,12 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ICorrelationContext, CorrelationContext>();
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        services.Configure<BackgroundJobOptions>(configuration.GetSection(BackgroundJobOptions.SectionName));
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<BookingNotificationService>();
+        services.AddScoped<OutboxProcessorJob>();
+        services.AddScoped<BookingMaintenanceJobs>();
 
         return services;
     }
