@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Slotly.Domain.Bookings;
 
 namespace Slotly.Api.Infrastructure;
 
@@ -15,6 +16,7 @@ internal sealed partial class GlobalExceptionHandler(
     {
         if (IsBookingConflict(exception))
         {
+            LogConflictException(logger, exception);
             var conflict = new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
@@ -57,15 +59,24 @@ internal sealed partial class GlobalExceptionHandler(
 
     private static bool IsBookingConflict(Exception exception)
     {
-        if (exception is DbUpdateConcurrencyException)
+        for (var current = exception; current is not null; current = current.InnerException)
         {
-            return true;
+            if (current is DbUpdateConcurrencyException concurrencyException
+                && concurrencyException.Entries.Any(entry => entry.Entity is Booking))
+            {
+                return true;
+            }
+
+            if (current is PostgresException postgresException
+                && postgresException.SqlState is PostgresErrorCodes.ExclusionViolation
+                    or PostgresErrorCodes.SerializationFailure
+                    or PostgresErrorCodes.DeadlockDetected)
+            {
+                return true;
+            }
         }
 
-        var postgresException = exception as PostgresException
-            ?? exception.InnerException as PostgresException;
-        return postgresException?.SqlState is PostgresErrorCodes.ExclusionViolation
-            or PostgresErrorCodes.SerializationFailure;
+        return false;
     }
 
     [LoggerMessage(
@@ -73,6 +84,14 @@ internal sealed partial class GlobalExceptionHandler(
         Level = LogLevel.Error,
         Message = "An unhandled exception occurred while processing the request.")]
     private static partial void LogUnhandledException(
+        ILogger logger,
+        Exception exception);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Warning,
+        Message = "A database concurrency or booking overlap conflict occurred.")]
+    private static partial void LogConflictException(
         ILogger logger,
         Exception exception);
 }

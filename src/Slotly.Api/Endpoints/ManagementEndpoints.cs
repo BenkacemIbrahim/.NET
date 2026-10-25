@@ -443,7 +443,13 @@ public static class ManagementEndpoints
         hours.ChangeRange(newRange);
         try
         {
-            AddBreaks(hours, request.Breaks);
+            foreach (var requestedBreak in request.Breaks.OrderBy(value => value.StartsAt))
+            {
+                var addedBreak = hours.AddBreak(new DailyTimeRange(
+                    requestedBreak.StartsAt,
+                    requestedBreak.EndsAt));
+                dbContext.WorkingHoursBreaks.Add(addedBreak);
+            }
         }
         catch (InvalidOperationException exception)
         {
