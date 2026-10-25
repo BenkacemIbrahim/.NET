@@ -8,6 +8,7 @@ using Slotly.Domain.Payments;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Tenancy;
+using Slotly.Api.Infrastructure;
 using Stripe;
 
 namespace Slotly.Api.Endpoints;
@@ -44,6 +45,7 @@ public static class PaymentEndpoints
         PaymentPolicyRequest request,
         SlotlyDbContext dbContext,
         ITenantContext tenantContext,
+        TenantSettingsCache settingsCache,
         CancellationToken cancellationToken)
     {
         var tenant = await dbContext.Tenants.SingleAsync(
@@ -61,6 +63,7 @@ public static class PaymentEndpoints
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await settingsCache.InvalidateAsync(tenant.Id, cancellationToken);
         return Results.Ok(new PaymentPolicyDto(tenant.OnlinePaymentsEnabled, tenant.DepositPercentage));
     }
 

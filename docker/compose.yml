@@ -48,6 +48,7 @@ services:
       Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
       Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-http://localhost:8080/payments/success}
       Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-http://localhost:8080/payments/cancel}
+      Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
       Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
       Jwt__Audience: ${JWT_AUDIENCE:-slotly-clients}
@@ -63,6 +64,18 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+
+  redis:
+    profiles: ["redis"]
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   postgres-data:

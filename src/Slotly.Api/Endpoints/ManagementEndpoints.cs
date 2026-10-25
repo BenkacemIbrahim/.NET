@@ -10,6 +10,7 @@ using Slotly.Domain.Staff;
 using Slotly.Domain.ValueObjects;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
+using Slotly.Api.Infrastructure;
 
 namespace Slotly.Api.Endpoints;
 
@@ -181,6 +182,7 @@ public static class ManagementEndpoints
         IValidator<ServiceRequest> validator,
         ITenantContext tenantContext,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -197,6 +199,7 @@ public static class ManagementEndpoints
             TimeSpan.FromMinutes(request.BufferMinutes));
         dbContext.Services.Add(service);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(service.TenantId, cancellationToken);
         return Results.Created($"/api/v1/services/{service.Id}", ToDto(service));
     }
 
@@ -205,6 +208,7 @@ public static class ManagementEndpoints
         [FromBody] ServiceRequest request,
         IValidator<ServiceRequest> validator,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -225,12 +229,14 @@ public static class ManagementEndpoints
             new Money(request.PriceAmount, request.Currency),
             TimeSpan.FromMinutes(request.BufferMinutes));
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateServiceAsync(service.TenantId, service.Id, cancellationToken);
         return Results.Ok(ToDto(service));
     }
 
     private static async Task<IResult> DeleteServiceAsync(
         Guid id,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var service = await dbContext.Services.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
@@ -241,6 +247,7 @@ public static class ManagementEndpoints
 
         service.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateServiceAsync(service.TenantId, service.Id, cancellationToken);
         return Results.NoContent();
     }
 
@@ -285,6 +292,7 @@ public static class ManagementEndpoints
         IValidator<StaffRequest> validator,
         ITenantContext tenantContext,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -312,6 +320,7 @@ public static class ManagementEndpoints
         var staff = Staff.Create(tenantId, request.UserId, request.DisplayName, normalizedEmail);
         dbContext.Staff.Add(staff);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(staff.TenantId, cancellationToken);
         return Results.Created($"/api/v1/staff/{staff.Id}", ToDto(staff));
     }
 
@@ -320,6 +329,7 @@ public static class ManagementEndpoints
         [FromBody] StaffRequest request,
         IValidator<StaffRequest> validator,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -355,12 +365,14 @@ public static class ManagementEndpoints
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(staff.TenantId, cancellationToken);
         return Results.Ok(ToDto(staff));
     }
 
     private static async Task<IResult> DeleteStaffAsync(
         Guid id,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var staff = await dbContext.Staff.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
@@ -371,6 +383,7 @@ public static class ManagementEndpoints
 
         staff.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(staff.TenantId, cancellationToken);
         return Results.NoContent();
     }
 
@@ -398,6 +411,7 @@ public static class ManagementEndpoints
         IValidator<WorkingHoursRequest> validator,
         ITenantContext tenantContext,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -421,6 +435,7 @@ public static class ManagementEndpoints
         var hours = BuildWorkingHours(RequiredTenantId(tenantContext), staffId, request);
         dbContext.WorkingHours.Add(hours);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(hours.TenantId, cancellationToken);
         return Results.Created($"/api/v1/staff/{staffId}/working-hours/{hours.Id}", ToDto(hours));
     }
 
@@ -430,6 +445,7 @@ public static class ManagementEndpoints
         [FromBody] WorkingHoursRequest request,
         IValidator<WorkingHoursRequest> validator,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -479,6 +495,7 @@ public static class ManagementEndpoints
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(hours.TenantId, cancellationToken);
         return Results.Ok(ToDto(hours));
     }
 
@@ -486,6 +503,7 @@ public static class ManagementEndpoints
         Guid staffId,
         Guid id,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var hours = await dbContext.WorkingHours
@@ -497,6 +515,7 @@ public static class ManagementEndpoints
 
         dbContext.WorkingHours.Remove(hours);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(hours.TenantId, cancellationToken);
         return Results.NoContent();
     }
 
@@ -538,6 +557,7 @@ public static class ManagementEndpoints
         IValidator<TimeOffRequest> validator,
         ITenantContext tenantContext,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -558,6 +578,7 @@ public static class ManagementEndpoints
             request.Reason);
         dbContext.TimeOff.Add(entry);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(entry.TenantId, cancellationToken);
         return Results.Created($"/api/v1/staff/{staffId}/time-off/{entry.Id}", ToDto(entry));
     }
 
@@ -567,6 +588,7 @@ public static class ManagementEndpoints
         [FromBody] TimeOffRequest request,
         IValidator<TimeOffRequest> validator,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -584,6 +606,7 @@ public static class ManagementEndpoints
 
         entry.Update(new TimeSlot(request.StartsAt, request.EndsAt), request.Reason);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(entry.TenantId, cancellationToken);
         return Results.Ok(ToDto(entry));
     }
 
@@ -591,6 +614,7 @@ public static class ManagementEndpoints
         Guid staffId,
         Guid id,
         SlotlyDbContext dbContext,
+        AvailabilityCache availabilityCache,
         CancellationToken cancellationToken)
     {
         var entry = await dbContext.TimeOff
@@ -602,6 +626,7 @@ public static class ManagementEndpoints
 
         dbContext.TimeOff.Remove(entry);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await availabilityCache.InvalidateTenantAsync(entry.TenantId, cancellationToken);
         return Results.NoContent();
     }
 
