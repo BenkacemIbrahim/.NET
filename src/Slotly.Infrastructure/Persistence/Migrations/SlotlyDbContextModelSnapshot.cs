@@ -69,6 +69,10 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("version");
 
+                    b.Property<DateTimeOffset>("_blockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_until");
+
                     b.Property<DateTimeOffset>("_endsAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ends_at");
@@ -479,6 +483,10 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int>("CancellationWindowHours")
+                        .HasColumnType("integer")
+                        .HasColumnName("cancellation_window_hours");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -498,6 +506,12 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("slug");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("time_zone_id");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

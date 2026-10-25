@@ -7,6 +7,7 @@ public sealed class Booking : Entity, ITenantOwned
 {
     private DateTimeOffset _endsAt;
     private DateTimeOffset _startsAt;
+    private DateTimeOffset _blockedUntil;
 
     private Booking()
     {
@@ -17,13 +18,14 @@ public sealed class Booking : Entity, ITenantOwned
         Guid customerId,
         Guid serviceId,
         Guid staffId,
-        TimeSlot slot)
+        TimeSlot slot,
+        TimeSpan bufferTime)
     {
         TenantId = DomainGuard.NotEmpty(tenantId, nameof(tenantId));
         CustomerId = DomainGuard.NotEmpty(customerId, nameof(customerId));
         ServiceId = DomainGuard.NotEmpty(serviceId, nameof(serviceId));
         StaffId = DomainGuard.NotEmpty(staffId, nameof(staffId));
-        SetSlot(slot);
+        SetSlot(slot, bufferTime);
         Status = BookingStatus.Pending;
         Version = Guid.NewGuid();
     }
@@ -38,6 +40,8 @@ public sealed class Booking : Entity, ITenantOwned
 
     public TimeSlot Slot => new(_startsAt, _endsAt);
 
+    public DateTimeOffset BlockedUntil => _blockedUntil;
+
     public BookingStatus Status { get; private set; }
 
     public string? CancellationReason { get; private set; }
@@ -49,8 +53,9 @@ public sealed class Booking : Entity, ITenantOwned
         Guid customerId,
         Guid serviceId,
         Guid staffId,
-        TimeSlot slot)
-        => new(tenantId, customerId, serviceId, staffId, slot);
+        TimeSlot slot,
+        TimeSpan bufferTime = default)
+        => new(tenantId, customerId, serviceId, staffId, slot, bufferTime);
 
     public void Confirm()
     {
@@ -81,14 +86,14 @@ public sealed class Booking : Entity, ITenantOwned
         Status = BookingStatus.NoShow;
     }
 
-    public void Reschedule(TimeSlot slot)
+    public void Reschedule(TimeSlot slot, TimeSpan bufferTime = default)
     {
         if (Status is not BookingStatus.Pending and not BookingStatus.Confirmed)
         {
             throw new InvalidOperationException("Only active bookings can be rescheduled.");
         }
 
-        SetSlot(slot);
+        SetSlot(slot, bufferTime);
     }
 
     private void EnsureStatus(BookingStatus expected, string message)
@@ -99,10 +104,18 @@ public sealed class Booking : Entity, ITenantOwned
         }
     }
 
-    private void SetSlot(TimeSlot slot)
+    private void SetSlot(TimeSlot slot, TimeSpan bufferTime)
     {
         ArgumentNullException.ThrowIfNull(slot);
+        if (bufferTime < TimeSpan.Zero || bufferTime > TimeSpan.FromDays(1))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(bufferTime),
+                "Buffer time must be between zero and one day.");
+        }
+
         _startsAt = slot.StartsAt;
         _endsAt = slot.EndsAt;
+        _blockedUntil = slot.EndsAt.Add(bufferTime);
     }
 }

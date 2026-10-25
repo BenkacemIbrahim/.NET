@@ -14,10 +14,12 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.ConfigureTenantOwned();
         builder.Property<DateTimeOffset>("_startsAt").HasColumnName("starts_at").IsRequired();
         builder.Property<DateTimeOffset>("_endsAt").HasColumnName("ends_at").IsRequired();
+        builder.Property<DateTimeOffset>("_blockedUntil").HasColumnName("blocked_until").IsRequired();
         builder.Property(booking => booking.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(booking => booking.CancellationReason).HasMaxLength(500);
         builder.Property(booking => booking.Version).IsConcurrencyToken();
         builder.Ignore(booking => booking.Slot);
+        builder.Ignore(booking => booking.BlockedUntil);
         builder.HasIndex("TenantId", "StaffId", "_startsAt", "Status");
         builder.HasIndex(booking => new { booking.TenantId, booking.CustomerId });
         builder.HasOne<Customer>()

@@ -12,6 +12,8 @@ public sealed class Tenant : Entity
     {
         Name = DomainGuard.NotBlank(name, nameof(name), 200);
         Slug = NormalizeSlug(slug);
+        TimeZoneId = "UTC";
+        CancellationWindowHours = 24;
         IsActive = true;
     }
 
@@ -20,6 +22,10 @@ public sealed class Tenant : Entity
     public string Slug { get; private set; } = string.Empty;
 
     public bool IsActive { get; private set; }
+
+    public string TimeZoneId { get; private set; } = string.Empty;
+
+    public int CancellationWindowHours { get; private set; }
 
     public static Tenant Create(string name, string slug) => new(name, slug);
 
@@ -31,6 +37,19 @@ public sealed class Tenant : Entity
     public void Activate() => IsActive = true;
 
     public void Deactivate() => IsActive = false;
+
+    public void ConfigureBookingPolicy(string timeZoneId, int cancellationWindowHours)
+    {
+        TimeZoneId = DomainGuard.NotBlank(timeZoneId, nameof(timeZoneId), 100);
+        if (cancellationWindowHours is < 0 or > 2160)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(cancellationWindowHours),
+                "The cancellation window must be between 0 and 2160 hours.");
+        }
+
+        CancellationWindowHours = cancellationWindowHours;
+    }
 
     private static string NormalizeSlug(string slug)
     {
