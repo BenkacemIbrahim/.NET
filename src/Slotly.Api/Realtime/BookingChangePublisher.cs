@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
+using Slotly.Api.Infrastructure;
 
 namespace Slotly.Api.Realtime;
 
-public sealed class BookingChangePublisher(IHubContext<AvailabilityHub> hubContext)
+public sealed class BookingChangePublisher(
+    IHubContext<AvailabilityHub> hubContext,
+    AvailabilityCache availabilityCache)
 {
     public Task PublishAsync(
         Guid tenantId,
@@ -14,10 +17,16 @@ public sealed class BookingChangePublisher(IHubContext<AvailabilityHub> hubConte
         CancellationToken cancellationToken)
     {
         var date = DateOnly.FromDateTime(startsAt.UtcDateTime);
-        return hubContext.Clients.Group(AvailabilityGroups.For(tenantId, serviceId, date))
+        return PublishCoreAsync();
+
+        async Task PublishCoreAsync()
+        {
+            await availabilityCache.InvalidateServiceAsync(tenantId, serviceId, cancellationToken);
+            await hubContext.Clients.Group(AvailabilityGroups.For(tenantId, serviceId, date))
             .SendAsync(
                 "SlotChanged",
                 new SlotChangedMessage(bookingId, serviceId, staffId, date, change, startsAt),
                 cancellationToken);
+        }
     }
 }

@@ -14,6 +14,7 @@ using Slotly.Domain.Tenants;
 using Slotly.Domain.ValueObjects;
 using Slotly.Domain.Payments;
 using Slotly.Api.Realtime;
+using Slotly.Api.Infrastructure;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 
@@ -76,11 +77,12 @@ public static class BookingEndpoints
         SlotlyDbContext dbContext,
         IAvailabilityEngine availabilityEngine,
         ITenantContext tenantContext,
+        AvailabilityCache availabilityCache,
+        TenantSettingsCache tenantSettingsCache,
         CancellationToken cancellationToken)
     {
         var tenantId = RequiredTenantId(tenantContext);
-        var tenant = await dbContext.Tenants.AsNoTracking()
-            .SingleAsync(candidate => candidate.Id == tenantId, cancellationToken);
+        var settings = await tenantSettingsCache.GetAsync(tenantId, dbContext, cancellationToken);
         var service = await dbContext.Services.AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.Id == serviceId && candidate.IsActive, cancellationToken);
         if (service is null)
@@ -96,41 +98,52 @@ public static class BookingEndpoints
             });
         }
 
-        var timeZone = FindTimeZone(tenant.TimeZoneId);
-        var staffQuery = dbContext.Staff.AsNoTracking().Where(staff => staff.IsActive);
-        if (staffId.HasValue)
-        {
-            staffQuery = staffQuery.Where(staff => staff.Id == staffId.Value);
-        }
-
-        var staffMembers = await staffQuery.ToListAsync(cancellationToken);
-        if (staffId.HasValue && staffMembers.Count == 0)
+        if (staffId.HasValue && !await dbContext.Staff.AsNoTracking().AnyAsync(
+                staff => staff.Id == staffId.Value && staff.IsActive,
+                cancellationToken))
         {
             return Results.NotFound();
         }
 
-        var staffSchedules = new List<StaffAvailability>();
-        foreach (var staff in staffMembers)
-        {
-            staffSchedules.Add(await LoadStaffAvailabilityAsync(dbContext, staff.Id, cancellationToken));
-        }
-
-        var search = new AvailabilitySearch(
+        var slots = await availabilityCache.GetOrCreateAsync(
+            tenantId,
+            serviceId,
+            staffId,
             startsOn,
             endsOn,
-            service.Duration,
-            service.BufferTime,
-            TimeSpan.FromMinutes(15),
-            timeZone,
-            staffSchedules);
-        var slots = availabilityEngine.FindAvailableSlots(search)
-            .Select(slot => new AvailabilityDto(
-                slot.StaffId,
-                slot.StartsAt,
-                slot.EndsAt,
-                slot.LocalStartsAt,
-                slot.LocalEndsAt))
-            .ToArray();
+            async token =>
+            {
+                var staffQuery = dbContext.Staff.AsNoTracking().Where(staff => staff.IsActive);
+                if (staffId.HasValue)
+                {
+                    staffQuery = staffQuery.Where(staff => staff.Id == staffId.Value);
+                }
+
+                var staffMembers = await staffQuery.ToListAsync(token);
+                var staffSchedules = new List<StaffAvailability>();
+                foreach (var staff in staffMembers)
+                {
+                    staffSchedules.Add(await LoadStaffAvailabilityAsync(dbContext, staff.Id, token));
+                }
+
+                var search = new AvailabilitySearch(
+                    startsOn,
+                    endsOn,
+                    service.Duration,
+                    service.BufferTime,
+                    TimeSpan.FromMinutes(15),
+                    FindTimeZone(settings.TimeZoneId),
+                    staffSchedules);
+                return availabilityEngine.FindAvailableSlots(search)
+                    .Select(slot => new AvailabilityDto(
+                        slot.StaffId,
+                        slot.StartsAt,
+                        slot.EndsAt,
+                        slot.LocalStartsAt,
+                        slot.LocalEndsAt))
+                    .ToArray();
+            },
+            cancellationToken);
 
         return Results.Ok(slots);
     }

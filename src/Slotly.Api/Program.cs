@@ -25,6 +25,14 @@ builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<BookingChangePublisher>();
+builder.Services.AddHybridCache();
+builder.Services.AddSingleton<AvailabilityCache>();
+builder.Services.AddSingleton<TenantSettingsCache>();
+var redisConnection = builder.Configuration["Redis:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnection);
+}
 
 builder.Services.AddSwaggerGen(options =>
 {
