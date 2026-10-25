@@ -35,6 +35,14 @@ public sealed class TimeOff : Entity, ITenantOwned
 
     public void Reschedule(TimeSlot slot) => SetSlot(slot);
 
+    public void Update(TimeSlot slot, string? reason)
+    {
+        SetSlot(slot);
+        Reason = string.IsNullOrWhiteSpace(reason)
+            ? null
+            : DomainGuard.NotBlank(reason, nameof(reason), 500);
+    }
+
     private void SetSlot(TimeSlot slot)
     {
         ArgumentNullException.ThrowIfNull(slot);
