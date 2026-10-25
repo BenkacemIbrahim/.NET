@@ -67,6 +67,7 @@ public static class DatabaseInitializer
         if (tenant is null)
         {
             tenant = Tenant.Create(tenantName, tenantSlug);
+            tenant.ConfigureBookingPolicy("Africa/Casablanca", 24);
             context.Tenants.Add(tenant);
             await context.SaveChangesAsync(cancellationToken);
         }

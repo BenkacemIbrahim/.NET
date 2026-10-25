@@ -7,6 +7,23 @@ namespace Slotly.Domain.Tests.Bookings;
 public sealed class BookingTests
 {
     [Fact]
+    public void IncludesServiceBufferInBlockedPeriod()
+    {
+        var start = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero);
+        var slot = new TimeSlot(start, start.AddMinutes(30));
+
+        var booking = Booking.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            slot,
+            TimeSpan.FromMinutes(15));
+
+        booking.BlockedUntil.Should().Be(slot.EndsAt.AddMinutes(15));
+    }
+
+    [Fact]
     public void ConfirmAndCompleteFollowValidLifecycle()
     {
         var booking = CreateBooking();
