@@ -27,7 +27,9 @@ public sealed record BookingDto(
     DateTimeOffset BlockedUntil,
     BookingStatus Status,
     string? CancellationReason,
-    Guid Version);
+    Guid Version,
+    Guid? PaymentId = null,
+    string? CheckoutUrl = null);
 
 public sealed record AvailabilityDto(
     Guid StaffId,

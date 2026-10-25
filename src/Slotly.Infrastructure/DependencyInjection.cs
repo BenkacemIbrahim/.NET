@@ -14,6 +14,7 @@ using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Observability;
 using Slotly.Infrastructure.Jobs;
 using Slotly.Infrastructure.Notifications;
+using Slotly.Infrastructure.Payments;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Infrastructure;
@@ -103,6 +104,8 @@ public static class DependencyInjection
         services.AddScoped<BookingNotificationService>();
         services.AddScoped<OutboxProcessorJob>();
         services.AddScoped<BookingMaintenanceJobs>();
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
+        services.AddScoped<IPaymentGateway, StripePaymentGateway>();
 
         return services;
     }

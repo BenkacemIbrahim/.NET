@@ -142,6 +142,7 @@ app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapBookingEndpoints();
+app.MapPaymentEndpoints();
 
 app.Run();
 
