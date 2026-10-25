@@ -29,10 +29,9 @@ in several layers:
 4. Composite foreign keys include `tenant_id`, preventing relationships from
    pointing at another tenant's records even if application checks are bypassed.
 
-Requests without a tenant header cannot read tenant-owned rows. Endpoints that
-do not access tenant data, such as `/health`, remain available without one.
-Authentication will become the authoritative source for the tenant context in
-a later sprint; the header is the explicit development boundary for now.
+Authenticated requests resolve the tenant from the signed JWT claim and reject
+a conflicting tenant header or subdomain. Endpoints that do not access tenant
+data, such as `/health`, remain available without a tenant context.
 
 ## Persistence approach
 
@@ -74,6 +73,8 @@ erDiagram
         uuid id PK
         string name
         string slug UK
+        string time_zone_id
+        int cancellation_window_hours
         bool is_active
     }
     USER {
@@ -139,6 +140,7 @@ erDiagram
         uuid staff_id FK
         timestamptz starts_at
         timestamptz ends_at
+        timestamptz blocked_until
         string status
         uuid version
     }
@@ -155,3 +157,7 @@ erDiagram
 
 All entities also have `created_at` and `updated_at` audit timestamps. Uniqueness
 for tenant-owned records is scoped by `tenant_id`.
+
+Booking overlap is also enforced in PostgreSQL by a partial GiST exclusion
+constraint over tenant, staff, and the `[starts_at, blocked_until)` range. See
+[booking-engine.md](booking-engine.md) for availability and concurrency details.
