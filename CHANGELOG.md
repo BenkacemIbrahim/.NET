@@ -40,3 +40,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Configurable SMTP confirmation, cancellation, reschedule, and reminder emails
   in HTML and plain text with idempotent delivery tracking.
 - Real PostgreSQL and Mailpit integration coverage proving retries do not send duplicates.
+- Stripe Checkout integration behind an application payment-gateway boundary.
+- Per-tenant online-payment and optional deposit policies based on service pricing.
+- Signed, idempotent Stripe webhook processing for successful checkout, failed
+  payment, and refunded charges.
+- Cancellation-window-aware Stripe refund endpoint and payment-driven booking transitions.
