@@ -49,6 +49,9 @@ services:
       Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-http://localhost:8080/payments/success}
       Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-http://localhost:8080/payments/cancel}
       Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-}
+      Cors__AllowedOrigins__0: ${CORS_ORIGIN_1:-http://localhost:5000}
+      Cors__AllowedOrigins__1: ${CORS_ORIGIN_2:-https://localhost:5001}
+      Seq__Url: ${SEQ_URL:-}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
       Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
       Jwt__Audience: ${JWT_AUDIENCE:-slotly-clients}
@@ -76,6 +79,16 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  seq:
+    profiles: ["seq"]
+    image: datalust/seq:2024.3
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "${SEQ_HTTP_PORT:-8081}:80"
+      - "${SEQ_INGEST_PORT:-5341}:5341"
 
 volumes:
   postgres-data:

@@ -1,0 +1,70 @@
+using System.Security.Claims;
+using Serilog.Context;
+using Slotly.Application.Common.Interfaces;
+using Slotly.Infrastructure.Persistence;
+
+namespace Slotly.Api.Infrastructure;
+
+internal sealed class SecurityHeadersMiddleware(RequestDelegate next)
+{
+    public async Task InvokeAsync(HttpContext context)
+    {
+        context.Response.OnStarting(() =>
+        {
+            var headers = context.Response.Headers;
+            headers["X-Content-Type-Options"] = "nosniff";
+            headers["X-Frame-Options"] = "DENY";
+            headers["Referrer-Policy"] = "no-referrer";
+            headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+            return Task.CompletedTask;
+        });
+        await next(context);
+    }
+}
+
+internal sealed class RequestIdentityLogMiddleware(RequestDelegate next)
+{
+    public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext)
+    {
+        var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous";
+        var tenantId = tenantContext.TenantId?.ToString() ?? "none";
+        using (LogContext.PushProperty("TenantId", tenantId))
+        using (LogContext.PushProperty("UserId", userId))
+        {
+            await next(context);
+        }
+    }
+}
+
+internal sealed class AuditLogMiddleware(RequestDelegate next)
+{
+    public async Task InvokeAsync(
+        HttpContext context,
+        SlotlyDbContext dbContext,
+        ITenantContext tenantContext,
+        TimeProvider timeProvider)
+    {
+        await next(context);
+        if (context.Request.Method is not ("POST" or "PUT" or "PATCH" or "DELETE")
+            || context.Response.StatusCode >= 500)
+        {
+            return;
+        }
+
+        Guid? userId = Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed)
+            ? parsed
+            : null;
+        dbContext.AuditLogs.Add(AuditLog.Create(
+            tenantContext.TenantId,
+            userId,
+            context.GetEndpoint()?.DisplayName ?? "HTTP mutation",
+            context.Request.Method,
+            context.Request.Path,
+            context.Response.StatusCode,
+            context.Response.Headers[CorrelationIdMiddleware.HeaderName].FirstOrDefault() ?? context.TraceIdentifier,
+            context.Connection.RemoteIpAddress?.ToString(),
+            timeProvider.GetUtcNow()));
+        await dbContext.SaveChangesAsync(context.RequestAborted);
+    }
+}
