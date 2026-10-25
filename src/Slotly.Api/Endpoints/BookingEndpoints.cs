@@ -26,6 +26,7 @@ public static class BookingEndpoints
     {
         var availability = routes.MapGroup("/api/v1/availability")
             .WithTags("Availability")
+            .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.CustomerOnly);
         availability.MapGet("/", GetAvailabilityAsync)
             .WithName("GetAvailability")
@@ -34,6 +35,7 @@ public static class BookingEndpoints
 
         var bookings = routes.MapGroup("/api/v1/bookings")
             .WithTags("Bookings")
+            .RequireRateLimiting("tenant-write")
             .RequireAuthorization(AuthorizationPolicies.CustomerOnly);
         bookings.MapPost("/", CreateBookingAsync)
             .WithName("CreateBooking")
