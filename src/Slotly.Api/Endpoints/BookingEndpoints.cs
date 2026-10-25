@@ -13,6 +13,7 @@ using Slotly.Domain.Staff;
 using Slotly.Domain.Tenants;
 using Slotly.Domain.ValueObjects;
 using Slotly.Domain.Payments;
+using Slotly.Api.Realtime;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 
@@ -140,6 +141,7 @@ public static class BookingEndpoints
         SlotlyDbContext dbContext,
         ITenantContext tenantContext,
         IPaymentGateway paymentGateway,
+        BookingChangePublisher changePublisher,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
@@ -217,6 +219,9 @@ public static class BookingEndpoints
 
         if (payment is null)
         {
+            await changePublisher.PublishAsync(
+                tenantId, booking.Id, booking.ServiceId, booking.StaffId,
+                booking.Slot.StartsAt, "Created", cancellationToken);
             return Results.Created($"/api/v1/bookings/{booking.Id}", ToDto(booking));
         }
 
@@ -232,6 +237,9 @@ public static class BookingEndpoints
             cancellationToken);
         payment.AttachCheckoutSession(checkout.SessionId, checkout.PaymentIntentId);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await changePublisher.PublishAsync(
+            tenantId, booking.Id, booking.ServiceId, booking.StaffId,
+            booking.Slot.StartsAt, "Created", cancellationToken);
         return Results.Created(
             $"/api/v1/bookings/{booking.Id}",
             ToDto(booking) with { PaymentId = payment.Id, CheckoutUrl = checkout.Url });
@@ -307,6 +315,7 @@ public static class BookingEndpoints
         SlotlyDbContext dbContext,
         ITenantContext tenantContext,
         TimeProvider timeProvider,
+        BookingChangePublisher changePublisher,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -340,6 +349,9 @@ public static class BookingEndpoints
 
         booking.Cancel(request.Reason);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await changePublisher.PublishAsync(
+            tenantId, booking.Id, booking.ServiceId, booking.StaffId,
+            booking.Slot.StartsAt, "Cancelled", cancellationToken);
         return Results.Ok(ToDto(booking));
     }
 
@@ -350,6 +362,7 @@ public static class BookingEndpoints
         SlotlyDbContext dbContext,
         ITenantContext tenantContext,
         TimeProvider timeProvider,
+        BookingChangePublisher changePublisher,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
@@ -398,9 +411,17 @@ public static class BookingEndpoints
             return BookingConflict();
         }
 
+        var previousStaffId = booking.StaffId;
+        var previousStartsAt = booking.Slot.StartsAt;
         booking.Reschedule(staffId, slot, service.BufferTime);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        await changePublisher.PublishAsync(
+            tenantId, booking.Id, booking.ServiceId, previousStaffId,
+            previousStartsAt, "Rescheduled", cancellationToken);
+        await changePublisher.PublishAsync(
+            tenantId, booking.Id, booking.ServiceId, booking.StaffId,
+            booking.Slot.StartsAt, "Rescheduled", cancellationToken);
         return Results.Ok(ToDto(booking));
     }
 

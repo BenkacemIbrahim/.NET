@@ -69,6 +69,20 @@ public static class DependencyInjection
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromSeconds(30),
             };
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Query["access_token"];
+                    if (!string.IsNullOrWhiteSpace(token)
+                        && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = token;
+                    }
+
+                    return Task.CompletedTask;
+                },
+            };
         });
 
         services.AddAuthorization(options =>
