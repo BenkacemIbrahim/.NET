@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Slotly.Api.Infrastructure;
 
@@ -11,6 +13,26 @@ internal sealed partial class GlobalExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (IsBookingConflict(exception))
+        {
+            var conflict = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Booking conflict",
+                Detail = "The requested slot is no longer available. Refresh availability and choose another slot.",
+                Type = "https://www.rfc-editor.org/rfc/rfc9110#section-15.5.10",
+                Instance = httpContext.Request.Path,
+            };
+            conflict.Extensions["traceId"] = httpContext.TraceIdentifier;
+            httpContext.Response.StatusCode = conflict.Status.Value;
+            await httpContext.Response.WriteAsJsonAsync(
+                conflict,
+                options: null,
+                contentType: "application/problem+json",
+                cancellationToken: cancellationToken);
+            return true;
+        }
+
         LogUnhandledException(logger, exception);
 
         var problemDetails = new ProblemDetails
@@ -31,6 +53,19 @@ internal sealed partial class GlobalExceptionHandler(
             cancellationToken: cancellationToken);
 
         return true;
+    }
+
+    private static bool IsBookingConflict(Exception exception)
+    {
+        if (exception is DbUpdateConcurrencyException)
+        {
+            return true;
+        }
+
+        var postgresException = exception as PostgresException
+            ?? exception.InnerException as PostgresException;
+        return postgresException?.SqlState is PostgresErrorCodes.ExclusionViolation
+            or PostgresErrorCodes.SerializationFailure;
     }
 
     [LoggerMessage(

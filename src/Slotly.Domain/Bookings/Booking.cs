@@ -96,6 +96,12 @@ public sealed class Booking : Entity, ITenantOwned
         SetSlot(slot, bufferTime);
     }
 
+    public void Reschedule(Guid staffId, TimeSlot slot, TimeSpan bufferTime = default)
+    {
+        Reschedule(slot, bufferTime);
+        StaffId = DomainGuard.NotEmpty(staffId, nameof(staffId));
+    }
+
     private void EnsureStatus(BookingStatus expected, string message)
     {
         if (Status != expected)
