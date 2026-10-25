@@ -1,7 +1,13 @@
 using System.Threading.RateLimiting;
+using System.Globalization;
 using Asp.Versioning;
 using Microsoft.OpenApi;
 using Hangfire;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 
 using Slotly.Api.Endpoints;
@@ -13,21 +19,55 @@ using Slotly.Infrastructure.Jobs;
 using Slotly.Api.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
 
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext());
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration.ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext();
+    var seqUrl = context.Configuration["Seq:Url"];
+    if (!string.IsNullOrWhiteSpace(seqUrl))
+    {
+        configuration.WriteTo.Seq(seqUrl, formatProvider: CultureInfo.InvariantCulture);
+    }
+});
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddCheck<PostgreSqlHealthCheck>("postgresql", tags: ["ready"])
+    .AddCheck<HangfireHealthCheck>("hangfire", tags: ["ready"])
+    .AddCheck<SmtpHealthCheck>("smtp", tags: ["ready"]);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<BookingChangePublisher>();
 builder.Services.AddHybridCache();
 builder.Services.AddSingleton<AvailabilityCache>();
 builder.Services.AddSingleton<TenantSettingsCache>();
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy("SlotlyClients", policy =>
+{
+    if (allowedOrigins.Length > 0)
+    {
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    }
+}));
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource.AddService("Slotly.Api"))
+        .WithTracing(tracing => tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter())
+        .WithMetrics(metrics => metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddConsoleExporter());
+}
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
 if (!string.IsNullOrWhiteSpace(redisConnection))
 {
@@ -142,11 +182,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseRateLimiter();
+app.UseCors("SlotlyClients");
 app.UseAuthentication();
 app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseRateLimiter();
+app.UseMiddleware<RequestIdentityLogMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<AuditLogMiddleware>();
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
@@ -180,7 +224,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Slotly API v1"));
 }
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live"),
+});
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live"),
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("ready"),
+});
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapBookingEndpoints();
