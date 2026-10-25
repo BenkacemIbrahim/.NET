@@ -56,6 +56,8 @@ depends only on Domain, Infrastructure depends on Application, and Api composes
 Application and Infrastructure. See [docs/architecture.md](docs/architecture.md)
 for the tenant-boundary design and entity relationship model, and
 [docs/auth.md](docs/auth.md) for the authentication and authorization design.
+The availability algorithm and database-level overlap guarantees are described
+in [docs/booking-engine.md](docs/booking-engine.md).
 
 ## Features
 
@@ -64,6 +66,11 @@ domain model, migrated PostgreSQL persistence, automatic Development seed data,
 tenant-isolated EF Core reads and writes, tenant-aware authentication and authorization
 (JWT + refresh token rotation with reuse detection), RFC 7807 error handling, structured
 logging, Swagger with Bearer authorization, and local PostgreSQL and Mailpit infrastructure.
+Tenant owners can manage services, staff, weekly working hours, breaks, and time
+off through validated, paginated APIs. Customers can search daylight-saving-safe
+availability and manage bookings; staff can complete bookings or mark no-shows.
+Serializable writes, optimistic concurrency, and a PostgreSQL GiST exclusion
+constraint guarantee that a staff member cannot be double-booked.
 
 Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
 each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API

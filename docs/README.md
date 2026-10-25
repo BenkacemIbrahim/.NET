@@ -7,3 +7,7 @@ features are implemented.
 
 The repository-level [README](../README.md) is the starting point for local
 development and current service endpoints.
+
+- [Architecture and tenant isolation](architecture.md)
+- [Authentication and authorization](auth.md)
+- [Availability and booking engine](booking-engine.md)

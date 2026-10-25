@@ -27,3 +27,10 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Fixed-window rate limiting on authentication endpoints (30 req/min).
 - Comprehensive integration test suite using Testcontainers PostgreSQL verifying
   the full authentication lifecycle, lockout, token reuse detection, and tenant boundaries.
+- Tenant-scoped CRUD APIs for services, staff, weekly working hours, breaks, and time off.
+- Daylight-saving-aware availability search for a specific staff member or any active staff.
+- Booking creation, filtering, cancellation, rescheduling, completion, and no-show APIs.
+- Tenant time-zone and cancellation-window policies.
+- Defense-in-depth overlap protection with transactional availability checks,
+  optimistic concurrency, and a PostgreSQL GiST exclusion constraint.
+- Endpoint and parallel-booking integration coverage against real PostgreSQL.
