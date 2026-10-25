@@ -15,7 +15,8 @@ namespace Slotly.Infrastructure.Persistence;
 public sealed class SlotlyDbContext(
     DbContextOptions<SlotlyDbContext> options,
     ITenantContext tenantContext,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    ICorrelationContext correlationContext)
     : DbContext(options)
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -149,7 +150,7 @@ public sealed class SlotlyDbContext(
                 OutboxMessages.Add(OutboxMessage.Create(
                     domainEvent,
                     JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
-                    Guid.NewGuid().ToString("N"),
+                    correlationContext.CorrelationId ?? Guid.NewGuid().ToString("N"),
                     occurredAt));
             }
 

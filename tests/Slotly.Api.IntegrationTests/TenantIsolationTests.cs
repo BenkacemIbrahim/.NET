@@ -103,7 +103,16 @@ public sealed class TenantIsolationTests : IAsyncLifetime
             .UseSnakeCaseNamingConvention()
             .Options;
 
-        return new SlotlyDbContext(options, tenantContext, TimeProvider.System);
+        return new SlotlyDbContext(
+            options,
+            tenantContext,
+            TimeProvider.System,
+            new TestCorrelationContext());
+    }
+
+    private sealed class TestCorrelationContext : Slotly.Application.Common.Interfaces.ICorrelationContext
+    {
+        public string? CorrelationId { get; set; } = "tenant-isolation-test";
     }
 
     private static Service CreateService(Guid tenantId, string name)

@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Domain.Users;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
+using Slotly.Infrastructure.Observability;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Infrastructure;
@@ -29,6 +32,16 @@ public static class DependencyInjection
         services.AddDbContext<SlotlyDbContext>(options => options
             .UseNpgsql(connectionString)
             .UseSnakeCaseNamingConvention());
+        services.AddHangfire(options => options
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(storage => storage.UseNpgsqlConnection(connectionString),
+                new PostgreSqlStorageOptions
+                {
+                    SchemaName = "hangfire",
+                    PrepareSchemaIfNecessary = true,
+                }));
 
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
@@ -81,6 +94,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICorrelationContext, CorrelationContext>();
 
         return services;
     }
