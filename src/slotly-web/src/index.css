@@ -33,31 +33,31 @@
 }
 
 .dark {
-  --background: #0B0F19;
-  --foreground: #F8FAFC;
-  --card: #111827;
-  --card-foreground: #F8FAFC;
-  --popover: #111827;
-  --popover-foreground: #F8FAFC;
-  --primary: #3B82F6;
+  --background: #0D1117;
+  --foreground: #E6EDF3;
+  --card: #161B27;
+  --card-foreground: #E6EDF3;
+  --popover: #1A2135;
+  --popover-foreground: #E6EDF3;
+  --primary: #4F8EF7;
   --primary-foreground: #FFFFFF;
-  --secondary: #1F2937;
-  --secondary-foreground: #E2E8F0;
-  --muted: #1F2937;
-  --muted-foreground: #94A3B8;
-  --accent: #1E293B;
-  --accent-foreground: #60A5FA;
-  --dark-surface: #030712;
-  --dark-surface-foreground: #FFFFFF;
-  --success: #10B981;
+  --secondary: #1E2D42;
+  --secondary-foreground: #CBD5E1;
+  --muted: #1A2438;
+  --muted-foreground: #8B9DC3;
+  --accent: #1A2540;
+  --accent-foreground: #7EB3FF;
+  --dark-surface: #090D14;
+  --dark-surface-foreground: #E6EDF3;
+  --success: #22C55E;
   --success-foreground: #FFFFFF;
   --warning: #F59E0B;
   --warning-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --destructive: #F87171;
   --destructive-foreground: #FFFFFF;
-  --border: #1F2937;
-  --input: #1F2937;
-  --ring: #3B82F6;
+  --border: #2A3347;
+  --input: #1E2D42;
+  --ring: #4F8EF7;
 }
 
 @theme inline {
@@ -183,9 +183,9 @@
 
 .slotly-event {
   border-radius: 0.5rem !important;
-  border: 1px solid #2563EB !important;
-  background-color: #2563EB !important;
-  color: #ffffff !important;
+  border: 1px solid var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
   padding: 2px 6px !important;
   font-weight: 600 !important;
   font-size: 0.75rem !important;
