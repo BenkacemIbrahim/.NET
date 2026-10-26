@@ -520,6 +520,11 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("logo_url");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -529,6 +534,12 @@ namespace Slotly.Infrastructure.Persistence.Migrations
                     b.Property<bool>("OnlinePaymentsEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("online_payments_enabled");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("primary_color");
 
                     b.Property<string>("Slug")
                         .IsRequired()

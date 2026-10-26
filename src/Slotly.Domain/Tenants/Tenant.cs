@@ -13,6 +13,7 @@ public sealed class Tenant : Entity
         Name = DomainGuard.NotBlank(name, nameof(name), 200);
         Slug = NormalizeSlug(slug);
         TimeZoneId = "UTC";
+        PrimaryColor = "#5145CD";
         CancellationWindowHours = 24;
         IsActive = true;
     }
@@ -24,6 +25,10 @@ public sealed class Tenant : Entity
     public bool IsActive { get; private set; }
 
     public string TimeZoneId { get; private set; } = string.Empty;
+
+    public string PrimaryColor { get; private set; } = string.Empty;
+
+    public string? LogoUrl { get; private set; }
 
     public int CancellationWindowHours { get; private set; }
 
@@ -66,6 +71,28 @@ public sealed class Tenant : Entity
 
         OnlinePaymentsEnabled = enabled;
         DepositPercentage = enabled ? depositPercentage : null;
+    }
+
+    public void ConfigureBranding(string primaryColor, string? logoUrl)
+    {
+        var normalizedColor = DomainGuard.NotBlank(primaryColor, nameof(primaryColor), 7).ToUpperInvariant();
+        if (normalizedColor.Length != 7
+            || normalizedColor[0] != '#'
+            || normalizedColor[1..].Any(character => !Uri.IsHexDigit(character)))
+        {
+            throw new ArgumentException("The primary color must be a six-digit hexadecimal color.", nameof(primaryColor));
+        }
+
+        var normalizedLogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();
+        if (normalizedLogoUrl is not null
+            && (!Uri.TryCreate(normalizedLogoUrl, UriKind.Absolute, out var uri)
+                || uri.Scheme is not ("http" or "https")))
+        {
+            throw new ArgumentException("The logo URL must be an absolute HTTP or HTTPS URL.", nameof(logoUrl));
+        }
+
+        PrimaryColor = normalizedColor;
+        LogoUrl = normalizedLogoUrl;
     }
 
     public decimal CalculatePaymentAmount(decimal servicePrice)
