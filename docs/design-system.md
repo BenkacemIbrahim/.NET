@@ -20,19 +20,19 @@ All color pairings exceed WCAG AA contrast standards (minimum 4.5:1 for body cop
 
 | Token | Light Mode (Hex) | Dark Mode (Hex) | Operational Purpose |
 |---|---|---|---|
-| `background` | `#F4F5F7` | `#0B0F19` | Application canvas backdrop |
+| `background` | `#F4F5F7` | `#0A0C10` | Application canvas backdrop |
 | `foreground` | `#101828` | `#F8FAFC` | High-contrast primary copy and headings |
-| `card` | `#FFFFFF` | `#111827` | Floating operational surface / card panel |
+| `card` | `#FFFFFF` | `#151821` | Floating operational surface / card panel |
 | `card-foreground`| `#101828` | `#F8FAFC` | Text on card surfaces |
-| `muted` | `#F2F4F7` | `#1F2937` | Secondary tracks, subtle tags, inactive tabs |
+| `muted` | `#F2F4F7` | `#1C202C` | Secondary tracks, subtle tags, inactive tabs |
 | `muted-foreground` | `#667085` | `#94A3B8` | Metadata, secondary labels, helper captions |
-| `border` | `#E4E7EC` | `#1F2937` | Crisp 1px structural dividing lines |
-| `input` | `#E4E7EC` | `#1F2937` | Input field borders and inactive control boundaries |
+| `border` | `#E4E7EC` | `#2B3142` | Crisp 1px structural dividing lines |
+| `input` | `#E4E7EC` | `#2B3142` | Input field borders and inactive control boundaries |
 | `primary` | `#2563EB` | `#3B82F6` | Vibrant Royal Blue: primary CTA, active pill tabs |
 | `primary-foreground` | `#FFFFFF` | `#FFFFFF` | Text on primary elements |
-| `accent` | `#EFF4FE` | `#1E293B` | Active sidebar nav highlight, selected slot surface |
+| `accent` | `#EFF4FE` | `#1C2740` | Active sidebar nav highlight, selected slot surface |
 | `accent-foreground` | `#2563EB` | `#60A5FA` | Text on accent surfaces |
-| `dark-surface` | `#0F172A` | `#030712` | High-impact dark metric card & secondary action pills |
+| `dark-surface` | `#020617` | `#1E2638` | High-impact dark metric card & secondary action pills |
 | `dark-surface-foreground` | `#FFFFFF` | `#FFFFFF` | Text on dark metric cards |
 | `success` | `#079455` | `#10B981` | Confirmed bookings, available slots, positive delta |
 | `warning` | `#F79009` | `#F59E0B` | Pending approvals, temporary locks, alerts |
