@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Slotly.Api.Infrastructure;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Application.Payments;
 using Slotly.Domain.Bookings;
@@ -8,7 +9,6 @@ using Slotly.Domain.Payments;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Tenancy;
-using Slotly.Api.Infrastructure;
 using Stripe;
 
 namespace Slotly.Api.Endpoints;

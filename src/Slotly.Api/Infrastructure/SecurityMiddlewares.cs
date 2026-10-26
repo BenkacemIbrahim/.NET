@@ -1,8 +1,8 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using Serilog.Context;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Slotly.Api.Infrastructure;
 

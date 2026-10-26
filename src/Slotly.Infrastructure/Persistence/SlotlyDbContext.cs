@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Domain.Bookings;
 using Slotly.Domain.Common;

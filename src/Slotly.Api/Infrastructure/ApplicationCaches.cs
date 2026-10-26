@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Slotly.Application.Bookings;
 using Slotly.Domain.Tenants;
 using Slotly.Infrastructure.Persistence;

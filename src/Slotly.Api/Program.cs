@@ -1,22 +1,21 @@
-using System.Threading.RateLimiting;
 using System.Globalization;
+using System.Threading.RateLimiting;
 using Asp.Versioning;
-using Microsoft.OpenApi;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
-
 using Slotly.Api.Endpoints;
 using Slotly.Api.Infrastructure;
+using Slotly.Api.Realtime;
 using Slotly.Application;
 using Slotly.Infrastructure;
-using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Jobs;
-using Slotly.Api.Realtime;
+using Slotly.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);

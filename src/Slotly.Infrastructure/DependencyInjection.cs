@@ -1,20 +1,20 @@
 using System.Text;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Hangfire;
-using Hangfire.PostgreSql;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Domain.Users;
 using Slotly.Infrastructure.Authentication;
-using Slotly.Infrastructure.Persistence;
-using Slotly.Infrastructure.Observability;
 using Slotly.Infrastructure.Jobs;
 using Slotly.Infrastructure.Notifications;
+using Slotly.Infrastructure.Observability;
 using Slotly.Infrastructure.Payments;
+using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Infrastructure;

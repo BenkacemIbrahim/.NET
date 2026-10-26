@@ -1,5 +1,5 @@
-using System.Net;
 using System.Globalization;
+using System.Net;
 using Slotly.Application.Common.Interfaces;
 
 namespace Slotly.Infrastructure.Notifications;

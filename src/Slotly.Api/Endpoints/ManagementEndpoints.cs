@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Slotly.Api.Infrastructure;
 using Slotly.Application.Common.Interfaces;
 using Slotly.Application.Common.Models;
 using Slotly.Application.Management;
@@ -10,7 +11,6 @@ using Slotly.Domain.Staff;
 using Slotly.Domain.ValueObjects;
 using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
-using Slotly.Api.Infrastructure;
 
 namespace Slotly.Api.Endpoints;
 
