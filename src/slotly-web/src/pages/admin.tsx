@@ -144,9 +144,6 @@ export function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
             Sign in to your workspace
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your workspace slug and credentials to manage your team's schedule.
-          </p>
 
           <form
             className="mt-8 space-y-4"
