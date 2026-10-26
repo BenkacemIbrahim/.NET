@@ -381,12 +381,40 @@ export function BookingsPage() {
   );
 }
 function BookingRows({ items }: { items: Booking[] }) {
+  const qc = useQueryClient();
+  const updateStatus = useMutation({
+    mutationFn: async ({
+      booking,
+      action,
+    }: {
+      booking: Booking;
+      action: "cancel" | "complete" | "no-show";
+    }) => {
+      const params = { path: { id: booking.id! } };
+      const body =
+        action === "cancel"
+          ? { version: booking.version, reason: "Cancelled by tenant administrator" }
+          : { version: booking.version };
+      const result =
+        action === "cancel"
+          ? await api.POST("/api/v1/bookings/{id}/cancel", { params, body })
+          : action === "complete"
+            ? await api.POST("/api/v1/bookings/{id}/complete", { params, body })
+            : await api.POST("/api/v1/bookings/{id}/no-show", { params, body });
+      if (!result.response.ok) throw new Error("The booking could not be updated.");
+    },
+    onSuccess: () => {
+      toast.success("Booking updated");
+      void qc.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error) => toast.error(apiMessage(error)),
+  });
   return (
     <div className="divide-y">
       {items.map((item) => (
         <div
           key={item.id}
-          className="grid gap-2 py-4 text-sm sm:grid-cols-[1fr_180px_120px] sm:items-center"
+          className="grid gap-2 py-4 text-sm sm:grid-cols-[1fr_140px_110px_auto] sm:items-center"
         >
           <div>
             <p className="font-semibold">Appointment</p>
@@ -404,6 +432,17 @@ function BookingRows({ items }: { items: Booking[] }) {
             {item.staffId?.slice(0, 8)}
           </span>
           <Status value={item.status} />
+          <div className="flex flex-wrap justify-end gap-1">
+            {item.status === 2 && (
+              <>
+                <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "complete" })}>Complete</Button>
+                <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "no-show" })}>No show</Button>
+              </>
+            )}
+            {(item.status === 1 || item.status === 2) && (
+              <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "cancel" })}>Cancel</Button>
+            )}
+          </div>
         </div>
       ))}
     </div>
