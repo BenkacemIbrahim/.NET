@@ -16,7 +16,7 @@ RUN dotnet publish src/Slotly.Api/Slotly.Api.csproj \
     /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
-RUN apk add --no-cache tzdata \
+RUN apk add --no-cache krb5-libs tzdata \
     && addgroup -S -g 10001 slotly \
     && adduser -S -u 10001 -G slotly -h /app slotly
 
