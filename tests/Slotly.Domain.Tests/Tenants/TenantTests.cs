@@ -14,6 +14,31 @@ public sealed class TenantTests
 
         tenant.CalculatePaymentAmount(199.99m).Should().Be(50m);
     }
+
+    [Fact]
+    public void ConfiguresValidatedBranding()
+    {
+        var tenant = Tenant.Create("Clinic", "clinic");
+
+        tenant.ConfigureBranding("#2f6fed", "https://cdn.example.com/clinic.svg");
+
+        tenant.PrimaryColor.Should().Be("#2F6FED");
+        tenant.LogoUrl.Should().Be("https://cdn.example.com/clinic.svg");
+    }
+
+    [Theory]
+    [InlineData("blue", null)]
+    [InlineData("#12345G", null)]
+    [InlineData("#123456", "javascript:alert(1)")]
+    public void RejectsUnsafeBranding(string color, string? logoUrl)
+    {
+        var tenant = Tenant.Create("Clinic", "clinic");
+
+        var act = () => tenant.ConfigureBranding(color, logoUrl);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
     [Fact]
     public void ConfiguresBookingPolicy()
     {

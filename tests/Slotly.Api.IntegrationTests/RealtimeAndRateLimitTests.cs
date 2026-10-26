@@ -24,8 +24,8 @@ public sealed class RealtimeIntegrationTests(AuthTestWebApplicationFactory facto
     public async Task TwoSubscribedClientsReceiveOneBookingUpdate()
     {
         var setup = await CreateSetupAsync();
-        await using var first = CreateHubConnection(setup.Auth.AccessToken);
-        await using var second = CreateHubConnection(setup.Auth.AccessToken);
+        await using var first = CreateHubConnection(setup.Slug);
+        await using var second = CreateHubConnection(setup.Slug);
         var firstUpdate = new TaskCompletionSource<SlotChangedMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
         var secondUpdate = new TaskCompletionSource<SlotChangedMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
         first.On<SlotChangedMessage>("SlotChanged", message => firstUpdate.TrySetResult(message));
@@ -35,18 +35,18 @@ public sealed class RealtimeIntegrationTests(AuthTestWebApplicationFactory facto
             first.InvokeAsync("Subscribe", setup.Service.Id, setup.Date),
             second.InvokeAsync("Subscribe", setup.Service.Id, setup.Date));
 
-        using var bookingRequest = AuthorizedRequest(
-            HttpMethod.Post,
-            "/api/v1/bookings",
-            setup.Auth,
-            new CreateBookingRequest(
+        using var bookingRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/bookings")
+        {
+            Content = JsonContent.Create(new CreateBookingRequest(
                 setup.Service.Id,
                 setup.Staff.Id,
                 new DateTimeOffset(setup.Date.ToDateTime(new TimeOnly(10, 0), DateTimeKind.Utc)),
                 null,
                 "Realtime Customer",
                 $"realtime-{Guid.NewGuid():N}@example.com",
-                null));
+                null)),
+        };
+        bookingRequest.Headers.Add("X-Tenant", setup.Slug);
         using var bookingResponse = await _client.SendAsync(bookingRequest);
         bookingResponse.StatusCode.Should().Be(HttpStatusCode.Created, await bookingResponse.Content.ReadAsStringAsync());
 
@@ -60,11 +60,10 @@ public sealed class RealtimeIntegrationTests(AuthTestWebApplicationFactory facto
         });
     }
 
-    private HubConnection CreateHubConnection(string accessToken)
+    private HubConnection CreateHubConnection(string tenantSlug)
         => new HubConnectionBuilder()
-            .WithUrl("http://localhost/hubs/availability", options =>
+            .WithUrl($"http://localhost/hubs/availability?tenant={tenantSlug}", options =>
             {
-                options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);
                 options.Transports = HttpTransportType.LongPolling;
                 options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
             })
@@ -86,7 +85,7 @@ public sealed class RealtimeIntegrationTests(AuthTestWebApplicationFactory facto
         await PostAsync<WorkingHoursRequest, WorkingHoursDto>(
             $"/api/v1/staff/{staff.Id}/working-hours",
             new WorkingHoursRequest(date.DayOfWeek, new TimeOnly(8, 0), new TimeOnly(18, 0), []), auth);
-        return new RealtimeSetup(auth, service, staff, date);
+        return new RealtimeSetup(auth, service, staff, date, $"realtime-{suffix}");
     }
 
     private async Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest body, TestAuth auth)
@@ -106,7 +105,7 @@ public sealed class RealtimeIntegrationTests(AuthTestWebApplicationFactory facto
     }
 
     private sealed record TestAuth(string AccessToken, Guid TenantId);
-    private sealed record RealtimeSetup(TestAuth Auth, ServiceDto Service, StaffDto Staff, DateOnly Date);
+    private sealed record RealtimeSetup(TestAuth Auth, ServiceDto Service, StaffDto Staff, DateOnly Date, string Slug);
 }
 
 public sealed class RateLimitIntegrationTests(AuthTestWebApplicationFactory factory)
