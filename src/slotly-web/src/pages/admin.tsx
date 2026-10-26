@@ -1,19 +1,25 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Calendar as CalendarIcon,
   CalendarDays,
+  Check,
+  ChevronLeft,
   ChevronRight,
   Clock,
+  ExternalLink,
   LayoutDashboard,
   LogOut,
   Menu,
   Plus,
   Scissors,
+  Search,
   Settings,
   Users,
   X,
+  type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useForm,
   type FieldValues,
@@ -21,6 +27,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import {
+  Link,
   Navigate,
   NavLink,
   Outlet,
@@ -38,6 +45,7 @@ import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
@@ -47,15 +55,42 @@ import { Skeleton } from "../components/ui/skeleton";
 import { cn } from "../lib/cn";
 
 type Booking = ApiSchemas["BookingDto"];
-const nav = [
-  ["/admin", "Overview", LayoutDashboard],
-  ["/admin/calendar", "Calendar", CalendarDays],
-  ["/admin/bookings", "Bookings", Clock],
-  ["/admin/services", "Services", Scissors],
-  ["/admin/staff", "Team", Users],
-  ["/admin/schedule", "Availability", CalendarDays],
-  ["/admin/settings", "Settings", Settings],
-] as const;
+
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+export interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    title: "MAIN",
+    items: [
+      { href: "/admin", label: "Overview", icon: LayoutDashboard },
+      { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },
+      { href: "/admin/bookings", label: "Bookings", icon: Clock },
+    ],
+  },
+  {
+    title: "WORKSPACE",
+    items: [
+      { href: "/admin/services", label: "Services", icon: Scissors },
+      { href: "/admin/staff", label: "Team", icon: Users },
+      { href: "/admin/schedule", label: "Availability", icon: CalendarIcon },
+    ],
+  },
+  {
+    title: "ACCOUNT",
+    items: [
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+    ],
+  },
+];
 
 export function AdminGuard() {
   const { session } = useAuth();
@@ -67,8 +102,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const schema = z.object({
     tenantSlug: z.string().min(2, "Enter your workspace slug."),
-    email: z.email(),
-    password: z.string().min(8),
+    email: z.email("Enter a valid email address."),
+    password: z.string().min(8, "Password must be at least 8 characters."),
   });
   type Login = z.infer<typeof schema>;
   const form = useForm<Login>({
@@ -79,42 +114,74 @@ export function LoginPage() {
       password: "",
     },
   });
+
   if (session) return <Navigate to="/admin" replace />;
+
   return (
-    <main className="grid min-h-dvh lg:grid-cols-2">
-      <section className="hidden bg-[radial-gradient(circle_at_top_left,_var(--primary),_#171245_70%)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-3 text-xl font-bold">
-          <span className="grid size-10 place-items-center rounded-md bg-white/15">
-            <CalendarDays />
-          </span>
-          Slotly
-        </div>
+    <main className="grid min-h-dvh bg-background lg:grid-cols-2">
+      {/* Editorial Split Panel (No AI gradients, crisp midnight slate) */}
+      <section className="hidden border-r border-border bg-dark-surface p-12 text-dark-surface-foreground lg:flex lg:flex-col lg:justify-between">
         <div>
-          <p className="max-w-lg text-4xl font-bold leading-tight">
-            A calmer way to run every appointment.
-          </p>
-          <p className="mt-4 max-w-md text-lg text-white/70">
-            Your schedule, team, customers, and payments in one focused
-            workspace.
-          </p>
-        </div>
-        <p className="text-sm text-white/50">Secure multi-tenant scheduling</p>
-      </section>
-      <section className="flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="mb-9 flex items-center justify-between lg:justify-end">
-            <div className="flex items-center gap-2 font-bold lg:hidden">
-              <CalendarDays className="text-primary" />
-              Slotly
-            </div>
-            <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary text-white font-bold text-base">
+              S
+            </span>
+            <span className="text-xl font-bold tracking-tight">Slotly</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-          <p className="mt-2 text-muted-foreground">
-            Sign in to manage today's schedule.
+          <div className="mt-20 max-w-lg">
+            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/80">
+              Clinical & Business Scheduling
+            </span>
+            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl text-white">
+              A high-precision operations console for your appointments.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-white/70">
+              Manage multi-practitioner schedules, real-time availability, double-booking prevention, and payments in one focused workspace.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4 border-t border-white/10 pt-8 text-sm text-white/60">
+          <div className="flex items-center gap-3">
+            <span className="grid size-5 place-items-center rounded-full bg-emerald-500/20 text-emerald-400">
+              <Check className="size-3" />
+            </span>
+            <span>Real-time availability with transactional outbox synchronization</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="grid size-5 place-items-center rounded-full bg-emerald-500/20 text-emerald-400">
+              <Check className="size-3" />
+            </span>
+            <span>Database GiST exclusion constraints preventing double bookings</span>
+          </div>
+          <p className="pt-2 text-xs text-white/40">Slotly SaaS Core · Version 1.0.0</p>
+        </div>
+      </section>
+
+      {/* Login Form */}
+      <section className="flex items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 font-bold lg:hidden">
+              <span className="grid size-8 place-items-center rounded-xl bg-primary text-white text-sm font-bold">
+                S
+              </span>
+              <span className="text-lg tracking-tight">Slotly</span>
+            </div>
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+            Sign in to your workspace
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter your workspace slug and credentials to manage your team's schedule.
           </p>
+
           <form
-            className="mt-8 space-y-5"
+            className="mt-8 space-y-4"
             onSubmit={form.handleSubmit(async (v) => {
               try {
                 await login(v.email, v.password, v.tenantSlug);
@@ -126,35 +193,56 @@ export function LoginPage() {
               }
             })}
           >
-            {(["tenantSlug", "email", "password"] as const).map((field) => (
-              <div key={field} className="space-y-2">
-                <Label htmlFor={field}>
-                  {field === "tenantSlug"
-                    ? "Workspace"
-                    : field === "email"
-                      ? "Email address"
-                      : "Password"}
-                </Label>
-                <Input
-                  id={field}
-                  type={field === "password" ? "password" : "text"}
-                  {...form.register(field)}
-                  aria-invalid={!!form.formState.errors[field]}
-                />
-                <FieldError>{form.formState.errors[field]?.message}</FieldError>
-              </div>
-            ))}
+            <div className="space-y-1.5">
+              <Label htmlFor="tenantSlug">Workspace</Label>
+              <Input
+                id="tenantSlug"
+                placeholder="e.g. northstar-health"
+                {...form.register("tenantSlug")}
+                aria-invalid={!!form.formState.errors.tenantSlug}
+              />
+              <FieldError>{form.formState.errors.tenantSlug?.message}</FieldError>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@clinic.example"
+                {...form.register("email")}
+                aria-invalid={!!form.formState.errors.email}
+              />
+              <FieldError>{form.formState.errors.email?.message}</FieldError>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...form.register("password")}
+                aria-invalid={!!form.formState.errors.password}
+              />
+              <FieldError>{form.formState.errors.password?.message}</FieldError>
+            </div>
+
             <Button
-              className="w-full"
+              className="mt-2 w-full rounded-full"
               size="lg"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Demo: northstar-health · amira@northstar.example · Password123!
-          </p>
+
+          <div className="mt-8 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+            <p className="font-semibold text-foreground">Demo credentials:</p>
+            <p className="mt-1 font-mono">Workspace: northstar-health</p>
+            <p className="font-mono">Email: amira@northstar.example</p>
+            <p className="font-mono">Password: Password123!</p>
+          </div>
         </div>
       </section>
     </main>
@@ -165,90 +253,166 @@ function AdminShell() {
   const [open, setOpen] = useState(false);
   const { session, logout } = useAuth();
   const location = useLocation();
-  const title =
-    nav.find(([path]) => path === location.pathname)?.[1] || "Workspace";
+
+  const allItems: NavItem[] = useMemo(
+    () => navGroups.flatMap((group) => group.items),
+    [],
+  );
+
+  const currentItem =
+    allItems.find((item) => item.href === location.pathname) || {
+      label: "Workspace",
+      href: "/admin",
+      icon: LayoutDashboard,
+    };
+
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_1fr]">
+    <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[260px_1fr]">
+      {/* Sidebar (YowTrip & Medicore Style) */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-[280px] border-r bg-card p-4 transition-transform lg:static lg:w-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:w-auto lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-12 items-center justify-between px-2">
-          <span className="flex items-center gap-2 font-bold">
-            <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
-              <CalendarDays className="size-4" />
+        {/* Brand Header */}
+        <div className="flex h-16 items-center justify-between border-b border-border px-5">
+          <Link to="/admin" className="flex items-center gap-2.5">
+            <span className="grid size-8 place-items-center rounded-xl bg-primary text-white font-bold text-sm">
+              S
             </span>
-            Slotly
-          </span>
+            <span className="text-lg font-bold tracking-tight text-foreground">
+              Slotly
+            </span>
+          </Link>
           <Button
             className="lg:hidden"
             variant="ghost"
             size="icon"
             onClick={() => setOpen(false)}
           >
-            <X />
+            <X className="size-4" />
           </Button>
         </div>
-        <nav className="mt-6 space-y-1">
-          {nav.map(([href, label, Icon]) => (
-            <NavLink
-              end={href === "/admin"}
-              key={href}
-              to={href}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                cn(
-                  "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
-                  isActive && "bg-primary/10 text-primary",
-                )
-              }
-            >
-              <Icon className="size-4" />
-              {label}
-            </NavLink>
+
+        {/* Quick Search Input */}
+        <div className="p-3">
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 size-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              readOnly
+              placeholder="Search appointments..."
+              className="h-9 w-full rounded-xl border border-input bg-muted/40 pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground cursor-pointer focus:bg-card"
+            />
+            <kbd className="absolute right-2.5 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
+          </div>
+        </div>
+
+        {/* Categorized Navigation */}
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
+          {navGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.title}
+              </p>
+              <div className="mt-1 space-y-0.5">
+                {group.items.map(({ href, label, icon: Icon }) => (
+                  <NavLink
+                    end={href === "/admin"}
+                    key={href}
+                    to={href}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-accent font-semibold text-accent-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )
+                    }
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
-        <div className="absolute bottom-4 left-4 right-4 border-t pt-4">
-          <div className="px-3">
-            <p className="truncate text-sm font-semibold">
-              {session?.user.displayName}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {session?.user.email}
-            </p>
+
+        {/* User Profile Card (Bottom of Sidebar) */}
+        <div className="border-t border-border p-3">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-2.5">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-xs text-primary">
+                {session?.user.displayName?.slice(0, 1) || "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-foreground">
+                  {session?.user.displayName}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {session?.user.email}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+              title="Sign out"
+              onClick={logout}
+            >
+              <LogOut className="size-3.5" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            className="mt-2 w-full justify-start"
-            onClick={logout}
-          >
-            <LogOut />
-            Sign out
-          </Button>
         </div>
       </aside>
-      <div>
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur sm:px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setOpen(true)}
-          >
-            <Menu />
-          </Button>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Workspace</span>
-            <ChevronRight className="size-3.5 text-muted-foreground" />
-            <span className="font-semibold">{title}</span>
+
+      {/* Main Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setOpen(true)}
+            >
+              <Menu className="size-4" />
+            </Button>
+
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Workspace</span>
+              <ChevronRight className="size-3.5 text-muted-foreground" />
+              <span className="font-semibold text-foreground">
+                {currentItem.label}
+              </span>
+            </div>
           </div>
-          <div className="ml-auto">
+
+          {/* Right Header Utilities */}
+          <div className="flex items-center gap-2.5">
+            <Link
+              to="/book/northstar-health"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted sm:inline-flex"
+            >
+              <span>Public booking page</span>
+              <ExternalLink className="size-3 text-muted-foreground" />
+            </Link>
             <ThemeToggle />
           </div>
         </header>
-        <main className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-8">
+
+        {/* View Content */}
+        <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
@@ -278,6 +442,7 @@ export function useBookings() {
     },
   });
 }
+
 function status(value?: number) {
   return (
     ["", "Pending", "Confirmed", "Cancelled", "Completed", "No-show"][
@@ -285,6 +450,7 @@ function status(value?: number) {
     ] || "Unknown"
   );
 }
+
 function Status({ value }: { value?: number }) {
   const label = status(value);
   return (
@@ -303,76 +469,322 @@ function Status({ value }: { value?: number }) {
     </Badge>
   );
 }
+
 export function DashboardPage() {
   const bookings = useBookings();
-  const [today] = useState(() => new Date().toDateString());
-  const todays =
-    bookings.data?.filter(
-      (x) => new Date(x.startsAt!).toDateString() === today,
-    ) ?? [];
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
+  const [today] = useState(() => new Date());
+  const todayStr = useMemo(() => today.toDateString(), [today]);
+  const todayFormatted = useMemo(
+    () =>
+      today.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [today],
+  );
+  const todayDateNum = today.getDate();
+  const todayMonthNum = today.getMonth();
+
+  const todays = useMemo(
+    () =>
+      bookings.data?.filter(
+        (x) => new Date(x.startsAt!).toDateString() === todayStr,
+      ) ?? [],
+    [bookings.data, todayStr],
+  );
+
+  const confirmedCount = todays.filter((x) => x.status === 2).length;
+  const pendingCount = todays.filter((x) => x.status === 1).length;
+
   return (
-    <div>
-      <PageTitle
-        title="Good morning"
-        description="Here's what is happening with your schedule today."
-      />
-      <div className="mt-7 grid gap-4 sm:grid-cols-3">
-        <Metric
-          label="Today's bookings"
-          value={todays.length}
-          detail="Across your team"
+    <div className="space-y-6">
+      {/* Greeting & Date Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageTitle
+          title="Good morning"
+          description="Here's what is happening with your clinic and team today."
         />
-        <Metric
-          label="Confirmed"
-          value={todays.filter((x) => x.status === 2).length}
-          detail="Ready to welcome"
-        />
-        <Metric
-          label="Needs attention"
-          value={todays.filter((x) => x.status === 1).length}
-          detail="Pending payment"
-        />
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold text-foreground">
+            <CalendarIcon className="size-3.5 text-primary" />
+            <span>{todayFormatted}</span>
+          </div>
+          <Button asChild size="sm" variant="dark">
+            <Link to="/book/northstar-health" target="_blank">
+              Book appointment
+            </Link>
+          </Button>
+        </div>
       </div>
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Today's schedule</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {bookings.isLoading ? (
-            <Skeleton className="h-48" />
-          ) : todays.length ? (
-            <BookingRows items={todays} />
-          ) : (
-            <EmptyState
-              icon={CalendarDays}
-              title="A clear day"
-              description="No appointments are scheduled today. New bookings will appear here automatically."
-            />
-          )}
-        </CardContent>
-      </Card>
+
+      {/* 3-Card High-Impact Metric Deck (Inspired by MTicket & Medicore) */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {/* Dark Midnight Slate Highlight Card */}
+        <div className="rounded-2xl border border-dark-surface bg-dark-surface p-5 text-dark-surface-foreground">
+          <div className="flex items-center justify-between text-xs font-medium text-white/70">
+            <span>Today's bookings</span>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-emerald-400 font-semibold">
+              Active
+            </span>
+          </div>
+          <p className="mt-3 text-3xl font-bold tabular-nums text-white">
+            {todays.length}
+          </p>
+          <div className="mt-3 flex items-center justify-between text-xs text-white/60 border-t border-white/10 pt-3">
+            <span>Capacity across team</span>
+            <span className="font-semibold text-white/90">100% available</span>
+          </div>
+        </div>
+
+        {/* Confirmed Metric Card */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            <span>Confirmed</span>
+            <span className="size-2 rounded-full bg-success" />
+          </div>
+          <p className="mt-3 text-3xl font-bold tabular-nums text-foreground">
+            {confirmedCount}
+          </p>
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
+            <span>Ready to welcome</span>
+            <span className="font-medium text-foreground">Verified</span>
+          </div>
+        </Card>
+
+        {/* Needs Attention / Pending Metric Card */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            <span>Needs attention</span>
+            <span className="size-2 rounded-full bg-warning" />
+          </div>
+          <p className="mt-3 text-3xl font-bold tabular-nums text-foreground">
+            {pendingCount}
+          </p>
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
+            <span>Pending payment or checkout</span>
+            <span className="font-medium text-foreground">15m lock</span>
+          </div>
+        </Card>
+      </div>
+
+      {/* Main Clinical & Scheduling Centerpiece (2-Column Grid like Medicore) */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* Left Column: Today's Appointments List */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <div>
+              <CardTitle>Today's schedule</CardTitle>
+              <CardDescription>
+                Confirmed and pending appointments for your workspace.
+              </CardDescription>
+            </div>
+            <Link
+              to="/admin/bookings"
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              View all
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {bookings.isLoading ? (
+              <Skeleton className="h-56" />
+            ) : todays.length ? (
+              <BookingRows items={todays} />
+            ) : (
+              <EmptyState
+                icon={CalendarDays}
+                title="A clear day"
+                description="No appointments are scheduled today. New bookings will appear here automatically."
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Right Column: Mini Calendar & Fast Context Widget (Medicore style) */}
+        <div className="space-y-6">
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-foreground">
+                {selectedCalendarDate.toLocaleDateString(undefined, {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </h3>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() =>
+                    setSelectedCalendarDate(
+                      new Date(
+                        selectedCalendarDate.getFullYear(),
+                        selectedCalendarDate.getMonth() - 1,
+                        1,
+                      ),
+                    )
+                  }
+                >
+                  <ChevronLeft className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() =>
+                    setSelectedCalendarDate(
+                      new Date(
+                        selectedCalendarDate.getFullYear(),
+                        selectedCalendarDate.getMonth() + 1,
+                        1,
+                      ),
+                    )
+                  }
+                >
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Days of Week Header */}
+            <div className="mt-4 grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                <div key={day} className="py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Days Matrix */}
+            <div className="mt-1 grid grid-cols-7 gap-y-1 text-center text-xs">
+              {Array.from({ length: 31 }).map((_, i) => {
+                const day = i + 1;
+                const isToday =
+                  day === todayDateNum &&
+                  selectedCalendarDate.getMonth() === todayMonthNum;
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    className={cn(
+                      "mx-auto flex size-8 items-center justify-center rounded-full font-medium tabular-nums transition-colors",
+                      isToday
+                        ? "bg-primary font-bold text-white"
+                        : "text-foreground hover:bg-muted",
+                    )}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Quick Team Status Card */}
+          <Card className="p-5">
+            <h3 className="text-sm font-bold text-foreground">Team status</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Practitioners on schedule today
+            </p>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid size-7 place-items-center rounded-full bg-primary/10 font-bold text-primary text-[11px]">
+                    A
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Amira Hadad</p>
+                    <p className="text-[11px] text-muted-foreground">General Medicine</p>
+                  </div>
+                </div>
+                <Badge variant="success">Available</Badge>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
+
 export function BookingsPage() {
   const bookings = useBookings();
+  const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "cancelled">("all");
+  const [search, setSearch] = useState("");
+
+  const filteredItems = useMemo(() => {
+    let items = bookings.data ?? [];
+    if (filter === "confirmed") items = items.filter((x) => x.status === 2);
+    else if (filter === "pending") items = items.filter((x) => x.status === 1);
+    else if (filter === "cancelled") items = items.filter((x) => x.status === 3);
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter(
+        (x) =>
+          x.id?.toLowerCase().includes(q) ||
+          x.staffId?.toLowerCase().includes(q),
+      );
+    }
+    return items;
+  }, [bookings.data, filter, search]);
+
   return (
-    <div>
-      <PageTitle
-        title="Bookings"
-        description="Review upcoming appointments and their status."
-      />
-      <Card className="mt-7">
-        <CardContent className="pt-5">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageTitle
+          title="Bookings"
+          description="Review upcoming appointments and manage reservation status."
+        />
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Filter by ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 w-48 text-xs rounded-xl"
+          />
+        </div>
+      </div>
+
+      {/* Segmented Pill Status Navigation (Medicore / MTicket style) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border pb-3 text-sm">
+        {(
+          [
+            ["all", "All bookings"],
+            ["confirmed", "Confirmed"],
+            ["pending", "Pending"],
+            ["cancelled", "Cancelled"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-xs font-semibold transition-colors",
+              filter === key
+                ? "bg-dark-surface text-dark-surface-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
           {bookings.isLoading ? (
             <Skeleton className="h-72" />
-          ) : bookings.data?.length ? (
-            <BookingRows items={bookings.data} />
+          ) : filteredItems.length ? (
+            <BookingRows items={filteredItems} />
           ) : (
             <EmptyState
               icon={Clock}
-              title="No bookings yet"
-              description="Share your booking page to start filling your calendar."
+              title="No bookings match your filter"
+              description="Appointments matching your current filter will show here."
             />
           )}
         </CardContent>
@@ -380,6 +792,7 @@ export function BookingsPage() {
     </div>
   );
 }
+
 function BookingRows({ items }: { items: Booking[] }) {
   const qc = useQueryClient();
   const updateStatus = useMutation({
@@ -393,7 +806,10 @@ function BookingRows({ items }: { items: Booking[] }) {
       const params = { path: { id: booking.id! } };
       const body =
         action === "cancel"
-          ? { version: booking.version, reason: "Cancelled by tenant administrator" }
+          ? {
+              version: booking.version,
+              reason: "Cancelled by tenant administrator",
+            }
           : { version: booking.version };
       const result =
         action === "cancel"
@@ -401,7 +817,8 @@ function BookingRows({ items }: { items: Booking[] }) {
           : action === "complete"
             ? await api.POST("/api/v1/bookings/{id}/complete", { params, body })
             : await api.POST("/api/v1/bookings/{id}/no-show", { params, body });
-      if (!result.response.ok) throw new Error("The booking could not be updated.");
+      if (!result.response.ok)
+        throw new Error("The booking could not be updated.");
     },
     onSuccess: () => {
       toast.success("Booking updated");
@@ -409,16 +826,22 @@ function BookingRows({ items }: { items: Booking[] }) {
     },
     onError: (error) => toast.error(apiMessage(error)),
   });
+
   return (
-    <div className="divide-y">
+    <div className="divide-y divide-border">
       {items.map((item) => (
         <div
           key={item.id}
-          className="grid gap-2 py-4 text-sm sm:grid-cols-[1fr_140px_110px_auto] sm:items-center"
+          className="grid gap-3 py-3.5 text-sm sm:grid-cols-[1fr_140px_110px_auto] sm:items-center"
         >
           <div>
-            <p className="font-semibold">Appointment</p>
-            <p className="mt-1 text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">Appointment</span>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                #{item.id?.slice(0, 8)}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
               {new Date(item.startsAt!).toLocaleString([], {
                 weekday: "short",
                 month: "short",
@@ -428,19 +851,46 @@ function BookingRows({ items }: { items: Booking[] }) {
               })}
             </p>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {item.staffId?.slice(0, 8)}
+          <span className="text-xs text-muted-foreground font-mono">
+            Staff: {item.staffId?.slice(0, 8)}
           </span>
-          <Status value={item.status} />
-          <div className="flex flex-wrap justify-end gap-1">
+          <div>
+            <Status value={item.status} />
+          </div>
+          <div className="flex flex-wrap justify-end gap-1.5">
             {item.status === 2 && (
               <>
-                <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "complete" })}>Complete</Button>
-                <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "no-show" })}>No show</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    updateStatus.mutate({ booking: item, action: "complete" })
+                  }
+                >
+                  Complete
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    updateStatus.mutate({ booking: item, action: "no-show" })
+                  }
+                >
+                  No show
+                </Button>
               </>
             )}
             {(item.status === 1 || item.status === 2) && (
-              <Button size="sm" variant="ghost" onClick={() => updateStatus.mutate({ booking: item, action: "cancel" })}>Cancel</Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() =>
+                  updateStatus.mutate({ booking: item, action: "cancel" })
+                }
+              >
+                Cancel
+              </Button>
             )}
           </div>
         </div>
@@ -462,7 +912,7 @@ export function ServicesPage() {
     },
   });
   const schema = z.object({
-    name: z.string().min(2),
+    name: z.string().min(2, "Service name required"),
     durationMinutes: z.number().min(5),
     priceAmount: z.number().min(0),
     currency: z.string().length(3),
@@ -492,25 +942,26 @@ export function ServicesPage() {
     },
     onError: (e) => toast.error(apiMessage(e)),
   });
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Services"
-        description="Define what customers can book and how long it takes."
+        description="Define what appointments customers can book, pricing, and durations."
       />
-      <div className="mt-7 grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-6">
             {services.data?.length ? (
-              <div className="divide-y">
+              <div className="divide-y divide-border">
                 {services.data.map((s) => (
                   <div
                     key={s.id}
                     className="flex items-center justify-between py-4"
                   >
                     <div>
-                      <p className="font-semibold">{s.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-semibold text-foreground">{s.name}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">
                         {s.durationMinutes} min · {s.priceAmount} {s.currency} ·{" "}
                         {s.bufferMinutes} min buffer
                       </p>
@@ -560,7 +1011,10 @@ export function StaffPage() {
       return data.items ?? [];
     },
   });
-  const schema = z.object({ displayName: z.string().min(2), email: z.email() });
+  const schema = z.object({
+    displayName: z.string().min(2, "Name required"),
+    email: z.email("Valid email required"),
+  });
   type Form = z.infer<typeof schema>;
   const form = useForm<Form>({
     resolver: zodResolver(schema),
@@ -578,26 +1032,27 @@ export function StaffPage() {
       void qc.invalidateQueries({ queryKey: ["staff-admin"] });
     },
   });
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Team"
-        description="Manage the people customers can book with."
+        description="Manage practitioners and staff members customers can book with."
       />
-      <div className="mt-7 grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-6">
             {staff.data?.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center gap-4 border-b py-4 last:border-0"
+                className="flex items-center gap-4 border-b border-border py-4 last:border-0"
               >
-                <div className="grid size-10 place-items-center rounded-full bg-primary/10 font-semibold text-primary">
+                <div className="grid size-10 place-items-center rounded-full bg-primary/10 font-bold text-sm text-primary">
                   {p.displayName?.slice(0, 1)}
                 </div>
                 <div>
-                  <p className="font-semibold">{p.displayName}</p>
-                  <p className="text-sm text-muted-foreground">{p.email}</p>
+                  <p className="font-semibold text-foreground">{p.displayName}</p>
+                  <p className="text-xs text-muted-foreground">{p.email}</p>
                 </div>
               </div>
             ))}
@@ -700,6 +1155,7 @@ export function SchedulePage() {
     },
     onError: (error) => toast.error(apiMessage(error)),
   });
+
   const timeOffSchema = z
     .object({
       startsAt: z.string().min(1),
@@ -737,6 +1193,7 @@ export function SchedulePage() {
     },
     onError: (error) => toast.error(apiMessage(error)),
   });
+
   const remove = useMutation({
     mutationFn: async ({
       kind,
@@ -769,6 +1226,7 @@ export function SchedulePage() {
     },
     onError: (error) => toast.error(apiMessage(error)),
   });
+
   const dayNames = [
     "Sunday",
     "Monday",
@@ -778,15 +1236,16 @@ export function SchedulePage() {
     "Friday",
     "Saturday",
   ];
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Availability"
-        description="Working hours and time off are managed per team member."
+        description="Configure weekly working hours and scheduled time off per team member."
       />
       {!staff.data?.length ? (
         <Card className="mt-7">
-          <CardContent className="pt-5">
+          <CardContent className="pt-6">
             <EmptyState
               icon={Users}
               title="Add a team member first"
@@ -801,11 +1260,11 @@ export function SchedulePage() {
         </Card>
       ) : (
         <>
-          <div className="mt-7 max-w-sm">
-            <Label htmlFor="schedule-staff">Team member</Label>
+          <div className="max-w-sm">
+            <Label htmlFor="schedule-staff">Select practitioner</Label>
             <select
               id="schedule-staff"
-              className="mt-2 h-11 w-full rounded-md border bg-background px-3 text-sm"
+              className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground"
               value={selectedStaffId}
               onChange={(event) => setStaffId(event.target.value)}
             >
@@ -816,26 +1275,33 @@ export function SchedulePage() {
               ))}
             </select>
           </div>
-          <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <div className="grid gap-6 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Weekly hours</CardTitle>
+                <CardDescription>
+                  Recurring weekly shifts available for online appointments.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="divide-y">
+                <div className="divide-y divide-border">
                   {hours.data?.map((entry) => (
                     <div
                       key={entry.id}
                       className="flex items-center justify-between py-3 text-sm"
                     >
-                      <span>
-                        <strong>{dayNames[entry.dayOfWeek ?? 0]}</strong> /{" "}
-                        {entry.startsAt?.slice(0, 5)}-
-                        {entry.endsAt?.slice(0, 5)}
+                      <span className="tabular-nums">
+                        <strong className="text-foreground">
+                          {dayNames[entry.dayOfWeek ?? 0]}
+                        </strong>{" "}
+                        <span className="text-muted-foreground">
+                          {entry.startsAt?.slice(0, 5)} - {entry.endsAt?.slice(0, 5)}
+                        </span>
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() =>
                           remove.mutate({ kind: "hours", id: entry.id! })
                         }
@@ -846,14 +1312,14 @@ export function SchedulePage() {
                   ))}
                 </div>
                 <form
-                  className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-3"
+                  className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-3"
                   onSubmit={hoursForm.handleSubmit((value) =>
                     addHours.mutate(value),
                   )}
                 >
                   <select
                     aria-label="Weekday"
-                    className="h-11 rounded-md border bg-background px-3 text-sm"
+                    className="h-11 rounded-xl border border-input bg-card px-3 text-sm text-foreground"
                     {...hoursForm.register("dayOfWeek", {
                       valueAsNumber: true,
                     })}
@@ -882,7 +1348,7 @@ export function SchedulePage() {
                     </div>
                   )}
                   <Button
-                    className="sm:col-span-3"
+                    className="sm:col-span-3 rounded-full"
                     disabled={addHours.isPending}
                   >
                     Add working day
@@ -890,28 +1356,34 @@ export function SchedulePage() {
                 </form>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Upcoming time off</CardTitle>
+                <CardDescription>
+                  Dates when this team member is blocked from booking.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="divide-y">
+                <div className="divide-y divide-border">
                   {timeOff.data?.map((entry) => (
                     <div
                       key={entry.id}
                       className="flex items-center justify-between gap-3 py-3 text-sm"
                     >
-                      <span>
-                        <strong>{entry.reason || "Unavailable"}</strong>
-                        <br />
-                        <span className="text-muted-foreground">
+                      <div>
+                        <strong className="text-foreground">
+                          {entry.reason || "Unavailable"}
+                        </strong>
+                        <p className="text-xs text-muted-foreground tabular-nums">
                           {new Date(entry.startsAt!).toLocaleString()} –{" "}
                           {new Date(entry.endsAt!).toLocaleString()}
-                        </span>
-                      </span>
+                        </p>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() =>
                           remove.mutate({ kind: "timeOff", id: entry.id! })
                         }
@@ -922,7 +1394,7 @@ export function SchedulePage() {
                   ))}
                 </div>
                 <form
-                  className="mt-5 grid gap-3 border-t pt-5"
+                  className="mt-5 grid gap-3 border-t border-border pt-5"
                   onSubmit={timeOffForm.handleSubmit((value) =>
                     addTimeOff.mutate(value),
                   )}
@@ -947,7 +1419,9 @@ export function SchedulePage() {
                       {timeOffForm.formState.errors.endsAt.message}
                     </FieldError>
                   )}
-                  <Button disabled={addTimeOff.isPending}>Add time off</Button>
+                  <Button disabled={addTimeOff.isPending} className="rounded-full">
+                    Add time off
+                  </Button>
                 </form>
               </CardContent>
             </Card>
@@ -957,6 +1431,7 @@ export function SchedulePage() {
     </div>
   );
 }
+
 export function SettingsPage() {
   const qc = useQueryClient();
   const settings = useQuery({
@@ -982,7 +1457,7 @@ export function SettingsPage() {
           name: settings.data.name || "",
           timeZoneId: settings.data.timeZoneId || "UTC",
           cancellationWindowHours: settings.data.cancellationWindowHours || 0,
-          primaryColor: settings.data.primaryColor || "#5145CD",
+          primaryColor: settings.data.primaryColor || "#2563EB",
           logoUrl: settings.data.logoUrl || "",
         }
       : undefined,
@@ -1000,16 +1475,17 @@ export function SettingsPage() {
       void qc.invalidateQueries({ queryKey: ["settings"] });
     },
   });
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Settings"
-        description="Control your public brand and booking policy."
+        description="Configure your workspace branding, time zone, and cancellation window."
       />
-      <Card className="mt-7 max-w-2xl">
+      <Card className="max-w-2xl">
         <CardContent className="pt-6">
           <form
-            className="space-y-5"
+            className="space-y-4"
             onSubmit={form.handleSubmit((v) => save.mutate(v))}
           >
             {(
@@ -1017,11 +1493,11 @@ export function SettingsPage() {
                 ["name", "Business name"],
                 ["timeZoneId", "Time zone"],
                 ["cancellationWindowHours", "Cancellation window (hours)"],
-                ["primaryColor", "Primary color"],
-                ["logoUrl", "Logo URL"],
+                ["primaryColor", "Primary brand color"],
+                ["logoUrl", "Logo image URL"],
               ] as const
             ).map(([key, label]) => (
-              <div key={key} className="space-y-2">
+              <div key={key} className="space-y-1.5">
                 <Label htmlFor={key}>{label}</Label>
                 <Input
                   id={key}
@@ -1032,6 +1508,7 @@ export function SettingsPage() {
                         ? "number"
                         : "text"
                   }
+                  className={key === "primaryColor" ? "h-11 w-24 p-1 cursor-pointer" : undefined}
                   {...form.register(key, {
                     valueAsNumber: key === "cancellationWindowHours",
                   })}
@@ -1039,7 +1516,7 @@ export function SettingsPage() {
                 <FieldError>{form.formState.errors[key]?.message}</FieldError>
               </div>
             ))}
-            <Button disabled={save.isPending}>
+            <Button disabled={save.isPending} className="mt-2 rounded-full">
               {save.isPending ? "Saving…" : "Save settings"}
             </Button>
           </form>
@@ -1057,37 +1534,17 @@ export function PageTitle({
   description: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {title}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {description}
-        </p>
-      </div>
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        {title}
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {description}
+      </p>
     </div>
   );
 }
-function Metric({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: number;
-  detail: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-3xl font-bold tabular-nums">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
+
 function QuickForm<T extends FieldValues>({
   title,
   form,
@@ -1109,7 +1566,7 @@ function QuickForm<T extends FieldValues>({
       <CardContent>
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           {fields.map(([key, label]) => (
-            <div key={String(key)} className="space-y-2">
+            <div key={String(key)} className="space-y-1.5">
               <Label htmlFor={String(key)}>{label}</Label>
               <Input
                 id={String(key)}
@@ -1130,8 +1587,8 @@ function QuickForm<T extends FieldValues>({
               />
             </div>
           ))}
-          <Button className="w-full" disabled={pending}>
-            <Plus />
+          <Button className="w-full rounded-full" disabled={pending}>
+            <Plus className="size-4" />
             {pending ? "Saving…" : "Add"}
           </Button>
         </form>

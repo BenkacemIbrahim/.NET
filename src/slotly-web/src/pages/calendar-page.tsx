@@ -16,12 +16,12 @@ const bookingStatuses: Record<number, string> = {
 export default function CalendarPage() {
   const bookings = useBookings();
   return (
-    <div>
+    <div className="space-y-6">
       <PageTitle
         title="Calendar"
-        description="See your team's schedule at a glance."
+        description="Comprehensive team appointment schedule and slot availability."
       />
-      <Card className="mt-7 p-3 sm:p-5">
+      <Card className="p-4 sm:p-6">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
