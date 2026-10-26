@@ -32,7 +32,7 @@ All color pairings exceed WCAG AA contrast standards (minimum 4.5:1 for body cop
 | `primary-foreground` | `#FFFFFF` | `#FFFFFF` | Text on primary elements |
 | `accent` | `#EFF4FE` | `#1C2740` | Active sidebar nav highlight, selected slot surface |
 | `accent-foreground` | `#2563EB` | `#60A5FA` | Text on accent surfaces |
-| `dark-surface` | `#020617` | `#1E2638` | High-impact dark metric card & secondary action pills |
+| `dark-surface` | `#020617` | `#030712` | High-impact dark metric card & secondary action pills |
 | `dark-surface-foreground` | `#FFFFFF` | `#FFFFFF` | Text on dark metric cards |
 | `success` | `#079455` | `#10B981` | Confirmed bookings, available slots, positive delta |
 | `warning` | `#F79009` | `#F59E0B` | Pending approvals, temporary locks, alerts |
