@@ -178,7 +178,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue("Database:AutoMigrateAndSeed", false))
 {
     await app.Services.InitializeDatabaseAsync();
 }
@@ -188,6 +188,15 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseCors("SlotlyClients");
+
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
+var hasStaticSpa = File.Exists(Path.Combine(webRoot, "index.html"));
+if (hasStaticSpa)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
 app.UseAuthentication();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseRateLimiter();
@@ -221,7 +230,7 @@ if (!app.Environment.IsEnvironment("Testing"))
         Cron.Daily);
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue("Swagger:Enabled", false))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Slotly API v1"));
@@ -246,6 +255,12 @@ app.MapBookingEndpoints();
 app.MapPaymentEndpoints();
 app.MapHub<AvailabilityHub>("/hubs/availability");
 
+if (hasStaticSpa)
+{
+    app.MapFallbackToFile("index.html");
+}
+
 app.Run();
 
 public partial class Program;
+

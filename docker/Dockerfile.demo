@@ -1,0 +1,49 @@
+# Stage 1: Build the React web frontend
+FROM node:22-alpine AS web-build
+WORKDIR /app
+COPY src/slotly-web/package.json src/slotly-web/package-lock.json ./
+RUN npm ci
+COPY src/slotly-web/ ./
+RUN npm run build
+
+# Stage 2: Build the .NET 10 API
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS dotnet-build
+WORKDIR /source
+
+COPY .editorconfig global.json Directory.Build.props Directory.Packages.props Slotly.sln ./
+COPY src/Slotly.Domain/Slotly.Domain.csproj src/Slotly.Domain/
+COPY src/Slotly.Application/Slotly.Application.csproj src/Slotly.Application/
+COPY src/Slotly.Infrastructure/Slotly.Infrastructure.csproj src/Slotly.Infrastructure/
+COPY src/Slotly.Api/Slotly.Api.csproj src/Slotly.Api/
+
+RUN dotnet restore src/Slotly.Api/Slotly.Api.csproj
+
+COPY src/ src/
+RUN dotnet publish src/Slotly.Api/Slotly.Api.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /app/publish \
+    /p:UseAppHost=false
+
+# Stage 3: Hardened, non-root single demo container
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
+
+RUN apk add --no-cache tzdata \
+    && addgroup -S -g 10001 slotly \
+    && adduser -S -u 10001 -G slotly -h /app slotly
+
+WORKDIR /app
+
+# Copy published .NET API
+COPY --from=dotnet-build --chown=slotly:slotly /app/publish .
+
+# Copy compiled React frontend into wwwroot for static file serving
+COPY --from=web-build --chown=slotly:slotly /app/dist ./wwwroot
+
+USER slotly:slotly
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_EnableDiagnostics=0 \
+    TZ=UTC
+
+ENTRYPOINT ["dotnet", "Slotly.Api.dll"]
