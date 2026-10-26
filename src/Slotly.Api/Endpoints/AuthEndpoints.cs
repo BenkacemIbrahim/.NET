@@ -26,16 +26,19 @@ public static class AuthEndpoints
 
         group.MapPost("/register-tenant", RegisterTenantAsync)
             .AllowAnonymous()
+            .Produces<AuthResponse>(StatusCodes.Status201Created)
             .WithName("RegisterTenant")
             .WithSummary("Registers a new tenant, owner user, and returns access and refresh tokens.");
 
         group.MapPost("/login", LoginAsync)
             .AllowAnonymous()
+            .Produces<AuthResponse>()
             .WithName("Login")
             .WithSummary("Authenticates a user within a tenant and issues tokens.");
 
         group.MapPost("/refresh", RefreshTokenAsync)
             .AllowAnonymous()
+            .Produces<AuthResponse>()
             .WithName("RefreshToken")
             .WithSummary("Rotates a refresh token and issues a new access token.");
 
@@ -56,6 +59,7 @@ public static class AuthEndpoints
 
         group.MapGet("/me", GetCurrentUserAsync)
             .RequireAuthorization()
+            .Produces<UserDto>()
             .WithName("GetCurrentUser")
             .WithSummary("Retrieves profile information for the authenticated user.");
 

@@ -14,6 +14,7 @@ public static class TenantEndpoints
     {
         routes.MapGet("/api/v1/public/tenant", GetPublicTenantAsync)
             .AllowAnonymous()
+            .Produces<TenantSettingsDto>()
             .RequireRateLimiting("tenant-api")
             .WithTags("Tenant settings")
             .WithName("GetPublicTenant")
@@ -24,10 +25,12 @@ public static class TenantEndpoints
             .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
         settings.MapGet("/", GetSettingsAsync)
+            .Produces<TenantSettingsDto>()
             .WithName("GetTenantSettings")
             .WithSummary("Returns settings for the active tenant.");
         settings.MapPut("/", UpdateSettingsAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<TenantSettingsDto>()
             .WithName("UpdateTenantSettings")
             .WithSummary("Updates tenant identity, booking policy, and public branding.");
         return routes;

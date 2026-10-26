@@ -30,6 +30,7 @@ public static class BookingEndpoints
             .RequireAuthorization(AuthorizationPolicies.CustomerOnly);
         availability.MapGet("/", GetAvailabilityAsync)
             .AllowAnonymous()
+            .Produces<AvailabilityDto[]>()
             .WithName("GetAvailability")
             .WithSummary("Returns free service slots for one staff member or any active staff member.")
             .WithDescription("Dates are interpreted in the tenant time zone. Results include UTC and local offsets, including both valid occurrences during a daylight-saving overlap. Example: GET /api/v1/availability?serviceId={serviceId}&startsOn=2026-11-02&endsOn=2026-11-08&staffId={staffId}");
@@ -40,22 +41,27 @@ public static class BookingEndpoints
             .RequireAuthorization(AuthorizationPolicies.CustomerOnly);
         bookings.MapPost("/", CreateBookingAsync)
             .AllowAnonymous()
+            .Produces<BookingDto>(StatusCodes.Status201Created)
             .WithName("CreateBooking")
             .WithSummary("Creates a confirmed booking after transactional availability validation.")
             .WithDescription("Example body: {\"serviceId\":\"11111111-1111-1111-1111-111111111111\",\"staffId\":\"22222222-2222-2222-2222-222222222222\",\"startsAt\":\"2026-11-02T09:00:00Z\",\"customerId\":null,\"customerName\":\"Sara Martin\",\"customerEmail\":\"sara@example.com\",\"customerPhone\":\"+212600000000\",\"notes\":\"First visit\"}");
         bookings.MapGet("/{id:guid}", GetBookingAsync)
+            .Produces<BookingDto>()
             .WithName("GetBooking")
             .WithSummary("Gets a tenant booking.")
             .WithDescription("Example: GET /api/v1/bookings/33333333-3333-3333-3333-333333333333");
         bookings.MapGet("/", ListBookingsAsync)
+            .Produces<PagedResponse<BookingDto>>()
             .WithName("ListBookings")
             .WithSummary("Lists tenant bookings with filters and pagination.")
             .WithDescription("Example: GET /api/v1/bookings?page=1&pageSize=20&staffId={staffId}&status=Confirmed&startsFrom=2026-11-01T00:00:00Z&startsTo=2026-12-01T00:00:00Z");
         bookings.MapPost("/{id:guid}/cancel", CancelBookingAsync)
+            .Produces<BookingDto>()
             .WithName("CancelBooking")
             .WithSummary("Cancels a booking when the tenant cancellation window permits it.")
             .WithDescription("Example body: {\"version\":\"44444444-4444-4444-4444-444444444444\",\"reason\":\"Customer requested cancellation\"}");
         bookings.MapPost("/{id:guid}/reschedule", RescheduleBookingAsync)
+            .Produces<BookingDto>()
             .WithName("RescheduleBooking")
             .WithSummary("Moves a booking after transactional availability validation.")
             .WithDescription("Example body: {\"version\":\"44444444-4444-4444-4444-444444444444\",\"startsAt\":\"2026-11-03T10:00:00Z\",\"staffId\":null}");

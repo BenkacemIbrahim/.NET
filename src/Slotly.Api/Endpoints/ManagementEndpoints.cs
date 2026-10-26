@@ -34,20 +34,24 @@ public static class ManagementEndpoints
 
         group.MapGet("/", ListServicesAsync)
             .AllowAnonymous()
+            .Produces<PagedResponse<ServiceDto>>()
             .WithName("ListServices")
             .WithSummary("Lists tenant services with pagination.")
             .WithDescription("Example: GET /api/v1/services?page=1&pageSize=20&includeInactive=false");
         group.MapGet("/{id:guid}", GetServiceAsync)
+            .Produces<ServiceDto>()
             .WithName("GetService")
             .WithSummary("Gets a tenant service.")
             .WithDescription("Example: GET /api/v1/services/11111111-1111-1111-1111-111111111111");
         group.MapPost("/", CreateServiceAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<ServiceDto>(StatusCodes.Status201Created)
             .WithName("CreateService")
             .WithSummary("Creates a service for the active tenant.")
             .WithDescription("Example body: {\"name\":\"Physiotherapy\",\"durationMinutes\":45,\"priceAmount\":65,\"currency\":\"EUR\",\"bufferMinutes\":15}");
         group.MapPut("/{id:guid}", UpdateServiceAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<ServiceDto>()
             .WithName("UpdateService")
             .WithSummary("Updates a tenant service.")
             .WithDescription("Example body: {\"name\":\"Physiotherapy follow-up\",\"durationMinutes\":30,\"priceAmount\":45,\"currency\":\"EUR\",\"bufferMinutes\":10}");
@@ -65,17 +69,20 @@ public static class ManagementEndpoints
             .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
-        group.MapGet("/", ListStaffAsync).AllowAnonymous().WithName("ListStaff").WithSummary("Lists staff with pagination.")
+        group.MapGet("/", ListStaffAsync).AllowAnonymous().Produces<PagedResponse<StaffDto>>().WithName("ListStaff").WithSummary("Lists staff with pagination.")
             .WithDescription("Example: GET /api/v1/staff?page=1&pageSize=20&includeInactive=false");
         group.MapGet("/{id:guid}", GetStaffAsync).WithName("GetStaff").WithSummary("Gets a staff member.")
+            .Produces<StaffDto>()
             .WithDescription("Example: GET /api/v1/staff/22222222-2222-2222-2222-222222222222");
         group.MapPost("/", CreateStaffAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<StaffDto>(StatusCodes.Status201Created)
             .WithName("CreateStaff")
             .WithSummary("Creates a staff profile.")
             .WithDescription("Example body: {\"displayName\":\"Amina Haddad\",\"email\":\"amina@example.com\"}");
         group.MapPut("/{id:guid}", UpdateStaffAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<StaffDto>()
             .WithName("UpdateStaff")
             .WithSummary("Updates a staff profile.")
             .WithDescription("Example body: {\"displayName\":\"Amina Haddad\",\"email\":\"amina.haddad@example.com\"}");
@@ -94,16 +101,19 @@ public static class ManagementEndpoints
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListWorkingHoursAsync)
+            .Produces<IReadOnlyCollection<WorkingHoursDto>>()
             .WithName("ListWorkingHours")
             .WithSummary("Lists a staff member's weekly working hours.")
             .WithDescription("Example: GET /api/v1/staff/22222222-2222-2222-2222-222222222222/working-hours");
         group.MapPost("/", CreateWorkingHoursAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<WorkingHoursDto>(StatusCodes.Status201Created)
             .WithName("CreateWorkingHours")
             .WithSummary("Creates working hours and breaks for a weekday.")
             .WithDescription("Example body: {\"dayOfWeek\":1,\"startsAt\":\"09:00:00\",\"endsAt\":\"17:00:00\",\"breaks\":[{\"startsAt\":\"12:00:00\",\"endsAt\":\"13:00:00\"}]}");
         group.MapPut("/{id:guid}", UpdateWorkingHoursAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<WorkingHoursDto>()
             .WithName("UpdateWorkingHours")
             .WithSummary("Updates working hours and replaces their breaks.")
             .WithDescription("Example body: {\"dayOfWeek\":1,\"startsAt\":\"08:30:00\",\"endsAt\":\"16:30:00\",\"breaks\":[]}");
@@ -122,20 +132,24 @@ public static class ManagementEndpoints
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListTimeOffAsync)
+            .Produces<PagedResponse<TimeOffDto>>()
             .WithName("ListTimeOff")
             .WithSummary("Lists a staff member's time off with pagination.")
             .WithDescription("Example: GET /api/v1/staff/{staffId}/time-off?page=1&pageSize=20");
         group.MapGet("/{id:guid}", GetTimeOffAsync)
+            .Produces<TimeOffDto>()
             .WithName("GetTimeOff")
             .WithSummary("Gets a time-off entry.")
             .WithDescription("Example: GET /api/v1/staff/{staffId}/time-off/{timeOffId}");
         group.MapPost("/", CreateTimeOffAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<TimeOffDto>(StatusCodes.Status201Created)
             .WithName("CreateTimeOff")
             .WithSummary("Creates a time-off entry.")
             .WithDescription("Example body: {\"startsAt\":\"2026-12-24T09:00:00Z\",\"endsAt\":\"2026-12-24T17:00:00Z\",\"reason\":\"Annual leave\"}");
         group.MapPut("/{id:guid}", UpdateTimeOffAsync)
             .RequireAuthorization(AuthorizationPolicies.TenantOwnerOnly)
+            .Produces<TimeOffDto>()
             .WithName("UpdateTimeOff")
             .WithSummary("Updates a time-off entry.")
             .WithDescription("Example body: {\"startsAt\":\"2026-12-24T10:00:00Z\",\"endsAt\":\"2026-12-24T16:00:00Z\",\"reason\":\"Annual leave\"}");
