@@ -41,7 +41,7 @@ builder.Services.AddHealthChecks()
     .AddCheck<HangfireHealthCheck>("hangfire", tags: ["ready"])
     .AddCheck<SmtpHealthCheck>("smtp", tags: ["ready"]);
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options => options.EnableDetailedErrors = builder.Environment.IsEnvironment("Testing"));
 builder.Services.AddSingleton<BookingChangePublisher>();
 builder.Services.AddHybridCache();
 builder.Services.AddSingleton<AvailabilityCache>();

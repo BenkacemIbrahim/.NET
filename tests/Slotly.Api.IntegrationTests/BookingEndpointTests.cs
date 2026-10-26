@@ -129,6 +129,20 @@ public sealed class BookingEndpointTests(AuthTestWebApplicationFactory factory)
         }
     }
 
+    [Fact]
+    public async Task CreatingBookingInvalidatesCachedAvailability()
+    {
+        var setup = await CreateSchedulingSetupAsync();
+        var url = $"/api/v1/availability?serviceId={setup.Service.Id}&staffId={setup.Staff.Id}&startsOn={setup.BookingDate:yyyy-MM-dd}&endsOn={setup.BookingDate:yyyy-MM-dd}";
+        var before = await GetAsync<AvailabilityDto[]>(url, setup.Auth);
+        var selected = before.First();
+
+        await CreateBookingAsync(setup, selected.StartsAt.UtcDateTime, "cache@customer.example");
+        var after = await GetAsync<AvailabilityDto[]>(url, setup.Auth);
+
+        after.Should().NotContain(slot => slot.StartsAt == selected.StartsAt);
+    }
+
     private async Task<SchedulingSetup> CreateSchedulingSetupAsync()
     {
         var suffix = Guid.NewGuid().ToString("N")[..10];
