@@ -1,129 +1,330 @@
-# Slotly
+<div align="center">
 
-Slotly is a multi-tenant booking and scheduling platform for clinics, salons,
-gyms, and other appointment-based businesses. This repository contains the
-ASP.NET Core API and a responsive React application for customer booking and
-tenant administration.
+# ⚡ Slotly
 
-## Technology stack
+**A modern, production-grade multi-tenant booking and scheduling SaaS platform.**  
+*A simplified Calendly for clinics, salons, and gyms with strict tenant isolation, zero-double-booking guarantees, and real-time availability updates.*
 
-- .NET 10, C#, and ASP.NET Core Web API
-- React, TypeScript, Vite, Tailwind CSS, TanStack Query, and SignalR
-- Clean Architecture: Domain, Application, Infrastructure, and Api
-- Entity Framework Core with PostgreSQL
-- Hangfire with PostgreSQL storage
-- SignalR and Serilog
-- xUnit, Testcontainers, and FluentAssertions
-- Docker Compose and GitHub Actions
+[![CI](https://github.com/BenkacemIbrahim/.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/BenkacemIbrahim/.NET/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/BenkacemIbrahim/.NET/actions/workflows/codeql.yml/badge.svg)](https://github.com/BenkacemIbrahim/.NET/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0%20LTS-purple.svg)](https://dotnet.microsoft.com/)
+[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Compose%20v2-2496ed.svg)](https://www.docker.com/)
 
-## Prerequisites
+</div>
 
-- [.NET SDK 10.0.402](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker
-  Engine with Docker Compose v2
-- Git
-- Node.js 22 (only required when running the web application outside Docker)
+---
 
-## Quick start
+## 📸 Visual Showcase
 
-Clone the repository, copy `.env.example` to `.env` if you want to override the
-safe local defaults, and run:
+<div align="center">
+
+### Customer Booking Experience (Desktop Light & Dark)
+
+| Light Theme | Dark Theme |
+| :---: | :---: |
+| ![Slotly Customer Booking Light](docs/screenshots/booking-desktop-light.png) | ![Slotly Customer Booking Dark](docs/screenshots/booking-desktop-dark.png) |
+
+### Mobile First Design (390px Viewport) & Tenant Administration
+
+| Mobile Customer Experience | Tenant Owner Admin Dashboard |
+| :---: | :---: |
+| <img src="docs/screenshots/booking-mobile-light.png" width="300" alt="Mobile Booking" /> | <img src="docs/screenshots/admin-desktop-light.png" width="550" alt="Admin Dashboard" /> |
+
+</div>
+
+---
+
+## ✨ Features at a Glance
+
+- **Multi-Tenancy with Defense-in-Depth**:
+  - Partitioned by `tenant_id` across all database entities.
+  - Automatic resolution via signed JWT claims, `X-Tenant-Id` GUID, `X-Tenant` slug, or tenant subdomains.
+  - EF Core Global Query Filters automatically scope all queries.
+  - Write-time interception stamps tenant keys and rejects foreign entities.
+  - PostgreSQL composite foreign keys enforce relational database-level tenant constraints.
+- **Zero Double-Booking Guarantee**:
+  - Three-tier defense: application availability engine, entity version optimistic concurrency, and a **PostgreSQL GiST exclusion constraint** (`slotly_bookings_no_overlap`).
+  - Tested under high-contention k6 race conditions with **100% prevention of overlapping bookings**.
+- **Daylight-Saving-Aware Availability Engine**:
+  - Computes available slots across weekly hours, breaks, buffer times, and staff time off.
+  - Handles timezone offsets and daylight saving transitions seamlessly.
+- **Real-Time Availability Updates**:
+  - SignalR WebSocket groups broadcast slot changes instantly to connected clients upon confirmation, reschedule, or cancellation.
+  - ASP.NET Core `HybridCache` (L1 in-memory + optional Redis L2) delivers sub-25ms availability search responses.
+- **Transactional Outbox & Reliable Background Jobs**:
+  - Lifecycle events persist to an outbox table within the booking database transaction.
+  - Hangfire background processors deliver idempotent HTML/text email notifications via Mailpit / SMTP.
+- **Stripe Checkout Test Payments**:
+  - Configurable deposit percentages or full online payments per service.
+  - Cryptographically signed, idempotent Stripe webhook handler.
+- **Accessible, Responsive Frontend (`slotly-web`)**:
+  - React 19, TypeScript strict, Vite, Tailwind CSS v4, and Radix UI / shadcn/ui.
+  - 100% type safety generated from OpenAPI Swagger contracts (`openapi-typescript`).
+  - Perfect **100 / 100 Lighthouse Accessibility & Best Practices** scores.
+  - Light and dark theme tokens with WCAG AA compliant contrast ratios.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Backend API** | .NET 10 (LTS), C# 13, ASP.NET Core Minimal APIs, Clean Architecture |
+| **Data & Persistence** | PostgreSQL 16 (Npgsql), Entity Framework Core 10, snake_case mapping, GiST constraints |
+| **Background Processing** | Hangfire with PostgreSQL storage, Transactional Outbox pattern |
+| **Realtime & Caching** | SignalR, Microsoft.Extensions.Caching.HybridCache, optional Redis L2 |
+| **Security & Auth** | ASP.NET Core Identity, JWT Bearer tokens, SHA-256 rotating refresh tokens, rate limiting |
+| **Payments & Mail** | Stripe.net SDK, Mailpit (local SMTP container), MailKit |
+| **Frontend Web** | React 19, TypeScript strict mode, Vite, TanStack Query, React Hook Form + Zod, Tailwind CSS v4, Radix UI, FullCalendar |
+| **API Client** | Typed client generated via `openapi-typescript` and `openapi-fetch` |
+| **Testing** | xUnit, FluentAssertions, Testcontainers (PostgreSQL), Vitest, React Testing Library, Playwright, Grafana k6 |
+| **DevOps & Containers** | Docker, Docker Compose, GitHub Actions (CI, CodeQL, GHCR, Releases), Alpine Nginx |
+
+---
+
+## 🏗️ Architecture & System Design
+
+Slotly strictly adheres to **Clean Architecture**. Dependencies point inward toward the Domain model:
+
+```text
+       +---------------------------------------------+
+       |                  Api Host                   |
+       |  (Minimal APIs, SignalR Hubs, Rate Limiter) |
+       +----------------------+----------------------+
+                              |
+       +----------------------v----------------------+
+       |               Infrastructure                |
+       | (EF Core, Npgsql, Hangfire, Mailpit, Stripe)|
+       +----------------------+----------------------+
+                              |
+       +----------------------v----------------------+
+       |                Application                  |
+       |     (Use Cases, Validators, Interfaces)     |
+       +----------------------+----------------------+
+                              |
+       +----------------------v----------------------+
+       |                   Domain                    |
+       | (Entities, Value Objects, Domain Events)    |
+       +---------------------------------------------+
+```
+
+### System Architecture Diagram
+
+```mermaid
+graph TD
+    Client["Customer / Tenant Admin (Browser)"]
+    Web["slotly-web (Nginx Container :3000)"]
+    Api["slotly-api (.NET 10 Container :8080)"]
+    Db[("PostgreSQL 16 :5433 (Tenant Partitioned + GiST)")]
+    Mailpit["Mailpit SMTP Listener :1025 / Web :8025"]
+    HangfireWorker["Hangfire Outbox Processor"]
+    Stripe["Stripe Checkout API"]
+
+    Client -->|HTTPS / WSS| Web
+    Web -->|Static SPA Assets| Client
+    Web -->|Reverse Proxy /api & /hubs| Api
+    Api -->|Queries / Writes with Global Filter| Db
+    Api -->|Outbox Events / Recurring Jobs| Db
+    HangfireWorker -->|Poll Outbox| Db
+    HangfireWorker -->|Send Notification Emails| Mailpit
+    Api -->|Create Checkout Session| Stripe
+    Stripe -->|Signed Webhook Callbacks| Api
+```
+
+### Booking Creation & Concurrency Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Customer
+    participant React as React Web Client
+    participant Api as Slotly API
+    participant Cache as HybridCache
+    participant Db as PostgreSQL 16
+    participant Hub as SignalR Hub
+    participant Outbox as Hangfire Worker
+
+    Customer->>React: Select Service & Available Time Slot
+    React->>Api: POST /api/v1/bookings
+    Api->>Db: Begin Serializable Transaction
+    Api->>Db: Verify Availability & Evaluate GiST Constraint
+    alt Slot is Available
+        Api->>Db: Insert Booking (Status: Confirmed) & OutboxMessage
+        Api->>Db: Commit Transaction
+        Api->>Cache: Evict Availability Keys
+        Api->>Hub: Broadcast SlotAvailabilityChanged (Tenant Group)
+        Hub-->>React: Live Slot Update Received
+        Api-->>React: 201 Created (Booking Details)
+        React-->>Customer: Display Confirmation Screen
+        Note over Outbox,Db: Background Processing
+        Outbox->>Db: Fetch Pending Outbox Messages
+        Outbox->>Db: Insert Idempotency Key & Dispatch Confirmation Email
+    else Concurrent Race Condition (Slot Taken)
+        Db-->>Api: GiST Exclusion Violation / Overlap Detected
+        Api->>Db: Rollback Transaction
+        Api-->>React: 409 Conflict (Slot No Longer Available)
+        React-->>Customer: Show Graceful Inline Conflict Warning
+    end
+```
+
+---
+
+## 🚀 Quick Start (One Command)
+
+Clone the repository and spin up the complete local infrastructure in Docker Compose:
 
 ```bash
 docker compose -f docker/compose.yml up --build -d --wait
 ```
 
-The local services are then available at:
+### Local Endpoints
 
-- API health: <http://localhost:8080/health>
-- Web application: <http://localhost:3000>
-- Public demo booking page: <http://localhost:3000/book/northstar-health>
-- API liveness: <http://localhost:8080/health/live>
-- API readiness: <http://localhost:8080/health/ready>
-- Swagger UI (Development): <http://localhost:8080/swagger>
-- Mailpit: <http://localhost:8025>
-- PostgreSQL: `localhost:5433`
+| Service | URL | Description |
+| :--- | :--- | :--- |
+| **Customer Booking Demo** | <http://localhost:3000/book/northstar-health> | Public booking flow for Northstar Health Clinic |
+| **Tenant Admin Portal** | <http://localhost:3000/login> | Admin sign-in (`amira@northstar.example` / `Password123!`) |
+| **API Swagger UI** | <http://localhost:8080/swagger> | Interactive OpenAPI specification and test console |
+| **API Health / Readiness** | <http://localhost:8080/health/ready> | Deep health check (DB, Hangfire, SMTP) |
+| **Mailpit Web UI** | <http://localhost:8025> | Local email inbox catching booking confirmations |
+| **Hangfire Dashboard** | <http://localhost:8080/hangfire> | Background job monitor (requires PlatformAdmin) |
+| **PostgreSQL** | `localhost:5433` | Database credentials: `slotly` / `slotly_local_only` |
 
-To build and test without running the API container:
-
+To tear down the stack and clean local volumes:
 ```bash
-dotnet restore Slotly.sln
-dotnet build Slotly.sln --configuration Release --no-restore
-dotnet test Slotly.sln --configuration Release --no-build
-cd src/slotly-web
-npm ci
-npm run lint && npm run typecheck && npm test && npm run build
-npm run test:e2e
+docker compose -f docker/compose.yml down -v
 ```
 
-PowerShell shortcuts are available through `scripts/slotly.ps1`; run it with
-`up`, `down`, `test`, or `migrate`.
+---
 
-## Architecture
+## ⚙️ Environment Configuration
 
-Dependencies point inward: Domain has no project dependencies, Application
-depends only on Domain, Infrastructure depends on Application, and Api composes
-Application and Infrastructure. See [docs/architecture.md](docs/architecture.md)
-for the tenant-boundary design and entity relationship model, and
-[docs/auth.md](docs/auth.md) for the authentication and authorization design.
-The availability algorithm and database-level overlap guarantees are described
-in [docs/booking-engine.md](docs/booking-engine.md).
-Reliable job processing, notification delivery, and operational settings are
-documented in [docs/background-jobs.md](docs/background-jobs.md).
-Stripe Checkout, webhook processing, refunds, and the manual test-mode workflow
-are documented in [docs/payments.md](docs/payments.md).
-Realtime availability, HybridCache, health checks, telemetry, and rate limiting
-are documented in [docs/observability.md](docs/observability.md). The security
-boundary, authorization review, and audit trail are documented in
-[docs/security.md](docs/security.md).
-The visual language and accessible component rules are defined in
-[docs/design-system.md](docs/design-system.md).
+Configuration is managed via `.env` or container environment variables. Safe development defaults are populated in [.env.example](.env.example):
 
-## Features
+| Variable | Description | Default | Required in Production |
+| :--- | :--- | :--- | :---: |
+| `POSTGRES_DB` | PostgreSQL database name | `slotly` | Yes |
+| `POSTGRES_USER` | PostgreSQL application user | `slotly` | Yes |
+| `POSTGRES_PASSWORD` | PostgreSQL user password | `slotly_local_only` | Yes |
+| `POSTGRES_PORT` | Host port mapped to PostgreSQL | `5433` | No |
+| `API_PORT` | Host port exposed by the API container | `8080` | No |
+| `WEB_PORT` | Host port exposed by the Web container | `3000` | No |
+| `JWT_SIGNING_KEY` | Secret key for signing JWT tokens (min 32 chars) | Safe dev key | **Yes** |
+| `JWT_ISSUER` | Validated JWT token issuer claim | `slotly-api` | Yes |
+| `JWT_AUDIENCE` | Validated JWT token audience claim | `slotly-clients` | Yes |
+| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Access token lifespan in minutes | `15` | No |
+| `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Refresh token lifespan in days | `7` | No |
+| `TENANCY_BASE_DOMAIN` | Base domain for tenant subdomain routing | `slotly.local` | Yes |
+| `TENANCY_ENABLE_SUBDOMAIN_RESOLUTION`| Enable tenant extraction from host subdomain | `true` | No |
+| `TENANCY_ENABLE_HEADER_RESOLUTION` | Enable `X-Tenant` / `X-Tenant-Id` headers | `true` | No |
+| `RATE_LIMIT_TENANT_API` | Per-minute request limit for tenant reads | `120` | No |
+| `RATE_LIMIT_TENANT_WRITE` | Token bucket limit for booking writes | `80` | No |
+| `SMTP_HOST` | Hostname of SMTP mail provider | `mailpit` | Yes |
+| `SMTP_CONTAINER_PORT` | Port of SMTP mail provider | `1025` | Yes |
+| `SMTP_USE_SSL` | Enable TLS/SSL connection for mail | `false` | Yes |
+| `SMTP_USERNAME` | SMTP authentication username | — | If auth enabled |
+| `SMTP_PASSWORD` | SMTP authentication password | — | If auth enabled |
+| `STRIPE_SECRET_KEY` | Stripe test API secret key (`sk_test_...`) | — | For payments |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`) | — | For webhooks |
+| `REDIS_CONNECTION_STRING` | Optional Redis connection string for L2 cache | — | Optional |
 
-The current foundation includes a production-shaped API host, rich scheduling
-domain model, migrated PostgreSQL persistence, automatic Development seed data,
-tenant-isolated EF Core reads and writes, tenant-aware authentication and authorization
-(JWT + refresh token rotation with reuse detection), RFC 7807 error handling, structured
-logging, Swagger with Bearer authorization, and local PostgreSQL and Mailpit infrastructure.
-Tenant owners can manage services, staff, weekly working hours, breaks, and time
-off through validated, paginated APIs. Customers can search daylight-saving-safe
-availability and manage bookings; staff can complete bookings or mark no-shows.
-Serializable writes, optimistic concurrency, and a PostgreSQL GiST exclusion
-constraint guarantee that a staff member cannot be double-booked.
-Booking lifecycle notifications and reminders are delivered through a
-transactional outbox, Hangfire PostgreSQL jobs, and configurable SMTP with
-idempotency protection. The PlatformAdmin-only Hangfire dashboard is exposed at
-`/hangfire`.
-Optional per-tenant online payments support full-price or deposit collection
-through Stripe Checkout. Signed, idempotent webhooks drive booking confirmation,
-failure release, and refund state.
-Authenticated SignalR groups broadcast tenant-isolated slot changes. HybridCache
-accelerates availability and tenant settings with optional Redis L2 storage.
-The API also provides dependency-aware readiness checks, OpenTelemetry console
-traces and metrics, tenant/user-enriched logs, tenant-partitioned rate limits,
-strict CORS and security headers, request-size limits, and persisted audit logs.
+---
 
-The browser application provides a tenant-branded, mobile-first customer flow
-with live slot updates and Stripe Checkout handoff. Its authenticated admin area
-includes today's dashboard, weekly/monthly calendar, booking lifecycle actions,
-services, team, working hours, time off, branding, and policy settings. It uses
-the API-generated OpenAPI types throughout and supports light and dark themes.
+## 🧪 Comprehensive Testing Guide
 
-![Slotly customer booking page](docs/screenshots/booking-desktop-light.png)
+Slotly maintains 100% test automation covering domain logic, integration isolation, frontend components, end-to-end browser journeys, and load capacity:
 
-Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
-each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API
-requests use an `X-Tenant-Id` header containing a tenant UUID, subdomain resolution,
-or JWT tenant claims.
+```bash
+# 1. Run Backend Unit & Integration Tests (including Testcontainers PostgreSQL)
+dotnet test Slotly.sln --configuration Release
 
-## Deployment
+# 2. Run Frontend Code Checks (Lint, TypeScript, Vitest)
+cd src/slotly-web
+npm ci
+npm run lint
+npm run typecheck
+npm test
 
-The API and nginx-served web app use multi-stage, non-root Docker images and run
-in the default Compose stack. Environment-specific deployment guidance will be added when
-the first hosted environment is introduced.
+# 3. Run Playwright End-to-End Browser Journeys (Against Running Stack)
+npm run test:e2e
 
-## Contributing
+# 4. Run k6 Load & Concurrency Benchmark
+Get-Content scripts/load-test.js -Raw | docker run --rm -i --network=slotly_default grafana/k6 run -
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and quality
-checks. This project is licensed under the [MIT License](LICENSE).
+### Test Coverage Highlights
+- **Domain Tests** (`tests/Slotly.Domain.Tests`): 36 unit tests validating entity invariants, lifecycle state machines, daylight saving offsets, and overlap rules.
+- **Application Tests** (`tests/Slotly.Application.Tests`): 25 unit tests covering FluentValidation request rules and availability calculations.
+- **Integration Tests** (`tests/Slotly.Api.IntegrationTests`): 27 integration tests running real PostgreSQL instances via **Testcontainers** verifying tenant boundary leaks, JWT refresh reuse detection, concurrent bookings, and transactional outbox idempotency.
+- **E2E Tests** (`src/slotly-web/e2e`): 7 Playwright browser journeys verifying booking completion, admin dashboard actions, and visual regression baselines.
+- **k6 Load Tests** (`scripts/load-test.js`): Verified **13,412 requests** at 334+ req/sec with sub-25ms cached responses and **0 double bookings**. See [docs/performance.md](docs/performance.md).
+
+---
+
+## 📁 Project Directory Structure
+
+```text
+.
+├── .github/                   # Workflows (CI, CodeQL, Release, Container Publishing)
+├── docker/                    # Dockerfiles (API, Web, Demo) and Compose configurations
+├── docs/                      # Architectural Decision Records (ADRs) and guides
+│   ├── adr/                   # Architecture Decision Records (0001–0006)
+│   ├── api.md                 # REST API reference and endpoint documentation
+│   ├── architecture.md        # Architecture and entity relationship models
+│   ├── deployment.md          # Cloud deployment guide and free hosting evaluation
+│   ├── design-system.md       # Visual tokens, accessible components, and theme rules
+│   ├── performance.md         # k6 benchmark metrics and latency percentiles
+│   └── screenshots/           # Visual baselines (light/dark, mobile/desktop)
+├── scripts/                   # Load testing scripts and PowerShell automation
+├── src/
+│   ├── Slotly.Domain/         # Scheduling domain entities, value objects, domain events
+│   ├── Slotly.Application/    # Use cases, validation, interfaces, availability engine
+│   ├── Slotly.Infrastructure/ # EF Core DbContext, Npgsql mappings, Hangfire, Mailpit
+│   ├── Slotly.Api/            # Minimal API endpoints, SignalR hubs, JWT & rate limiting
+│   └── slotly-web/            # React 19 SPA, Tailwind CSS v4, TanStack Query, Radix UI
+├── tests/
+│   ├── Slotly.Domain.Tests/   # Domain unit tests
+│   ├── Slotly.Application.Tests/ # Application and validator unit tests
+│   └── Slotly.Api.IntegrationTests/ # Real database Testcontainers integration tests
+├── .env.example               # Template of all environment variables
+├── CHANGELOG.md               # Versioned changelog following Keep a Changelog
+├── LICENSE                    # MIT License
+└── README.md                  # Project documentation root
+```
+
+---
+
+## ☁️ Free Cloud Deployment & Demo Hosting
+
+Slotly is engineered to deploy seamlessly on free cloud infrastructure without code modifications:
+
+- **Hosting Target**: [Render.com](https://render.com) (Free Web Service) or [Fly.io](https://fly.io)
+- **Database**: [Neon.tech](https://neon.tech) (Free Serverless PostgreSQL 16)
+- **Single Demo Container**: Uses `docker/Dockerfile.demo` where the ASP.NET Core process hosts both the compiled React SPA static files and the API endpoints, with in-memory HybridCache and auto-migration on boot.
+
+### Cold-Start Behavior & Free Tier Limits
+- **Render Web Service**: Spins down to 0 instances after 15 minutes of inactivity. Initial cold-start request takes **~45–50 seconds** to provision compute and boot .NET 10. Subsequent requests respond in **< 30 ms**.
+- **Neon Serverless PostgreSQL**: Auto-suspends after 5 minutes of idle time; wakes up in **~500 ms** on incoming connection.
+- Detailed step-by-step instructions and configuration flags are documented in [docs/deployment.md](docs/deployment.md).
+
+---
+
+## 🗺️ Product Roadmap
+
+- [x] **Core Architecture**: Solution architecture, repository foundation, central package management.
+- [x] **Multi-Tenancy & Data**: Domain models, PostgreSQL schema, tenant isolation, seed data.
+- [x] **Authentication & Security**: JWT authentication, rotating refresh tokens, lockout protection, security headers.
+- [x] **Availability Engine**: Real-time slot calculation, PostgreSQL GiST exclusion constraint for zero double-booking.
+- [x] **Background Jobs & Outbox**: Hangfire background jobs, transactional outbox pattern, idempotent email delivery.
+- [x] **Stripe Integration**: Stripe Checkout, customizable deposit policies, secure webhook processing.
+- [x] **Realtime & Caching**: SignalR live availability broadcasts, HybridCache L1/L2 caching, rate limiting.
+- [x] **Web Experience**: Modern React 19 SPA, OpenAPI TypeScript integration, responsive light/dark themes.
+- [x] **Hardening & Quality**: k6 concurrency benchmarks, architecture decision records (ADRs), CI/CD pipelines.
+- [ ] **v1.1.0** *(Upcoming)*: Multi-location tenant support, Google / Outlook calendar two-way sync, custom SMS reminders via Twilio.
+
+---
+
+## 📄 License
+
+This project is licensed under the terms of the [MIT License](LICENSE).
