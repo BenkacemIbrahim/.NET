@@ -42,11 +42,12 @@ public static class DependencyInjection
             .UsePostgreSqlStorage(storage => storage.UseNpgsqlConnection(connectionString),
                 new PostgreSqlStorageOptions
                 {
-                    SchemaName = "hangfire",
+                    SchemaName = configuration["Hangfire:SchemaName"],
                     PrepareSchemaIfNecessary = true,
                 }));
 
-        var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+        var jwtOptions = configuration.GetRequiredSection(JwtOptions.SectionName).Get<JwtOptions>()
+            ?? throw new InvalidOperationException("JWT configuration is missing.");
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
         services.AddAuthentication(options =>

@@ -8,7 +8,7 @@ public sealed class StripeOptions
 
     public string WebhookSecret { get; set; } = string.Empty;
 
-    public string SuccessUrl { get; set; } = "http://localhost:8080/payments/success";
+    public string SuccessUrl { get; set; } = string.Empty;
 
-    public string CancelUrl { get; set; } = "http://localhost:8080/payments/cancel";
+    public string CancelUrl { get; set; } = string.Empty;
 }

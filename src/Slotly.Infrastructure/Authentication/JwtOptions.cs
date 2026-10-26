@@ -4,13 +4,13 @@ public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
 
-    public string SigningKey { get; set; } = "slotly-dev-signing-key-must-be-at-least-32-chars-long-for-hmac-sha256!";
+    public string SigningKey { get; set; } = string.Empty;
 
-    public string Issuer { get; set; } = "slotly-api";
+    public string Issuer { get; set; } = string.Empty;
 
-    public string Audience { get; set; } = "slotly-clients";
+    public string Audience { get; set; } = string.Empty;
 
-    public int AccessTokenLifetimeMinutes { get; set; } = 15;
+    public int AccessTokenLifetimeMinutes { get; set; }
 
-    public int RefreshTokenLifetimeDays { get; set; } = 7;
+    public int RefreshTokenLifetimeDays { get; set; }
 }

@@ -40,6 +40,7 @@ public sealed class AuthTestWebApplicationFactory : WebApplicationFactory<Progra
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.UseSlotlyTestConfiguration();
         builder.UseSetting("ConnectionStrings:SlotlyDatabase", _database.GetConnectionString());
         builder.UseSetting("Jwt:SigningKey", "integration-tests-super-secret-signing-key-minimum-32-chars!");
         builder.UseSetting("Jwt:Issuer", "slotly-test");

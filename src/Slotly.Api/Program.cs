@@ -18,6 +18,7 @@ using Slotly.Infrastructure.Jobs;
 using Slotly.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+EnvironmentConfiguration.Validate(builder.Configuration, builder.Environment);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
 
 builder.Host.UseSerilog((context, services, configuration) =>
@@ -115,7 +116,8 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 if (!builder.Environment.IsEnvironment("Testing"))
 {
-    builder.Services.AddHangfireServer(options => options.WorkerCount = Math.Max(2, Environment.ProcessorCount));
+    builder.Services.AddHangfireServer(options =>
+        options.WorkerCount = builder.Configuration.GetValue<int>("Hangfire:WorkerCount"));
 }
 
 builder.Services.AddRateLimiter(options =>
@@ -135,9 +137,9 @@ builder.Services.AddRateLimiter(options =>
             .ExecuteAsync(context.HttpContext);
     };
 
-    var authPermitLimit = builder.Configuration.GetValue("RateLimiting:AuthPermitLimit", 30);
-    var tenantApiPermitLimit = builder.Configuration.GetValue("RateLimiting:TenantApiPermitLimit", 120);
-    var tenantWriteTokenLimit = builder.Configuration.GetValue("RateLimiting:TenantWriteTokenLimit", 80);
+    var authPermitLimit = builder.Configuration.GetValue<int>("RateLimiting:AuthPermitLimit");
+    var tenantApiPermitLimit = builder.Configuration.GetValue<int>("RateLimiting:TenantApiPermitLimit");
+    var tenantWriteTokenLimit = builder.Configuration.GetValue<int>("RateLimiting:TenantWriteTokenLimit");
 
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -178,7 +180,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue("Database:AutoMigrateAndSeed", false))
+if (app.Configuration.GetValue<bool>("Database:AutoMigrateAndSeed"))
 {
     await app.Services.InitializeDatabaseAsync();
 }
@@ -230,7 +232,7 @@ if (!app.Environment.IsEnvironment("Testing"))
         Cron.Daily);
 }
 
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue("Swagger:Enabled", false))
+if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Slotly API v1"));

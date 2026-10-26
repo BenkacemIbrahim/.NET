@@ -51,6 +51,7 @@ public sealed class NotificationTestWebApplicationFactory : WebApplicationFactor
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.UseSlotlyTestConfiguration();
         builder.UseSetting("ConnectionStrings:SlotlyDatabase", _database.GetConnectionString());
         builder.UseSetting("Jwt:SigningKey", "notification-tests-signing-key-minimum-32-characters!");
         builder.UseSetting("Jwt:Issuer", "slotly-test");
