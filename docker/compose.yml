@@ -50,6 +50,7 @@ services:
       Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-}
       Cors__AllowedOrigins__0: ${CORS_ORIGIN_1:-http://localhost:5000}
       Cors__AllowedOrigins__1: ${CORS_ORIGIN_2:-https://localhost:5001}
+      Cors__AllowedOrigins__2: ${CORS_ORIGIN_3:-http://localhost:3000}
       Seq__Url: ${SEQ_URL:-}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
       Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
