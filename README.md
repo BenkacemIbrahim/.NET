@@ -34,6 +34,8 @@ docker compose -f docker/compose.yml --profile api up --build -d
 The local services are then available at:
 
 - API health: <http://localhost:8080/health>
+- API liveness: <http://localhost:8080/health/live>
+- API readiness: <http://localhost:8080/health/ready>
 - Swagger UI (Development): <http://localhost:8080/swagger>
 - Mailpit: <http://localhost:8025>
 - PostgreSQL: `localhost:5433`
@@ -62,6 +64,10 @@ Reliable job processing, notification delivery, and operational settings are
 documented in [docs/background-jobs.md](docs/background-jobs.md).
 Stripe Checkout, webhook processing, refunds, and the manual test-mode workflow
 are documented in [docs/payments.md](docs/payments.md).
+Realtime availability, HybridCache, health checks, telemetry, and rate limiting
+are documented in [docs/observability.md](docs/observability.md). The security
+boundary, authorization review, and audit trail are documented in
+[docs/security.md](docs/security.md).
 
 ## Features
 
@@ -82,6 +88,11 @@ idempotency protection. The PlatformAdmin-only Hangfire dashboard is exposed at
 Optional per-tenant online payments support full-price or deposit collection
 through Stripe Checkout. Signed, idempotent webhooks drive booking confirmation,
 failure release, and refund state.
+Authenticated SignalR groups broadcast tenant-isolated slot changes. HybridCache
+accelerates availability and tenant settings with optional Redis L2 storage.
+The API also provides dependency-aware readiness checks, OpenTelemetry console
+traces and metrics, tenant/user-enriched logs, tenant-partitioned rate limits,
+strict CORS and security headers, request-size limits, and persisted audit logs.
 
 Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
 each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API

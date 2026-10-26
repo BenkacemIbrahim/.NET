@@ -13,3 +13,5 @@ development and current service endpoints.
 - [Availability and booking engine](booking-engine.md)
 - [Background jobs and notifications](background-jobs.md)
 - [Stripe payments](payments.md)
+- [Realtime, caching, and observability](observability.md)
+- [API security](security.md)

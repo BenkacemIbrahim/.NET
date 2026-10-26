@@ -45,3 +45,12 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Signed, idempotent Stripe webhook processing for successful checkout, failed
   payment, and refunded charges.
 - Cancellation-window-aware Stripe refund endpoint and payment-driven booking transitions.
+- Tenant-isolated SignalR availability updates for booking lifecycle changes.
+- HybridCache-backed availability and tenant settings with mutation-aware
+  invalidation and optional Redis L2 storage.
+- Tenant-partitioned API rate limits with RFC 7807 throttling responses.
+- PostgreSQL, Hangfire, and SMTP readiness checks plus process liveness checks.
+- OpenTelemetry console traces and metrics, tenant/user log enrichment, and an
+  optional Seq Compose profile.
+- Strict CORS, security headers, request-size limits, and persisted sensitive-action audits.
+- Authenticated SignalR, cache invalidation, and rate-limit integration tests.
