@@ -127,7 +127,7 @@ export function LoginPage() {
       </section>
 
       {/* Login Form */}
-      <section className="flex items-center justify-center p-6 sm:p-12">
+      <section className="flex items-center justify-center p-6 pb-24 sm:p-12 sm:pb-28">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-2.5 font-bold lg:hidden">
