@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Slotly.Domain.Bookings;
+using Slotly.Domain.Customers;
 using Slotly.Domain.Services;
 using Slotly.Domain.Staff;
 using Slotly.Domain.Tenants;
@@ -93,14 +95,33 @@ public static class DatabaseInitializer
         context.Staff.Add(staff);
 
 
+        Service? primaryService = null;
         foreach (var service in services)
         {
-            context.Services.Add(Service.Create(
+            var createdService = Service.Create(
                 tenant.Id,
                 service.Name,
                 service.Duration,
                 service.Price,
-                service.Buffer));
+                service.Buffer);
+            context.Services.Add(createdService);
+            primaryService ??= createdService;
+        }
+
+        if (primaryService is not null && tenantSlug == "northstar-health")
+        {
+            var customer = Customer.Create(tenant.Id, "Karim Tazi", "karim@example.com", "+212600000002");
+            context.Customers.Add(customer);
+
+            var nextWeekday = DateTimeOffset.UtcNow.Date.AddDays(1);
+            while (nextWeekday.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            {
+                nextWeekday = nextWeekday.AddDays(1);
+            }
+            var slot = new TimeSlot(nextWeekday.AddHours(14), nextWeekday.AddHours(14).Add(primaryService.Duration));
+            var sampleBooking = Booking.Create(tenant.Id, customer.Id, primaryService.Id, staff.Id, slot, primaryService.BufferTime);
+            sampleBooking.Confirm();
+            context.Bookings.Add(sampleBooking);
         }
 
         foreach (var day in new[]
