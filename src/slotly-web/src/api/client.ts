@@ -18,6 +18,11 @@ export interface AuthSession {
 }
 
 const storageKey = "slotly.session";
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+if (!configuredApiUrl) {
+  throw new Error("Missing required environment variable VITE_API_URL.");
+}
+export const apiBaseUrl = configuredApiUrl.replace(/\/$/, "");
 
 export const authStorage = {
   read(): AuthSession | null {
@@ -49,7 +54,7 @@ const authentication: Middleware = {
   },
 };
 
-export const api = createClient<paths>({ baseUrl: "" });
+export const api = createClient<paths>({ baseUrl: apiBaseUrl });
 api.use(authentication);
 
 export function tenantHeaders(slug: string): HeadersInit {

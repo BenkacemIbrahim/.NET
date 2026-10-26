@@ -18,7 +18,13 @@ import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { api, apiMessage, tenantHeaders, type ApiSchemas } from "../api/client";
+import {
+  api,
+  apiBaseUrl,
+  apiMessage,
+  tenantHeaders,
+  type ApiSchemas,
+} from "../api/client";
 import { ThemeToggle } from "../components/theme-toggle";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -123,7 +129,9 @@ export function PublicBookingPage() {
   useEffect(() => {
     if (!service?.id) return;
     const connection = new HubConnectionBuilder()
-      .withUrl(`/hubs/availability?tenant=${encodeURIComponent(tenantSlug)}`)
+      .withUrl(
+        `${apiBaseUrl}/hubs/availability?tenant=${encodeURIComponent(tenantSlug)}`,
+      )
       .withAutomaticReconnect()
       .build();
     connection.on(

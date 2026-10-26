@@ -13,4 +13,4 @@ npm run build
 ```
 
 During local development, `npm run dev` proxies API and SignalR requests to the
-ASP.NET Core API configured by `VITE_API_PROXY_TARGET`.
+ASP.NET Core API configured by the required `VITE_API_URL` value in `.env.local`.
