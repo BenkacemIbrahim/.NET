@@ -177,13 +177,17 @@ sequenceDiagram
 
 ---
 
-## 🚀 Quick Start (One Command)
+## 🚀 Quick Start
 
-Clone the repository and spin up the complete local infrastructure in Docker Compose:
+Generate unique local credentials, then start the complete local infrastructure:
 
-```bash
-docker compose -f docker/compose.yml up --build -d --wait
+```powershell
+./scripts/initialize-environment.ps1
+docker compose --env-file .env -f docker/compose.yml up --build --detach --wait
 ```
+
+The generator creates the ignored `.env` and `src/slotly-web/.env.local` files.
+It refuses to overwrite them unless `-Force` is supplied explicitly.
 
 ### Local Endpoints
 
@@ -195,30 +199,36 @@ docker compose -f docker/compose.yml up --build -d --wait
 | **API Health / Readiness** | <http://localhost:8080/health/ready> | Deep health check (DB, Hangfire, SMTP) |
 | **Mailpit Web UI** | <http://localhost:8025> | Local email inbox catching booking confirmations |
 | **Hangfire Dashboard** | <http://localhost:8080/hangfire> | Background job monitor (requires PlatformAdmin) |
-| **PostgreSQL** | `localhost:5433` | Database credentials: `slotly` / `slotly_local_only` |
+| **Seq** | <http://localhost:8081> | Structured application logs |
+| **Redis** | `localhost:6379` | HybridCache distributed cache |
+| **PostgreSQL** | `localhost:5433` | Unique credentials generated in the ignored `.env` file |
 
 To tear down the stack and clean local volumes:
 ```bash
-docker compose -f docker/compose.yml down -v
+docker compose --env-file .env -f docker/compose.yml down --volumes
 ```
 
 ---
 
 ## ⚙️ Environment Configuration
 
-Configuration is managed via `.env` or container environment variables. Safe development defaults are populated in [.env.example](.env.example):
+Configuration is supplied by the ignored real `.env` files. There are no
+runtime sample fallbacks: Compose and the API fail with the missing variable's
+name. [.env.example](.env.example) and
+[src/slotly-web/.env.example](src/slotly-web/.env.example) document the required
+names with fake values.
 
 | Variable | Description | Default | Required in Production |
 | :--- | :--- | :--- | :---: |
-| `POSTGRES_DB` | PostgreSQL database name | `slotly` | Yes |
-| `POSTGRES_USER` | PostgreSQL application user | `slotly` | Yes |
-| `POSTGRES_PASSWORD` | PostgreSQL user password | `slotly_local_only` | Yes |
+| `POSTGRES_DB` | PostgreSQL database name | Generated locally | Yes |
+| `POSTGRES_USER` | PostgreSQL application user | Generated locally | Yes |
+| `POSTGRES_PASSWORD` | PostgreSQL user password | Generated locally | Yes |
 | `POSTGRES_PORT` | Host port mapped to PostgreSQL | `5433` | No |
 | `API_PORT` | Host port exposed by the API container | `8080` | No |
 | `WEB_PORT` | Host port exposed by the Web container | `3000` | No |
-| `JWT_SIGNING_KEY` | Secret key for signing JWT tokens (min 32 chars) | Safe dev key | **Yes** |
-| `JWT_ISSUER` | Validated JWT token issuer claim | `slotly-api` | Yes |
-| `JWT_AUDIENCE` | Validated JWT token audience claim | `slotly-clients` | Yes |
+| `JWT_SIGNING_KEY` | Secret key for signing JWT tokens (min 32 chars) | Generated locally | **Yes** |
+| `JWT_ISSUER` | Validated JWT token issuer claim | Configured locally | Yes |
+| `JWT_AUDIENCE` | Validated JWT token audience claim | Configured locally | Yes |
 | `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Access token lifespan in minutes | `15` | No |
 | `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Refresh token lifespan in days | `7` | No |
 | `TENANCY_BASE_DOMAIN` | Base domain for tenant subdomain routing | `slotly.local` | Yes |
@@ -233,7 +243,9 @@ Configuration is managed via `.env` or container environment variables. Safe dev
 | `SMTP_PASSWORD` | SMTP authentication password | — | If auth enabled |
 | `STRIPE_SECRET_KEY` | Stripe test API secret key (`sk_test_...`) | — | For payments |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`) | — | For webhooks |
-| `REDIS_CONNECTION_STRING` | Optional Redis connection string for L2 cache | — | Optional |
+| `REDIS_CONNECTION_STRING` | Redis connection string for L2 cache | `redis:6379` locally | Yes |
+| `SEQ_URL` | Seq structured-log ingestion URL | `http://seq:5341` locally | Yes |
+| `VITE_API_URL` | Browser-visible API origin (frontend `.env.local`) | `http://localhost:8080` locally | Yes |
 
 ---
 
