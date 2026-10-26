@@ -1,7 +1,3 @@
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/react/daygrid";
-import interactionPlugin from "@fullcalendar/react/interaction";
-import timeGridPlugin from "@fullcalendar/react/timegrid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -260,7 +256,7 @@ function AdminShell() {
   );
 }
 
-function useBookings() {
+export function useBookings() {
   return useQuery({
     queryKey: ["bookings"],
     queryFn: async () => {
@@ -354,37 +350,6 @@ export function DashboardPage() {
             />
           )}
         </CardContent>
-      </Card>
-    </div>
-  );
-}
-export function CalendarPage() {
-  const bookings = useBookings();
-  return (
-    <div>
-      <PageTitle
-        title="Calendar"
-        description="See your team's schedule at a glance."
-      />
-      <Card className="mt-7 p-3 sm:p-5">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
-          }}
-          height="auto"
-          nowIndicator
-          events={(bookings.data ?? []).map((b) => ({
-            id: b.id,
-            title: status(b.status),
-            start: b.startsAt,
-            end: b.endsAt,
-            className: "slotly-event",
-          }))}
-        />
       </Card>
     </div>
   );
@@ -615,26 +580,341 @@ export function StaffPage() {
 }
 
 export function SchedulePage() {
+  const qc = useQueryClient();
+  const staff = useQuery({
+    queryKey: ["staff-admin"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/staff", {
+        params: { query: { page: 1, pageSize: 100, includeInactive: false } },
+      });
+      if (!data) throw error;
+      return data.items ?? [];
+    },
+  });
+  const [staffId, setStaffId] = useState("");
+  const selectedStaffId = staffId || staff.data?.[0]?.id || "";
+  const hours = useQuery({
+    queryKey: ["working-hours", selectedStaffId],
+    enabled: !!selectedStaffId,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/v1/staff/{staffId}/working-hours",
+        { params: { path: { staffId: selectedStaffId } } },
+      );
+      if (!data) throw error;
+      return data;
+    },
+  });
+  const timeOff = useQuery({
+    queryKey: ["time-off", selectedStaffId],
+    enabled: !!selectedStaffId,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/v1/staff/{staffId}/time-off",
+        {
+          params: {
+            path: { staffId: selectedStaffId },
+            query: { page: 1, pageSize: 100 },
+          },
+        },
+      );
+      if (!data) throw error;
+      return data.items ?? [];
+    },
+  });
+  const hoursSchema = z
+    .object({
+      dayOfWeek: z.number().min(0).max(6),
+      startsAt: z.string().min(1),
+      endsAt: z.string().min(1),
+    })
+    .refine((v) => v.startsAt < v.endsAt, {
+      message: "End time must be after start time.",
+      path: ["endsAt"],
+    });
+  type HoursForm = z.infer<typeof hoursSchema>;
+  const hoursForm = useForm<HoursForm>({
+    resolver: zodResolver(hoursSchema),
+    defaultValues: { dayOfWeek: 1, startsAt: "09:00", endsAt: "17:00" },
+  });
+  const addHours = useMutation({
+    mutationFn: async (value: HoursForm) => {
+      const { data, error } = await api.POST(
+        "/api/v1/staff/{staffId}/working-hours",
+        {
+          params: { path: { staffId: selectedStaffId } },
+          body: {
+            dayOfWeek: value.dayOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+            startsAt: `${value.startsAt}:00`,
+            endsAt: `${value.endsAt}:00`,
+            breaks: [],
+          },
+        },
+      );
+      if (!data) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Working hours added");
+      void qc.invalidateQueries({
+        queryKey: ["working-hours", selectedStaffId],
+      });
+    },
+    onError: (error) => toast.error(apiMessage(error)),
+  });
+  const timeOffSchema = z
+    .object({
+      startsAt: z.string().min(1),
+      endsAt: z.string().min(1),
+      reason: z.string().max(500),
+    })
+    .refine((v) => v.startsAt < v.endsAt, {
+      message: "End date must be after start date.",
+      path: ["endsAt"],
+    });
+  type TimeOffForm = z.infer<typeof timeOffSchema>;
+  const timeOffForm = useForm<TimeOffForm>({
+    resolver: zodResolver(timeOffSchema),
+    defaultValues: { startsAt: "", endsAt: "", reason: "" },
+  });
+  const addTimeOff = useMutation({
+    mutationFn: async (value: TimeOffForm) => {
+      const { data, error } = await api.POST(
+        "/api/v1/staff/{staffId}/time-off",
+        {
+          params: { path: { staffId: selectedStaffId } },
+          body: {
+            startsAt: new Date(value.startsAt).toISOString(),
+            endsAt: new Date(value.endsAt).toISOString(),
+            reason: value.reason || null,
+          },
+        },
+      );
+      if (!data) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Time off added");
+      timeOffForm.reset();
+      void qc.invalidateQueries({ queryKey: ["time-off", selectedStaffId] });
+    },
+    onError: (error) => toast.error(apiMessage(error)),
+  });
+  const remove = useMutation({
+    mutationFn: async ({
+      kind,
+      id,
+    }: {
+      kind: "hours" | "timeOff";
+      id: string;
+    }) => {
+      const path = { staffId: selectedStaffId, id };
+      const response =
+        kind === "hours"
+          ? await api.DELETE("/api/v1/staff/{staffId}/working-hours/{id}", {
+              params: { path },
+            })
+          : await api.DELETE("/api/v1/staff/{staffId}/time-off/{id}", {
+              params: { path },
+            });
+      if (!response.response.ok)
+        throw new Error("The schedule could not be updated.");
+      return kind;
+    },
+    onSuccess: (kind) => {
+      toast.success("Schedule updated");
+      void qc.invalidateQueries({
+        queryKey: [
+          kind === "hours" ? "working-hours" : "time-off",
+          selectedStaffId,
+        ],
+      });
+    },
+    onError: (error) => toast.error(apiMessage(error)),
+  });
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   return (
     <div>
       <PageTitle
         title="Availability"
         description="Working hours and time off are managed per team member."
       />
-      <Card className="mt-7">
-        <CardContent className="pt-5">
-          <EmptyState
-            icon={CalendarDays}
-            title="Choose a team member"
-            description="Open a team member to configure weekly hours, breaks, and upcoming time off."
-            action={
-              <Button asChild>
-                <NavLink to="/admin/staff">View team</NavLink>
-              </Button>
-            }
-          />
-        </CardContent>
-      </Card>
+      {!staff.data?.length ? (
+        <Card className="mt-7">
+          <CardContent className="pt-5">
+            <EmptyState
+              icon={Users}
+              title="Add a team member first"
+              description="Availability belongs to an active team member."
+              action={
+                <Button asChild>
+                  <NavLink to="/admin/staff">Add team member</NavLink>
+                </Button>
+              }
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="mt-7 max-w-sm">
+            <Label htmlFor="schedule-staff">Team member</Label>
+            <select
+              id="schedule-staff"
+              className="mt-2 h-11 w-full rounded-md border bg-background px-3 text-sm"
+              value={selectedStaffId}
+              onChange={(event) => setStaffId(event.target.value)}
+            >
+              {staff.data.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-6 grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly hours</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y">
+                  {hours.data?.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between py-3 text-sm"
+                    >
+                      <span>
+                        <strong>{dayNames[entry.dayOfWeek ?? 0]}</strong> /{" "}
+                        {entry.startsAt?.slice(0, 5)}-
+                        {entry.endsAt?.slice(0, 5)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          remove.mutate({ kind: "hours", id: entry.id! })
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-3"
+                  onSubmit={hoursForm.handleSubmit((value) =>
+                    addHours.mutate(value),
+                  )}
+                >
+                  <select
+                    aria-label="Weekday"
+                    className="h-11 rounded-md border bg-background px-3 text-sm"
+                    {...hoursForm.register("dayOfWeek", {
+                      valueAsNumber: true,
+                    })}
+                  >
+                    {dayNames.map((day, index) => (
+                      <option key={day} value={index}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                  <Input
+                    aria-label="Start time"
+                    type="time"
+                    {...hoursForm.register("startsAt")}
+                  />
+                  <Input
+                    aria-label="End time"
+                    type="time"
+                    {...hoursForm.register("endsAt")}
+                  />
+                  {hoursForm.formState.errors.endsAt && (
+                    <div className="sm:col-span-3">
+                      <FieldError>
+                        {hoursForm.formState.errors.endsAt.message}
+                      </FieldError>
+                    </div>
+                  )}
+                  <Button
+                    className="sm:col-span-3"
+                    disabled={addHours.isPending}
+                  >
+                    Add working day
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming time off</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y">
+                  {timeOff.data?.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between gap-3 py-3 text-sm"
+                    >
+                      <span>
+                        <strong>{entry.reason || "Unavailable"}</strong>
+                        <br />
+                        <span className="text-muted-foreground">
+                          {new Date(entry.startsAt!).toLocaleString()} –{" "}
+                          {new Date(entry.endsAt!).toLocaleString()}
+                        </span>
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          remove.mutate({ kind: "timeOff", id: entry.id! })
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  className="mt-5 grid gap-3 border-t pt-5"
+                  onSubmit={timeOffForm.handleSubmit((value) =>
+                    addTimeOff.mutate(value),
+                  )}
+                >
+                  <Input
+                    aria-label="Time off starts"
+                    type="datetime-local"
+                    {...timeOffForm.register("startsAt")}
+                  />
+                  <Input
+                    aria-label="Time off ends"
+                    type="datetime-local"
+                    {...timeOffForm.register("endsAt")}
+                  />
+                  <Input
+                    aria-label="Reason"
+                    placeholder="Reason (optional)"
+                    {...timeOffForm.register("reason")}
+                  />
+                  {timeOffForm.formState.errors.endsAt && (
+                    <FieldError>
+                      {timeOffForm.formState.errors.endsAt.message}
+                    </FieldError>
+                  )}
+                  <Button disabled={addTimeOff.isPending}>Add time off</Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -730,7 +1010,7 @@ export function SettingsPage() {
   );
 }
 
-function PageTitle({
+export function PageTitle({
   title,
   description,
 }: {
