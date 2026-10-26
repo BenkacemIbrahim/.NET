@@ -23,19 +23,27 @@ try {
 
     switch ($Command) {
         'up' {
-            docker compose -f docker/compose.yml --profile api up --build --detach
+            if (-not (Test-Path -LiteralPath $environmentFile)) {
+                throw 'Missing .env. Run scripts/initialize-environment.ps1 first.'
+            }
+            docker compose --env-file .env -f docker/compose.yml up --build --detach --wait
         }
         'down' {
-            docker compose -f docker/compose.yml --profile api down
+            docker compose --env-file .env -f docker/compose.yml down
         }
         'test' {
             dotnet test Slotly.sln --configuration Release
         }
         'migrate' {
-            $databaseName = if ($env:POSTGRES_DB) { $env:POSTGRES_DB } else { 'slotly' }
-            $databaseUser = if ($env:POSTGRES_USER) { $env:POSTGRES_USER } else { 'slotly' }
-            $databasePassword = if ($env:POSTGRES_PASSWORD) { $env:POSTGRES_PASSWORD } else { 'slotly_local_only' }
-            $databasePort = if ($env:POSTGRES_PORT) { $env:POSTGRES_PORT } else { '5433' }
+            foreach ($requiredVariable in @('POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_PORT')) {
+                if (-not (Get-Item -Path "Env:$requiredVariable" -ErrorAction SilentlyContinue).Value) {
+                    throw "Missing $requiredVariable in .env."
+                }
+            }
+            $databaseName = $env:POSTGRES_DB
+            $databaseUser = $env:POSTGRES_USER
+            $databasePassword = $env:POSTGRES_PASSWORD
+            $databasePort = $env:POSTGRES_PORT
             $env:ConnectionStrings__SlotlyDatabase = "Host=localhost;Port=$databasePort;Database=$databaseName;Username=$databaseUser;Password=$databasePassword"
 
             dotnet tool restore

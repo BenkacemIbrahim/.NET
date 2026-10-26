@@ -17,6 +17,10 @@ TestResults/
 .env
 .env.*
 !.env.example
+src/slotly-web/.env
+src/slotly-web/.env.local
+src/slotly-web/.env.development.local
+src/slotly-web/.env.production.local
 appsettings.Local.json
 secrets.json
 

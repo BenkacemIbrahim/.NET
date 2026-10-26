@@ -22,6 +22,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Generate isolated CI environment
+        shell: pwsh
+        run: ./scripts/initialize-environment.ps1
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -64,20 +68,20 @@ jobs:
         run: dotnet test Slotly.sln --configuration Release --no-build --logger "console;verbosity=normal"
 
       - name: Validate Compose configuration
-        run: docker compose -f docker/compose.yml config --quiet
+        run: docker compose --env-file .env -f docker/compose.yml config --quiet
 
       - name: Build API image
         run: docker build --file docker/Dockerfile --tag slotly-api:ci .
 
       - name: Build web image
-        run: docker build --file docker/Dockerfile.web --tag slotly-web:ci .
+        run: docker build --build-arg VITE_API_URL=http://localhost:8080 --file docker/Dockerfile.web --tag slotly-web:ci .
 
       - name: Install Playwright browser
         working-directory: src/slotly-web
         run: npx playwright install --with-deps chromium
 
       - name: Start end-to-end stack
-        run: docker compose -f docker/compose.yml up --build --detach --wait
+        run: docker compose --env-file .env -f docker/compose.yml up --build --detach --wait
 
       - name: Run browser journeys
         working-directory: src/slotly-web
@@ -93,4 +97,4 @@ jobs:
 
       - name: Stop end-to-end stack
         if: always()
-        run: docker compose -f docker/compose.yml down --volumes
+        run: docker compose --env-file .env -f docker/compose.yml down --volumes

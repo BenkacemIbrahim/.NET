@@ -5,11 +5,11 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-slotly}
-      POSTGRES_USER: ${POSTGRES_USER:-slotly}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-slotly_local_only}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in the root .env file}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in the root .env file}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${POSTGRES_PORT:?Set POSTGRES_PORT in the root .env file}:${POSTGRES_CONTAINER_PORT:?Set POSTGRES_CONTAINER_PORT in the root .env file}"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +23,8 @@ services:
     image: axllent/mailpit:v1.27.8
     restart: unless-stopped
     ports:
-      - "${SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+      - "${SMTP_PORT:?Set SMTP_PORT in the root .env file}:1025"
+      - "${MAILPIT_HTTP_PORT:?Set MAILPIT_HTTP_PORT in the root .env file}:8025"
 
   api:
     build:
@@ -32,38 +32,46 @@ services:
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__SlotlyDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB:-slotly};Username=${POSTGRES_USER:-slotly};Password=${POSTGRES_PASSWORD:-slotly_local_only}
-      Smtp__Host: ${SMTP_HOST:-mailpit}
-      Smtp__Port: ${SMTP_CONTAINER_PORT:-1025}
-      Smtp__UseSsl: ${SMTP_USE_SSL:-false}
-      Smtp__Username: ${SMTP_USERNAME:-}
-      Smtp__Password: ${SMTP_PASSWORD:-}
-      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-notifications@slotly.local}
-      Smtp__FromName: ${SMTP_FROM_NAME:-Slotly}
-      BackgroundJobs__PendingBookingExpiryMinutes: ${PENDING_BOOKING_EXPIRY_MINUTES:-15}
-      BackgroundJobs__RetentionDays: ${BACKGROUND_JOB_RETENTION_DAYS:-30}
-      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
-      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
-      Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:-http://localhost:8080/payments/success}
-      Stripe__CancelUrl: ${STRIPE_CANCEL_URL:-http://localhost:8080/payments/cancel}
-      Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-}
-      Cors__AllowedOrigins__0: ${CORS_ORIGIN_1:-http://localhost:5000}
-      Cors__AllowedOrigins__1: ${CORS_ORIGIN_2:-https://localhost:5001}
-      Cors__AllowedOrigins__2: ${CORS_ORIGIN_3:-http://localhost:3000}
-      Seq__Url: ${SEQ_URL:-}
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-slotly-local-jwt-signing-key-change-before-deployment-2026}
-      Jwt__Issuer: ${JWT_ISSUER:-slotly-api}
-      Jwt__Audience: ${JWT_AUDIENCE:-slotly-clients}
-      Jwt__AccessTokenLifetimeMinutes: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
-      Jwt__RefreshTokenLifetimeDays: ${JWT_REFRESH_TOKEN_LIFETIME_DAYS:-7}
-      Tenancy__BaseDomain: ${TENANCY_BASE_DOMAIN:-slotly.local}
-      Tenancy__EnableSubdomainResolution: ${TENANCY_ENABLE_SUBDOMAIN_RESOLUTION:-true}
-      Tenancy__EnableHeaderResolution: ${TENANCY_ENABLE_HEADER_RESOLUTION:-true}
-      RateLimiting__TenantApiPermitLimit: ${RATE_LIMIT_TENANT_API:-120}
-      RateLimiting__TenantWriteTokenLimit: ${RATE_LIMIT_TENANT_WRITE:-80}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:?Set ASPNETCORE_ENVIRONMENT in the root .env file}
+      AllowedHosts: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS in the root .env file}
+      ConnectionStrings__SlotlyDatabase: ${DATABASE_CONNECTION_STRING:?Set DATABASE_CONNECTION_STRING in the root .env file}
+      Smtp__Host: ${SMTP_HOST:?Set SMTP_HOST in the root .env file}
+      Smtp__Port: ${SMTP_CONTAINER_PORT:?Set SMTP_CONTAINER_PORT in the root .env file}
+      Smtp__UseSsl: ${SMTP_USE_SSL:?Set SMTP_USE_SSL in the root .env file}
+      Smtp__Username: ${SMTP_USERNAME-}
+      Smtp__Password: ${SMTP_PASSWORD-}
+      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:?Set SMTP_FROM_ADDRESS in the root .env file}
+      Smtp__FromName: ${SMTP_FROM_NAME:?Set SMTP_FROM_NAME in the root .env file}
+      BackgroundJobs__PendingBookingExpiryMinutes: ${PENDING_BOOKING_EXPIRY_MINUTES:?Set PENDING_BOOKING_EXPIRY_MINUTES in the root .env file}
+      BackgroundJobs__RetentionDays: ${BACKGROUND_JOB_RETENTION_DAYS:?Set BACKGROUND_JOB_RETENTION_DAYS in the root .env file}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET-}
+      Stripe__SuccessUrl: ${STRIPE_SUCCESS_URL:?Set STRIPE_SUCCESS_URL in the root .env file}
+      Stripe__CancelUrl: ${STRIPE_CANCEL_URL:?Set STRIPE_CANCEL_URL in the root .env file}
+      Redis__ConnectionString: ${REDIS_CONNECTION_STRING:?Set REDIS_CONNECTION_STRING in the root .env file}
+      Cors__AllowedOrigins__0: ${CORS_ORIGIN_1:?Set CORS_ORIGIN_1 in the root .env file}
+      Cors__AllowedOrigins__1: ${CORS_ORIGIN_2:?Set CORS_ORIGIN_2 in the root .env file}
+      Seq__Url: ${SEQ_URL:?Set SEQ_URL in the root .env file}
+      Serilog__MinimumLevel__Default: ${LOG_LEVEL:?Set LOG_LEVEL in the root .env file}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in the root .env file}
+      Jwt__Issuer: ${JWT_ISSUER:?Set JWT_ISSUER in the root .env file}
+      Jwt__Audience: ${JWT_AUDIENCE:?Set JWT_AUDIENCE in the root .env file}
+      Jwt__AccessTokenLifetimeMinutes: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:?Set JWT_ACCESS_TOKEN_LIFETIME_MINUTES in the root .env file}
+      Jwt__RefreshTokenLifetimeDays: ${JWT_REFRESH_TOKEN_LIFETIME_DAYS:?Set JWT_REFRESH_TOKEN_LIFETIME_DAYS in the root .env file}
+      Tenancy__BaseDomain: ${TENANCY_BASE_DOMAIN:?Set TENANCY_BASE_DOMAIN in the root .env file}
+      Tenancy__EnableSubdomainResolution: ${TENANCY_ENABLE_SUBDOMAIN_RESOLUTION:?Set TENANCY_ENABLE_SUBDOMAIN_RESOLUTION in the root .env file}
+      Tenancy__EnableHeaderResolution: ${TENANCY_ENABLE_HEADER_RESOLUTION:?Set TENANCY_ENABLE_HEADER_RESOLUTION in the root .env file}
+      RateLimiting__AuthPermitLimit: ${RATE_LIMIT_AUTH:?Set RATE_LIMIT_AUTH in the root .env file}
+      RateLimiting__TenantApiPermitLimit: ${RATE_LIMIT_TENANT_API:?Set RATE_LIMIT_TENANT_API in the root .env file}
+      RateLimiting__TenantWriteTokenLimit: ${RATE_LIMIT_TENANT_WRITE:?Set RATE_LIMIT_TENANT_WRITE in the root .env file}
+      Hangfire__WorkerCount: ${HANGFIRE_WORKER_COUNT:?Set HANGFIRE_WORKER_COUNT in the root .env file}
+      Hangfire__SchemaName: ${HANGFIRE_SCHEMA:?Set HANGFIRE_SCHEMA in the root .env file}
+      Database__AutoMigrateAndSeed: ${DATABASE_AUTO_MIGRATE_AND_SEED:?Set DATABASE_AUTO_MIGRATE_AND_SEED in the root .env file}
+      Swagger__Enabled: ${SWAGGER_ENABLED:?Set SWAGGER_ENABLED in the root .env file}
+      PublicUrls__Api: ${PUBLIC_API_URL:?Set PUBLIC_API_URL in the root .env file}
+      PublicUrls__Web: ${PUBLIC_WEB_URL:?Set PUBLIC_WEB_URL in the root .env file}
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_PORT:?Set API_PORT in the root .env file}:8080"
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health/ready"]
       interval: 10s
@@ -75,24 +83,29 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+      redis:
+        condition: service_healthy
+      seq:
+        condition: service_started
 
   web:
     build:
       context: ..
       dockerfile: docker/Dockerfile.web
+      args:
+        VITE_API_URL: ${PUBLIC_API_URL:?Set PUBLIC_API_URL in the root .env file}
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-3000}:8080"
+      - "${WEB_PORT:?Set WEB_PORT in the root .env file}:8080"
     depends_on:
       api:
         condition: service_healthy
 
   redis:
-    profiles: ["redis"]
     image: redis:8-alpine
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:?Set REDIS_PORT in the root .env file}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -100,14 +113,13 @@ services:
       retries: 10
 
   seq:
-    profiles: ["seq"]
     image: datalust/seq:2024.3
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
     ports:
-      - "${SEQ_HTTP_PORT:-8081}:80"
-      - "${SEQ_INGEST_PORT:-5341}:5341"
+      - "${SEQ_HTTP_PORT:?Set SEQ_HTTP_PORT in the root .env file}:80"
+      - "${SEQ_INGEST_PORT:?Set SEQ_INGEST_PORT in the root .env file}:5341"
 
 volumes:
   postgres-data:
