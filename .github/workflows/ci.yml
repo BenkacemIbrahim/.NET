@@ -27,6 +27,25 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/slotly-web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: src/slotly-web
+        run: npm ci
+
+      - name: Validate frontend
+        working-directory: src/slotly-web
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -49,3 +68,6 @@ jobs:
 
       - name: Build API image
         run: docker build --file docker/Dockerfile --tag slotly-api:ci .
+
+      - name: Build web image
+        run: docker build --file docker/Dockerfile.web --tag slotly-web:ci .

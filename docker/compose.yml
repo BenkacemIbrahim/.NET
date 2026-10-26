@@ -27,7 +27,6 @@ services:
       - "${MAILPIT_HTTP_PORT:-8025}:8025"
 
   api:
-    profiles: ["api"]
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -62,11 +61,28 @@ services:
       Tenancy__EnableHeaderResolution: ${TENANCY_ENABLE_HEADER_RESOLUTION:-true}
     ports:
       - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     depends_on:
       postgres:
         condition: service_healthy
       mailpit:
         condition: service_started
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
 
   redis:
     profiles: ["redis"]
