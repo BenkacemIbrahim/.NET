@@ -2,12 +2,13 @@
 
 Slotly is a multi-tenant booking and scheduling platform for clinics, salons,
 gyms, and other appointment-based businesses. This repository contains the
-ASP.NET Core API foundation and will grow to include the Blazor web application,
-tenant-aware scheduling, notifications, billing, and operational tooling.
+ASP.NET Core API and a responsive React application for customer booking and
+tenant administration.
 
 ## Technology stack
 
-- .NET 10, C#, ASP.NET Core Web API, and Blazor Web App
+- .NET 10, C#, and ASP.NET Core Web API
+- React, TypeScript, Vite, Tailwind CSS, TanStack Query, and SignalR
 - Clean Architecture: Domain, Application, Infrastructure, and Api
 - Entity Framework Core with PostgreSQL
 - Hangfire with PostgreSQL storage
@@ -21,6 +22,7 @@ tenant-aware scheduling, notifications, billing, and operational tooling.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker
   Engine with Docker Compose v2
 - Git
+- Node.js 22 (only required when running the web application outside Docker)
 
 ## Quick start
 
@@ -28,12 +30,14 @@ Clone the repository, copy `.env.example` to `.env` if you want to override the
 safe local defaults, and run:
 
 ```bash
-docker compose -f docker/compose.yml --profile api up --build -d
+docker compose -f docker/compose.yml up --build -d --wait
 ```
 
 The local services are then available at:
 
 - API health: <http://localhost:8080/health>
+- Web application: <http://localhost:3000>
+- Public demo booking page: <http://localhost:3000/book/northstar-health>
 - API liveness: <http://localhost:8080/health/live>
 - API readiness: <http://localhost:8080/health/ready>
 - Swagger UI (Development): <http://localhost:8080/swagger>
@@ -46,6 +50,10 @@ To build and test without running the API container:
 dotnet restore Slotly.sln
 dotnet build Slotly.sln --configuration Release --no-restore
 dotnet test Slotly.sln --configuration Release --no-build
+cd src/slotly-web
+npm ci
+npm run lint && npm run typecheck && npm test && npm run build
+npm run test:e2e
 ```
 
 PowerShell shortcuts are available through `scripts/slotly.ps1`; run it with
@@ -68,6 +76,8 @@ Realtime availability, HybridCache, health checks, telemetry, and rate limiting
 are documented in [docs/observability.md](docs/observability.md). The security
 boundary, authorization review, and audit trail are documented in
 [docs/security.md](docs/security.md).
+The visual language and accessible component rules are defined in
+[docs/design-system.md](docs/design-system.md).
 
 ## Features
 
@@ -94,6 +104,14 @@ The API also provides dependency-aware readiness checks, OpenTelemetry console
 traces and metrics, tenant/user-enriched logs, tenant-partitioned rate limits,
 strict CORS and security headers, request-size limits, and persisted audit logs.
 
+The browser application provides a tenant-branded, mobile-first customer flow
+with live slot updates and Stripe Checkout handoff. Its authenticated admin area
+includes today's dashboard, weekly/monthly calendar, booking lifecycle actions,
+services, team, working hours, time off, branding, and policy settings. It uses
+the API-generated OpenAPI types throughout and supports light and dark themes.
+
+![Slotly customer booking page](docs/screenshots/booking-desktop-light.png)
+
 Development startup seeds Northstar Health Clinic and Atlas Wellness Studio,
 each with services, staff, weekday hours, and lunch breaks. Tenant-scoped API
 requests use an `X-Tenant-Id` header containing a tenant UUID, subdomain resolution,
@@ -101,8 +119,8 @@ or JWT tenant claims.
 
 ## Deployment
 
-The API has a multi-stage, non-root Docker image and can run through the `api`
-Compose profile. Environment-specific deployment guidance will be added when
+The API and nginx-served web app use multi-stage, non-root Docker images and run
+in the default Compose stack. Environment-specific deployment guidance will be added when
 the first hosted environment is introduced.
 
 ## Contributing

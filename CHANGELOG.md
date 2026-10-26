@@ -54,3 +54,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   optional Seq Compose profile.
 - Strict CORS, security headers, request-size limits, and persisted sensitive-action audits.
 - Authenticated SignalR, cache invalidation, and rate-limit integration tests.
+- Tenant-branded React booking flow with live availability, customer details,
+  Stripe Checkout handoff, responsive light/dark themes, and accessible states.
+- Authenticated admin dashboard, FullCalendar schedule, booking actions, and
+  management screens for services, staff, working hours, time off, and settings.
+- OpenAPI-generated TypeScript API contracts, nginx container, Vitest component
+  tests, Playwright browser journeys, visual baselines, and real-stack CI coverage.
