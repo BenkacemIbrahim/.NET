@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar as CalendarIcon,
   CalendarDays,
-  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -119,43 +118,12 @@ export function LoginPage() {
 
   return (
     <main className="grid min-h-dvh bg-background lg:grid-cols-2">
-      {/* Editorial Split Panel (No AI gradients, crisp midnight slate) */}
-      <section className="hidden border-r border-border bg-dark-surface p-12 text-dark-surface-foreground lg:flex lg:flex-col lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-white font-bold text-base">
-              S
-            </span>
-            <span className="text-xl font-bold tracking-tight">Slotly</span>
-          </div>
-          <div className="mt-20 max-w-lg">
-            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/80">
-              Clinical & Business Scheduling
-            </span>
-            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl text-white">
-              A high-precision operations console for your appointments.
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-white/70">
-              Manage multi-practitioner schedules, real-time availability, double-booking prevention, and payments in one focused workspace.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4 border-t border-white/10 pt-8 text-sm text-white/60">
-          <div className="flex items-center gap-3">
-            <span className="grid size-5 place-items-center rounded-full bg-emerald-500/20 text-emerald-400">
-              <Check className="size-3" />
-            </span>
-            <span>Real-time availability with transactional outbox synchronization</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="grid size-5 place-items-center rounded-full bg-emerald-500/20 text-emerald-400">
-              <Check className="size-3" />
-            </span>
-            <span>Database GiST exclusion constraints preventing double bookings</span>
-          </div>
-          <p className="pt-2 text-xs text-white/40">Slotly SaaS Core · Version 1.0.0</p>
-        </div>
+      <section className="relative hidden items-center justify-center overflow-hidden border-r border-primary bg-primary p-12 lg:flex">
+        <img
+          src="/slotly-auth-illustration.png"
+          alt=""
+          className="h-auto max-h-[82vh] w-full max-w-[540px] object-contain drop-shadow-2xl"
+        />
       </section>
 
       {/* Login Form */}
@@ -237,12 +205,7 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-8 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-            <p className="font-semibold text-foreground">Demo credentials:</p>
-            <p className="mt-1 font-mono">Workspace: northstar-health</p>
-            <p className="font-mono">Email: amira@northstar.example</p>
-            <p className="font-mono">Password: Password123!</p>
-          </div>
+
         </div>
       </section>
     </main>
