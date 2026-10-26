@@ -111,18 +111,37 @@
     margin: 0;
   }
 
-  /* Strict prohibition of box-shadow depth; only accessible focus rings allowed */
   button,
-  a,
+  a {
+    @apply outline-none transition-colors duration-150;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Direct border activation on click/focus without floating halo ring */
   input,
   select,
   textarea {
-    @apply outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+    outline: none !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  button,
-  a {
-    @apply transition-colors duration-150;
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 1px var(--primary) !important;
+  }
+
+  input[aria-invalid="true"]:focus,
+  select[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus {
+    border-color: var(--destructive) !important;
+    box-shadow: 0 0 0 1px var(--destructive) !important;
   }
 
   /* Numerical tables, metrics, dates, and times strictly use tabular figures */
@@ -133,62 +152,144 @@
 }
 
 /* FullCalendar Modern Theme */
+:root {
+  --fc-classic-background: var(--card);
+  --fc-classic-foreground: var(--foreground);
+  --fc-classic-border: var(--border);
+  --fc-classic-strong-border: var(--border);
+  --fc-classic-today: color-mix(in srgb, var(--primary) 6%, transparent);
+  --fc-classic-highlight: color-mix(in srgb, var(--primary) 10%, transparent);
+  --fc-classic-faint: var(--muted);
+  --fc-classic-muted: var(--muted);
+  --fc-classic-strong: var(--secondary);
+}
+
+.dark,
+:where(.dark) {
+  --fc-classic-background: var(--card) !important;
+  --fc-classic-foreground: var(--foreground) !important;
+  --fc-classic-border: var(--border) !important;
+  --fc-classic-strong-border: var(--border) !important;
+  --fc-classic-today: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  --fc-classic-highlight: color-mix(in srgb, var(--primary) 15%, transparent) !important;
+  --fc-classic-faint: rgba(255, 255, 255, 0.04) !important;
+  --fc-classic-muted: rgba(255, 255, 255, 0.08) !important;
+  --fc-classic-strong: rgba(255, 255, 255, 0.12) !important;
+}
+
 .fc {
-  --fc-border-color: var(--border);
-  --fc-today-bg-color: var(--accent);
-  --fc-page-bg-color: var(--card);
-  --fc-neutral-bg-color: var(--muted);
-  --fc-button-text-color: var(--foreground);
-  --fc-button-bg-color: var(--card);
-  --fc-button-border-color: var(--border);
-  --fc-button-hover-bg-color: var(--muted);
-  --fc-button-hover-border-color: var(--border);
-  --fc-button-active-bg-color: var(--primary);
-  --fc-button-active-border-color: var(--primary);
   font-family: inherit;
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
 }
 
-.fc .fc-toolbar-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--foreground);
-}
-
-.fc .fc-button {
-  border-radius: 9999px !important;
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 0.35rem 0.85rem;
-  box-shadow: none !important;
-  text-transform: capitalize;
-}
-
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active {
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: #ffffff !important;
-}
-
-.fc-theme-standard td,
-.fc-theme-standard th {
+/* Neutralize rogue white backgrounds across all FullCalendar internal wrappers */
+.fc table,
+.fc tbody,
+.fc thead,
+.fc tr,
+.fc td,
+.fc th,
+.fc [class*="fc-classic-"] {
+  background-color: transparent;
   border-color: var(--border) !important;
+  color: var(--foreground) !important;
 }
 
-.fc-theme-standard .fc-scrollgrid {
-  border-color: var(--border) !important;
-  border-radius: 1rem;
-  overflow: hidden;
+.fc .fc-scrollgrid {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
 }
 
-.slotly-event {
-  border-radius: 0.5rem !important;
-  border: 1px solid var(--primary) !important;
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-  padding: 2px 6px !important;
+.fc .fc-view-harness {
+  background-color: var(--card) !important;
+}
+
+/* Day header row styling */
+.fc th {
+  background-color: var(--secondary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.fc th a {
+  color: var(--muted-foreground) !important;
+  text-decoration: none !important;
   font-weight: 600 !important;
-  font-size: 0.75rem !important;
+  font-size: 0.8125rem !important;
+  display: block;
+  padding: 0.75rem 0.25rem !important;
+}
+
+/* Today column highlight in header & body */
+.fc .fc-day-today {
+  background-color: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+}
+
+.fc th.fc-day-today a {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Time slots and labels */
+.fc .fc-timegrid-slot {
+  height: 48px !important;
+}
+
+.fc td.fc-timegrid-slot-label {
+  background-color: transparent !important;
+  border-right: 1px solid var(--border) !important;
+  vertical-align: top !important;
+  padding-right: 0.5rem !important;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  font-size: 0.6875rem !important;
+  font-weight: 500 !important;
+  color: var(--muted-foreground) !important;
+  text-transform: lowercase !important;
+  letter-spacing: 0.02em !important;
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-top-style: dashed !important;
+  border-top-color: color-mix(in srgb, var(--border) 40%, transparent) !important;
+}
+
+/* Event card overrides inside grid */
+.fc .fc-timegrid-event-harness {
+  padding: 2px !important;
+}
+
+.fc .fc-timegrid-event {
+  border-radius: 8px !important;
+  border: none !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.fc .fc-event {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.fc .fc-event-main {
+  padding: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Red indicator line for current time */
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #ef4444 !important;
+  border-width: 2px !important;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: #ef4444 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

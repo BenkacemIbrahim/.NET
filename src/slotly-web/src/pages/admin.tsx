@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Scissors,
   Search,
@@ -44,7 +46,6 @@ import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
@@ -211,6 +212,26 @@ export function LoginPage() {
 
 function AdminShell() {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("slotly_sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("slotly_sidebar_collapsed", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
   const { session, logout } = useAuth();
   const location = useLocation();
 
@@ -227,24 +248,44 @@ function AdminShell() {
     };
 
   return (
-    <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[260px_1fr]">
-      {/* Sidebar (YowTrip & Medicore Style) */}
+    <div
+      className={cn(
+        "min-h-dvh bg-card transition-[grid-template-columns] duration-300 lg:grid",
+        collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[260px_1fr]",
+      )}
+    >
+      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:w-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-card transition-all duration-300 lg:sticky lg:top-0 lg:h-dvh lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
+          collapsed ? "w-[72px] lg:w-[72px]" : "w-[260px] lg:w-[260px]",
         )}
       >
         {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-border px-5">
-          <Link to="/admin" className="flex items-center gap-2.5">
-            <span className="grid size-8 place-items-center rounded-xl bg-primary text-white font-bold text-sm">
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center justify-between",
+            collapsed ? "px-3 justify-center" : "px-5",
+          )}
+        >
+          <Link
+            to="/admin"
+            className="flex items-center gap-2.5 overflow-hidden"
+            title={collapsed ? "Slotly" : undefined}
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary text-white font-bold text-sm shadow-sm">
               S
             </span>
-            <span className="text-lg font-bold tracking-tight text-foreground">
-              Slotly
-            </span>
+            {!collapsed && (
+              <span className="text-lg font-bold tracking-tight text-foreground transition-opacity">
+                Slotly
+              </span>
+            )}
           </Link>
+
+
+          {/* Mobile Close Button */}
           <Button
             className="lg:hidden"
             variant="ghost"
@@ -255,39 +296,35 @@ function AdminShell() {
           </Button>
         </div>
 
-        {/* Quick Search Input */}
-        <div className="p-3">
-          <div className="relative flex items-center">
-            <Search className="absolute left-3 size-3.5 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              readOnly
-              placeholder="Search appointments..."
-              className="h-9 w-full rounded-xl border border-input bg-muted/40 pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground cursor-pointer focus:bg-card"
-            />
-            <kbd className="absolute right-2.5 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
 
         {/* Categorized Navigation */}
-        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
+        <nav
+          className={cn(
+            "flex-1 space-y-3.5 overflow-y-auto py-2",
+            collapsed ? "px-2" : "px-3",
+          )}
+        >
           {navGroups.map((group) => (
             <div key={group.title} className="space-y-1">
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.title}
-              </p>
-              <div className="mt-1 space-y-0.5">
+              {!collapsed && (
+                <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {group.title}
+                </p>
+              )}
+              <div className="mt-0.5 space-y-0.5">
                 {group.items.map(({ href, label, icon: Icon }) => (
                   <NavLink
                     end={href === "/admin"}
                     key={href}
                     to={href}
+                    title={collapsed ? label : undefined}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
+                        "flex h-9 items-center rounded-xl text-sm font-medium transition-all",
+                        collapsed
+                          ? "justify-center px-0 size-9 mx-auto"
+                          : "gap-2.5 px-3",
                         isActive
                           ? "bg-accent font-semibold text-accent-foreground"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -295,7 +332,7 @@ function AdminShell() {
                     }
                   >
                     <Icon className="size-4 shrink-0" />
-                    <span>{label}</span>
+                    {!collapsed && <span className="truncate">{label}</span>}
                   </NavLink>
                 ))}
               </div>
@@ -304,39 +341,70 @@ function AdminShell() {
         </nav>
 
         {/* User Profile Card (Bottom of Sidebar) */}
-        <div className="border-t border-border p-3">
-          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-2.5">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-xs text-primary">
-                {session?.user.displayName?.slice(0, 1) || "U"}
+        <div className="shrink-0 p-2.5">
+          {!collapsed ? (
+            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-2">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-xs text-primary">
+                  {session?.user.displayName?.slice(0, 1) || "U"}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-foreground">
+                    {session?.user.displayName}
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {session?.user.email}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-foreground">
-                  {session?.user.displayName}
-                </p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {session?.user.email}
-                </p>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                title="Sign out"
+                onClick={logout}
+              >
+                <LogOut className="size-3.5" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-              title="Sign out"
-              onClick={logout}
-            >
-              <LogOut className="size-3.5" />
-            </Button>
-          </div>
+          ) : (
+            <div className="flex justify-center py-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Sign out"
+                onClick={logout}
+              >
+                <LogOut className="size-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-card px-4 sm:px-6">
           <div className="flex items-center gap-3">
+            {/* Desktop Quick Collapse Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted"
+              onClick={toggleCollapse}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="size-4" />
+              ) : (
+                <PanelLeftClose className="size-4" />
+              )}
+            </Button>
+
+            {/* Mobile Drawer Trigger */}
             <Button
               variant="ghost"
               size="icon"
@@ -358,11 +426,34 @@ function AdminShell() {
 
           {/* Right Header Utilities */}
           <div className="flex items-center gap-2.5">
+            {/* Quick Search */}
+            <div className="relative hidden items-center sm:flex">
+              <Search className="absolute left-3 size-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                readOnly
+                placeholder="Search appointments..."
+                className="h-9 w-48 rounded-full border border-border bg-card pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/40 focus:bg-card transition-colors md:w-60"
+              />
+              <kbd className="absolute right-2.5 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 rounded-full sm:hidden"
+              title="Search"
+            >
+              <Search className="size-4" />
+            </Button>
             <Link
               to="/book/northstar-health"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted sm:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-xs font-medium text-foreground hover:bg-muted sm:inline-flex"
             >
               <span>Public booking page</span>
               <ExternalLink className="size-3 text-muted-foreground" />
@@ -468,11 +559,11 @@ export function DashboardPage() {
           description="Here's what is happening with your clinic and team today."
         />
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold text-foreground">
+          <div className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-xs font-semibold text-foreground">
             <CalendarIcon className="size-3.5 text-primary" />
             <span>{todayFormatted}</span>
           </div>
-          <Button asChild size="sm" variant="dark">
+          <Button asChild size="sm" variant="dark" className="h-9 rounded-full px-4">
             <Link to="/book/northstar-health" target="_blank">
               Book appointment
             </Link>
@@ -537,9 +628,6 @@ export function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle>Today's schedule</CardTitle>
-              <CardDescription>
-                Confirmed and pending appointments for your workspace.
-              </CardDescription>
             </div>
             <Link
               to="/admin/bookings"
@@ -1239,9 +1327,6 @@ export function SchedulePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Weekly hours</CardTitle>
-                <CardDescription>
-                  Recurring weekly shifts available for online appointments.
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="divide-y divide-border">
@@ -1320,9 +1405,6 @@ export function SchedulePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Upcoming time off</CardTitle>
-                <CardDescription>
-                  Dates when this team member is blocked from booking.
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="divide-y divide-border">
@@ -1488,19 +1570,15 @@ export function SettingsPage() {
 
 export function PageTitle({
   title,
-  description,
 }: {
   title: string;
-  description: string;
+  description?: string;
 }) {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         {title}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {description}
-      </p>
     </div>
   );
 }
