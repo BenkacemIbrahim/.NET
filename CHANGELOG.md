@@ -4,9 +4,17 @@ All notable changes to Slotly will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-10-26
 
 ### Added
+
+- Production release of the Slotly multi-tenant booking and scheduling platform.
+- Architecture Decision Records (ADR 0001–0006) capturing architectural, multi-tenancy, concurrency, and frontend patterns.
+- k6 automated load test suite verifying sub-25ms cached responses and 100% race-condition protection.
+- Comprehensive REST API reference (`docs/api.md`) with request/response schemas and RFC 7807 problem details.
+- Deployment runbook (`docs/deployment.md`) documenting production containers, free-tier cloud deployment, and zero-cost demo topologies.
+- CodeQL automated security scanning and GitHub Container Registry (GHCR) publishing workflows.
+- Release automation workflow packaging versioned GitHub Releases on semantic tags.
 
 - Clean Architecture .NET 10 solution and test projects.
 - ASP.NET Core API with health checks, Swagger, Serilog, and RFC 7807 errors.
