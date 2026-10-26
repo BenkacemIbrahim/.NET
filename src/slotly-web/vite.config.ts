@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
     test: {
       exclude: ["e2e/**", "node_modules/**"],
       environment: "jsdom",
+      pool: "threads",
       globals: true,
       setupFiles: "./src/test/setup.ts",
       css: true,
