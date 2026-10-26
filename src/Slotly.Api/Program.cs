@@ -136,12 +136,16 @@ builder.Services.AddRateLimiter(options =>
             .ExecuteAsync(context.HttpContext);
     };
 
+    var authPermitLimit = builder.Configuration.GetValue("RateLimiting:AuthPermitLimit", 30);
+    var tenantApiPermitLimit = builder.Configuration.GetValue("RateLimiting:TenantApiPermitLimit", 120);
+    var tenantWriteTokenLimit = builder.Configuration.GetValue("RateLimiting:TenantWriteTokenLimit", 80);
+
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 30,
+                PermitLimit = authPermitLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
@@ -153,7 +157,7 @@ builder.Services.AddRateLimiter(options =>
                 ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 120,
+                PermitLimit = tenantApiPermitLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
@@ -165,8 +169,8 @@ builder.Services.AddRateLimiter(options =>
                 ?? "anonymous",
             factory: _ => new TokenBucketRateLimiterOptions
             {
-                TokenLimit = 80,
-                TokensPerPeriod = 40,
+                TokenLimit = tenantWriteTokenLimit,
+                TokensPerPeriod = tenantWriteTokenLimit / 2,
                 ReplenishmentPeriod = TimeSpan.FromMinutes(1),
                 AutoReplenishment = true,
                 QueueLimit = 0,

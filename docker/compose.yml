@@ -60,6 +60,8 @@ services:
       Tenancy__BaseDomain: ${TENANCY_BASE_DOMAIN:-slotly.local}
       Tenancy__EnableSubdomainResolution: ${TENANCY_ENABLE_SUBDOMAIN_RESOLUTION:-true}
       Tenancy__EnableHeaderResolution: ${TENANCY_ENABLE_HEADER_RESOLUTION:-true}
+      RateLimiting__TenantApiPermitLimit: ${RATE_LIMIT_TENANT_API:-120}
+      RateLimiting__TenantWriteTokenLimit: ${RATE_LIMIT_TENANT_WRITE:-80}
     ports:
       - "${API_PORT:-8080}:8080"
     healthcheck:
