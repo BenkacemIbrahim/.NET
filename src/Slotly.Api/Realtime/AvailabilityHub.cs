@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Slotly.Infrastructure.Authentication;
 using Slotly.Infrastructure.Persistence;
 using Slotly.Infrastructure.Tenancy;
 
 namespace Slotly.Api.Realtime;
 
-[Authorize(Policy = AuthorizationPolicies.CustomerOnly)]
+[AllowAnonymous]
 public sealed class AvailabilityHub(
     TenantContext tenantContext,
     SlotlyDbContext dbContext) : Hub
@@ -15,7 +14,7 @@ public sealed class AvailabilityHub(
     public async Task Subscribe(Guid serviceId, DateOnly date)
     {
         var cancellationToken = Context.ConnectionAborted;
-        var tenantId = ResolveTenant();
+        var tenantId = await ResolveTenantAsync(cancellationToken);
         if (!await dbContext.Services.AsNoTracking().AnyAsync(
                 service => service.Id == serviceId && service.IsActive,
                 cancellationToken))
@@ -29,30 +28,40 @@ public sealed class AvailabilityHub(
             cancellationToken);
     }
 
-    public Task Unsubscribe(Guid serviceId, DateOnly date)
+    public async Task Unsubscribe(Guid serviceId, DateOnly date)
     {
-        var tenantId = ResolveTenant();
-        return Groups.RemoveFromGroupAsync(
+        var tenantId = await ResolveTenantAsync(Context.ConnectionAborted);
+        await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
             AvailabilityGroups.For(tenantId, serviceId, date),
             Context.ConnectionAborted);
     }
 
-    private Guid ResolveTenant()
+    private async Task<Guid> ResolveTenantAsync(CancellationToken cancellationToken)
     {
         if (tenantContext.TenantId is { } resolvedTenantId)
         {
             return resolvedTenantId;
         }
 
-        if (!Guid.TryParse(Context.User?.FindFirst("tenant_id")?.Value, out var claimedTenantId)
-            || claimedTenantId == Guid.Empty)
+        if (Guid.TryParse(Context.User?.FindFirst("tenant_id")?.Value, out var claimedTenantId)
+            && claimedTenantId != Guid.Empty)
         {
-            throw new HubException("An active tenant is required.");
+            tenantContext.SetTenant(claimedTenantId);
+            return claimedTenantId;
         }
 
-        tenantContext.SetTenant(claimedTenantId);
-        return claimedTenantId;
+        var tenantSlug = Context.GetHttpContext()?.Request.Query["tenant"].ToString().Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(tenantSlug))
+        {
+            throw new HubException("A tenant slug is required.");
+        }
+
+        var tenant = await dbContext.Tenants.IgnoreQueryFilters().AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Slug == tenantSlug && value.IsActive, cancellationToken)
+            ?? throw new HubException("The tenant was not found.");
+        tenantContext.SetTenant(tenant.Id);
+        return tenant.Id;
     }
 }
 

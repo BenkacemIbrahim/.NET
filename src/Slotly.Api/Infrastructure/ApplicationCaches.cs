@@ -41,7 +41,15 @@ public sealed class AvailabilityCache(HybridCache cache)
     private static string ServiceTag(Guid tenantId, Guid serviceId) => $"tenant:{tenantId:N}:service:{serviceId:N}";
 }
 
-public sealed record TenantSettings(string TimeZoneId, int CancellationWindowHours, bool OnlinePaymentsEnabled, decimal? DepositPercentage);
+public sealed record TenantSettings(
+    string Name,
+    string Slug,
+    string TimeZoneId,
+    int CancellationWindowHours,
+    string PrimaryColor,
+    string? LogoUrl,
+    bool OnlinePaymentsEnabled,
+    decimal? DepositPercentage);
 
 public sealed class TenantSettingsCache(HybridCache cache)
 {
@@ -56,8 +64,12 @@ public sealed class TenantSettingsCache(HybridCache cache)
                 var tenant = await dbContext.Tenants.AsNoTracking()
                     .SingleAsync(value => value.Id == tenantId, token);
                 return new TenantSettings(
+                    tenant.Name,
+                    tenant.Slug,
                     tenant.TimeZoneId,
                     tenant.CancellationWindowHours,
+                    tenant.PrimaryColor,
+                    tenant.LogoUrl,
                     tenant.OnlinePaymentsEnabled,
                     tenant.DepositPercentage);
             },

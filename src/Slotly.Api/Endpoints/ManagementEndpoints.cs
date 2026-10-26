@@ -33,6 +33,7 @@ public static class ManagementEndpoints
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
         group.MapGet("/", ListServicesAsync)
+            .AllowAnonymous()
             .WithName("ListServices")
             .WithSummary("Lists tenant services with pagination.")
             .WithDescription("Example: GET /api/v1/services?page=1&pageSize=20&includeInactive=false");
@@ -64,7 +65,7 @@ public static class ManagementEndpoints
             .RequireRateLimiting("tenant-api")
             .RequireAuthorization(AuthorizationPolicies.ActiveTenantOnly);
 
-        group.MapGet("/", ListStaffAsync).WithName("ListStaff").WithSummary("Lists staff with pagination.")
+        group.MapGet("/", ListStaffAsync).AllowAnonymous().WithName("ListStaff").WithSummary("Lists staff with pagination.")
             .WithDescription("Example: GET /api/v1/staff?page=1&pageSize=20&includeInactive=false");
         group.MapGet("/{id:guid}", GetStaffAsync).WithName("GetStaff").WithSummary("Gets a staff member.")
             .WithDescription("Example: GET /api/v1/staff/22222222-2222-2222-2222-222222222222");
