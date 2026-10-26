@@ -26,11 +26,17 @@
 | :---: | :---: |
 | ![Slotly Customer Booking Light](docs/screenshots/booking-desktop-light.png) | ![Slotly Customer Booking Dark](docs/screenshots/booking-desktop-dark.png) |
 
-### Mobile First Design (390px Viewport) & Tenant Administration
+### Tenant Operations Dashboard (Desktop Light & Dark)
 
-| Mobile Customer Experience | Tenant Owner Admin Dashboard |
+| Light Theme | Dark Theme |
 | :---: | :---: |
-| <img src="docs/screenshots/booking-mobile-light.png" width="300" alt="Mobile Booking" /> | <img src="docs/screenshots/admin-desktop-light.png" width="550" alt="Admin Dashboard" /> |
+| ![Slotly Admin Dashboard Light](docs/screenshots/admin-desktop-light.png) | ![Slotly Admin Dashboard Dark](docs/screenshots/admin-desktop-dark.png) |
+
+### Mobile-First Responsive Experience (390px Viewport)
+
+| Mobile Customer Booking | Mobile Admin Operations |
+| :---: | :---: |
+| <img src="docs/screenshots/booking-mobile-light.png" width="300" alt="Mobile Booking" /> | <img src="docs/screenshots/admin-mobile-light.png" width="300" alt="Mobile Admin" /> |
 
 </div>
 
