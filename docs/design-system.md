@@ -1,85 +1,106 @@
-# Slotly design system
+# Slotly Design System
 
-Slotly should feel calm, precise, and trustworthy. The visual language combines
-the clarity of a clinical tool with the polish of a modern scheduling product.
-Interfaces use generous whitespace, restrained color, and clear hierarchy;
-decoration never competes with appointment information.
+Slotly is a high-precision, border-defined multi-tenant scheduling and clinical operations platform. Inspired directly by modern high-density operational and healthcare dashboards (Medicore, YowTrip, MTicket), the visual language prioritizes architectural clarity, instant data scanning, and generous whitespace over decorative fluff.
 
-## Color
+---
 
-The neutral scale is cool slate, with indigo as the product accent and emerald
-reserved for successful or available states. Tenant booking pages replace the
-accent with the tenant's validated primary color while preserving the same
-contrast rules.
+## 1. Core Principles
 
-| Token | Light | Dark | Use |
-| --- | --- | --- | --- |
-| `background` | `#f7f8fc` | `#090d18` | Page canvas |
-| `foreground` | `#172033` | `#f4f7fb` | Primary text |
-| `card` | `#ffffff` | `#111827` | Raised surfaces |
-| `muted` | `#eef1f6` | `#1b2536` | Secondary surfaces |
-| `muted-foreground` | `#667085` | `#9aa7ba` | Secondary text |
-| `border` | `#dfe4ec` | `#293548` | Dividers and controls |
-| `primary` | `#5145cd` | `#8b83f6` | Main actions and focus |
-| `primary-foreground` | `#ffffff` | `#090d18` | Text on primary |
-| `success` | `#07835d` | `#49d3a5` | Availability and success |
-| `warning` | `#b54708` | `#fdb86b` | Caution and pending |
-| `destructive` | `#c4324a` | `#fb7185` | Destructive actions |
+1. **Hierarchy Through Borders & Contrast**: No box-shadows, no blur/glassmorphism, and no background gradient washes. Depth and hierarchy are achieved exclusively through crisp 1px borders (`#E4E7EC`), pure white cards on a neutral light-gray canvas (`#F4F5F7`), and deliberate typographic weighting.
+2. **Clinical & Operational Scannability**: Numeric values (appointment times, prices, slot counts, statistics) strictly employ tabular figures (`tabular-nums`) to prevent horizontal jitter. Statuses are indicated quietly via minimal 6px colored dots or clear textual labels rather than bulky badges.
+3. **Pill & Rounded Geometry**: Main panels and dashboard cards use generous `16px-20px` (`rounded-2xl`) corners. Navigation items, interactive filters, segmented tab bars, and primary CTAs use full `9999px` (`rounded-full`) pill geometry.
+4. **Human, Plain-Spoken Microcopy**: Zero robotic, marketing, or pseudo-magical text. Concise, functional labels and instructional guidance.
+5. **Strict Zero-Decoration Rule**: No AI-generated artwork, 3D shapes, or decorative sparkles. Icons use Lucide with a consistent `1.75px` stroke and direct semantic intent.
 
-Every text/background pair must meet WCAG AA. Focus rings use a two-pixel
-primary outline with a two-pixel canvas offset. Color is always paired with an
-icon, label, or shape for status communication.
+---
 
-## Typography
+## 2. Color Palette
 
-Inter Variable is bundled through `@fontsource-variable/inter`; no third-party
-font request is made at runtime. The body uses 14–16 px text with 1.5 line
-height. Display headings use 30–40 px, section headings 20–24 px, and labels
-12–14 px. Headings use 620–700 weight and slightly negative tracking. Numeric
-times use tabular figures so columns remain stable.
+All color pairings exceed WCAG AA contrast standards (minimum 4.5:1 for body copy and 3.0:1 for large display text).
 
-## Spacing, shape, and elevation
+| Token | Light Mode (Hex) | Dark Mode (Hex) | Operational Purpose |
+|---|---|---|---|
+| `background` | `#F4F5F7` | `#0B0F19` | Application canvas backdrop |
+| `foreground` | `#101828` | `#F8FAFC` | High-contrast primary copy and headings |
+| `card` | `#FFFFFF` | `#111827` | Floating operational surface / card panel |
+| `card-foreground`| `#101828` | `#F8FAFC` | Text on card surfaces |
+| `muted` | `#F2F4F7` | `#1F2937` | Secondary tracks, subtle tags, inactive tabs |
+| `muted-foreground` | `#667085` | `#94A3B8` | Metadata, secondary labels, helper captions |
+| `border` | `#E4E7EC` | `#1F2937` | Crisp 1px structural dividing lines |
+| `input` | `#E4E7EC` | `#1F2937` | Input field borders and inactive control boundaries |
+| `primary` | `#2563EB` | `#3B82F6` | Vibrant Royal Blue: primary CTA, active pill tabs |
+| `primary-foreground` | `#FFFFFF` | `#FFFFFF` | Text on primary elements |
+| `accent` | `#EFF4FE` | `#1E293B` | Active sidebar nav highlight, selected slot surface |
+| `accent-foreground` | `#2563EB` | `#60A5FA` | Text on accent surfaces |
+| `dark-surface` | `#0F172A` | `#030712` | High-impact dark metric card & secondary action pills |
+| `dark-surface-foreground` | `#FFFFFF` | `#FFFFFF` | Text on dark metric cards |
+| `success` | `#079455` | `#10B981` | Confirmed bookings, available slots, positive delta |
+| `warning` | `#F79009` | `#F59E0B` | Pending approvals, temporary locks, alerts |
+| `destructive` | `#D92D20` | `#EF4444` | Cancelled appointments, destructive dialogs |
+| `ring` | `#2563EB` | `#3B82F6` | Accessible keyboard focus outline |
 
-The spacing system follows a four-pixel base: 4, 8, 12, 16, 20, 24, 32, 40,
-48, and 64 px. Dense administrative controls use 8–12 px internal gaps; booking
-steps use 20–32 px to remain comfortable on touch screens.
+---
 
-Radii are 8 px for small controls, 12 px for inputs and buttons, 16 px for
-cards, and 24 px for feature panels. Pills use a full radius only for statuses,
-avatars, and compact filters. Shadows are subtle: level one separates cards,
-level two is reserved for floating menus and dialogs, and level three for modal
-overlays. Borders remain visible in both themes.
+## 3. Typography & Numerals
 
-## Layout and responsive behavior
+- **Typeface**: `Plus Jakarta Sans Variable` (self-hosted locally via `@fontsource-variable/plus-jakarta-sans`). Zero external runtime network requests.
+- **Tabular Figures**: Every numeric data point (prices, times, dates, percentages, phone numbers) must use `tabular-nums`.
 
-Mobile is the default. Customer booking uses a single column with a persistent
-summary/action area and touch targets of at least 44 px. At 768 px it becomes a
-two-panel flow. The admin shell collapses its sidebar below 1024 px and retains
-breadcrumbs and the primary action in the top bar. Content width is capped at
-1440 px; tables become cards or horizontal scroll regions rather than clipping.
+| Element | Size | Weight | Tracking | Line Height |
+|---|---|---|---|---|
+| H1 / Page Heading | `28px` (`text-2xl` / `text-3xl`) | `700` (Bold) | `-0.025em` | `1.2` |
+| H2 / Section Title | `20px` (`text-xl`) | `600` (Semi-bold) | `-0.02em` | `1.3` |
+| H3 / Card Title | `16px` (`text-base`) | `600` (Semi-bold) | `-0.01em` | `1.4` |
+| Metric Hero Value | `30px` (`text-3xl`) | `700` (Bold, Tabular) | `-0.02em` | `1.1` |
+| Body / Table Rows | `14px` (`text-sm`) | `400` / `500` | `0` | `1.5` |
+| Labels / Metadata | `13px` (`text-xs` / `text-sm`) | `500` (Medium) | `0` | `1.4` |
+| Micro / Category Caps | `11px` (`text-[11px]`) | `600` (Semi-bold) | `+0.05em` | `1.2` |
 
-## Components
+---
 
-- Buttons have primary, secondary, outline, ghost, and destructive variants.
-  Only one primary action appears in a local decision area.
-- Inputs have visible labels, optional help text, inline errors, and persistent
-  focus treatment. Placeholder text never replaces a label.
-- Cards use a border plus level-one shadow. Interactive cards gain a subtle
-  border/translate transition without changing layout.
-- Dialogs and menus use Radix primitives for focus trapping, dismissal, and
-  keyboard navigation.
-- Loading states preserve the final layout with low-contrast animated
-  skeletons. Empty states explain why the area is empty and offer one next step.
-- Toasts confirm background or cross-page actions; validation and destructive
-  errors remain adjacent to the affected control.
-- Motion lasts 140–220 ms with standard easing. `prefers-reduced-motion`
-  disables nonessential animation.
+## 4. Spacing, Borders & Shapes
 
-## Booking-specific rules
+- **Borders**: Strictly 1px solid `border-border`. Depth is never conveyed through `box-shadow`.
+- **Corner Radii**:
+  - `rounded-full` (`9999px`): Filter pills, navigation segmented bars, primary CTA buttons, date circle highlights, status dots.
+  - `rounded-2xl` (`1.25rem` / `20px`): Outer page cards, dashboard widgets, modal dialog windows.
+  - `rounded-xl` (`0.75rem` / `12px`): Form inputs, select dropdowns, appointment time slots.
+  - `rounded-lg` (`0.5rem` / `8px`): Sub-controls, menu items, tooltips.
+- **Elevation**:
+  - Zero `box-shadow`.
+  - Accessible focus rings: `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`.
 
-Service and staff choices show duration, price, and identity before decorative
-content. The date picker exposes full weekday names to assistive technology.
-Slots are grouped by morning, afternoon, and evening, use the tenant time zone,
-and show an unambiguous offset around daylight-saving transitions. Selection is
-never indicated by color alone. A compact order summary remains visible before
-the customer submits details or leaves for Stripe Checkout.
+---
+
+## 5. Component Standards
+
+### 5.1 App Shell
+- **Sidebar**: Fixed width `260px`, white background (`bg-card`), right border `border-r border-border`. Categorized with quiet uppercase section headers (`MAIN`, `WORKSPACE`, `ACCOUNT`). Active navigation item has light blue accent background (`bg-accent text-accent-foreground font-semibold rounded-xl`).
+- **User Footer**: Profile card at the bottom of the sidebar with user avatar, name, email, and clean options trigger.
+- **Top Header**: Breadcrumb or section title on the left; segmented pill navigation or action buttons on the right.
+
+### 5.2 Buttons
+- **Primary**: Pill-shaped (`rounded-full h-11 px-6 bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors`).
+- **Dark Pill (Action)**: Pill-shaped (`rounded-full h-10 px-5 bg-dark-surface text-dark-surface-foreground font-medium hover:bg-dark-surface/90`).
+- **Secondary / Outline**: Pill or rounded-xl (`rounded-xl h-10 px-4 border border-border bg-card text-foreground hover:bg-muted`).
+- **Ghost**: (`rounded-xl h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-muted`).
+
+### 5.3 Inputs & Forms
+- Text inputs and dropdown triggers have `h-11 rounded-xl border border-input bg-card px-3.5 text-sm`.
+- Visible labels in `13px font-medium text-foreground`.
+- Inline validation errors in `12px font-medium text-destructive`.
+
+### 5.4 Metric & Operational Cards
+- Clean white card (`rounded-2xl border border-border bg-card p-5`).
+- High-impact dark metric card (`rounded-2xl bg-dark-surface text-dark-surface-foreground p-5`).
+- High-contrast electric blue highlight card (`rounded-2xl bg-primary text-primary-foreground p-5`).
+
+### 5.5 Mini Calendar & Availability Slots
+- Calendar dates in a clean grid; today or selected date highlighted with a crisp solid circle (`bg-primary text-white rounded-full size-8 flex items-center justify-center font-semibold`).
+- Time slot buttons formatted as tabular strings (`10:00 AM`), `h-10 rounded-xl border border-border bg-card hover:border-primary/50 text-sm font-medium tabular-nums`.
+
+### 5.6 Status Indicators
+- Quiet 6px solid dots paired with plain text labels:
+  - Confirmed: Green dot (`bg-success`) + "Confirmed"
+  - Pending: Amber dot (`bg-warning`) + "Pending"
+  - Cancelled: Slate/Red dot (`bg-muted-foreground`) + "Cancelled"

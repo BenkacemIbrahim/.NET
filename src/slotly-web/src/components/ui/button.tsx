@@ -4,25 +4,28 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../../lib/cn";
 
 export const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-primary text-primary-foreground shadow-sm hover:-translate-y-px hover:brightness-105 active:translate-y-0",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
+          "bg-primary text-primary-foreground hover:bg-primary/90",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-muted",
         outline:
-          "border bg-card text-card-foreground shadow-sm hover:bg-accent",
+          "border border-border bg-card text-foreground hover:bg-muted",
+        dark:
+          "bg-dark-surface text-dark-surface-foreground hover:bg-dark-surface/90",
         ghost:
-          "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          "rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground hover:brightness-105",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
       },
       size: {
-        sm: "min-h-9 rounded-sm px-3 text-xs",
-        md: "min-h-11 px-4",
-        lg: "min-h-12 rounded-lg px-6 text-base",
-        icon: "size-11 p-0",
+        sm: "min-h-9 rounded-full px-3.5 text-xs",
+        md: "min-h-11 px-5",
+        lg: "min-h-12 rounded-full px-6 text-base",
+        icon: "size-10 rounded-full p-0",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },
