@@ -8,8 +8,8 @@
 **A modern, production-grade multi-tenant booking and scheduling SaaS platform.**  
 *A simplified Calendly for clinics, salons, and gyms with strict tenant isolation, zero-double-booking guarantees, and real-time availability updates.*
 
-[![CI](https://github.com/BenkacemIbrahim/.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/BenkacemIbrahim/.NET/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/BenkacemIbrahim/.NET/actions/workflows/codeql.yml/badge.svg)](https://github.com/BenkacemIbrahim/.NET/actions/workflows/codeql.yml)
+[![CI](https://github.com/BenkacemIbrahim/slotly-dotnet-saas/actions/workflows/ci.yml/badge.svg)](https://github.com/BenkacemIbrahim/slotly-dotnet-saas/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/BenkacemIbrahim/slotly-dotnet-saas/actions/workflows/codeql.yml/badge.svg)](https://github.com/BenkacemIbrahim/slotly-dotnet-saas/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0%20LTS-purple.svg)](https://dotnet.microsoft.com/)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
