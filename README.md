@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/slotly-logo-white.png">
-  <img alt="Slotly" src="docs/slotly-logo.png" width="300">
-</picture>
+<img src="docs/slotly-logo.png" alt="Slotly" width="280" />
 
 <br />
 <br />
