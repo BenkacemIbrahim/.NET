@@ -26,6 +26,12 @@
 | :---: | :---: |
 | ![Slotly Customer Booking Light](docs/screenshots/booking-desktop-light.png) | ![Slotly Customer Booking Dark](docs/screenshots/booking-desktop-dark.png) |
 
+### Tenant Authentication & Workspace Sign-in (Desktop Light & Dark)
+
+| Light Theme | Dark Theme |
+| :---: | :---: |
+| ![Slotly Workspace Sign-in Light](docs/screenshots/login-desktop-light.png) | ![Slotly Workspace Sign-in Dark](docs/screenshots/login-desktop-dark.png) |
+
 ### Tenant Operations Dashboard (Desktop Light & Dark)
 
 | Light Theme | Dark Theme |
@@ -34,9 +40,9 @@
 
 ### Mobile-First Responsive Experience (390px Viewport)
 
-| Mobile Customer Booking | Mobile Admin Operations |
-| :---: | :---: |
-| <img src="docs/screenshots/booking-mobile-light.png" width="300" alt="Mobile Booking" /> | <img src="docs/screenshots/admin-mobile-light.png" width="300" alt="Mobile Admin" /> |
+| Mobile Customer Booking | Mobile Workspace Sign-in | Mobile Admin Operations |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/booking-mobile-light.png" width="240" alt="Mobile Booking" /> | <img src="docs/screenshots/login-mobile-light.png" width="240" alt="Mobile Sign-in" /> | <img src="docs/screenshots/admin-mobile-light.png" width="240" alt="Mobile Admin" /> |
 
 </div>
 
