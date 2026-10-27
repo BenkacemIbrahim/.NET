@@ -61,7 +61,7 @@ Tenant-scoped endpoints resolve the active tenant through one of the following m
 ```json
 {
   "tenantSlug": "northstar-health",
-  "email": "amira@northstar.example",
+  "email": "amira.benali@northstarhealth.ma",
   "password": "Password123!"
 }
 ```

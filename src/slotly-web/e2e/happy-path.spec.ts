@@ -9,7 +9,7 @@ function nextWeekday() {
 
 test("customer books an available appointment", async ({ page }) => {
   await page.goto("/book/northstar-health");
-  await page.getByRole("button", { name: /General Consultation/i }).click();
+  await page.getByRole("button", { name: /General Medical Consultation/i }).click();
   await page.getByLabel("Date").fill(nextWeekday());
   const slots = page.locator("button.tabular-nums");
   await expect(slots.first()).toBeVisible();
@@ -28,7 +28,7 @@ test("customer books an available appointment", async ({ page }) => {
 test("tenant owner signs in and opens booking management", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Workspace").fill("northstar-health");
-  await page.getByLabel("Email address").fill("amira@northstar.example");
+  await page.getByLabel("Email address").fill("amira.benali@northstarhealth.ma");
   await page.getByLabel("Password").fill("Password123!");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(

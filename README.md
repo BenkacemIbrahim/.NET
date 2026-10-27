@@ -194,7 +194,7 @@ It refuses to overwrite them unless `-Force` is supplied explicitly.
 | Service | URL | Description |
 | :--- | :--- | :--- |
 | **Customer Booking Demo** | <http://localhost:3000/book/northstar-health> | Public booking flow for Northstar Health Clinic |
-| **Tenant Admin Portal** | <http://localhost:3000/login> | Admin sign-in (`amira@northstar.example` / `Password123!`) |
+| **Tenant Admin Portal** | <http://localhost:3000/login> | Admin sign-in (`amira.benali@northstarhealth.ma` / `Password123!`) |
 | **API Swagger UI** | <http://localhost:8080/swagger> | Interactive OpenAPI specification and test console |
 | **API Health / Readiness** | <http://localhost:8080/health/ready> | Deep health check (DB, Hangfire, SMTP) |
 | **Mailpit Web UI** | <http://localhost:8025> | Local email inbox catching booking confirmations |

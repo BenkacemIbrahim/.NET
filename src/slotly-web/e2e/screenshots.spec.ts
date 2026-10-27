@@ -12,7 +12,7 @@ for (const theme of ["light", "dark"] as const) {
         theme,
       );
       await page.goto("/book/northstar-health");
-      await page.getByText("General Consultation").waitFor();
+      await page.getByText("General Medical Consultation").waitFor();
       await page.screenshot({
         path: `../../docs/screenshots/booking-${viewport.name}-${theme}.png`,
         fullPage: true,
@@ -27,7 +27,7 @@ for (const theme of ["light", "dark"] as const) {
       );
       await page.goto("/login");
       await page.getByLabel("Workspace").fill("northstar-health");
-      await page.getByLabel("Email address").fill("amira@northstar.example");
+      await page.getByLabel("Email address").fill("amira.benali@northstarhealth.ma");
       await page.getByLabel("Password").fill("Password123!");
       await page.getByRole("button", { name: "Sign in" }).click();
       await page.getByRole("heading", { name: /Good morning/i }).waitFor();

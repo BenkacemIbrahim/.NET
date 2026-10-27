@@ -110,7 +110,7 @@ export function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       tenantSlug: "northstar-health",
-      email: "amira@northstar.example",
+      email: "amira.benali@northstarhealth.ma",
       password: "",
     },
   });
