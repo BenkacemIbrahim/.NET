@@ -25,6 +25,7 @@ import {
   tenantHeaders,
   type ApiSchemas,
 } from "../api/client";
+import { SlotlyLogo } from "../components/slotly-logo";
 import { ThemeToggle } from "../components/theme-toggle";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -204,13 +205,11 @@ export function PublicBookingPage() {
             {branding?.logoUrl ? (
               <img
                 src={branding.logoUrl}
-                alt=""
+                alt={branding?.name || "Logo"}
                 className="size-8 rounded-xl object-contain border border-border"
               />
             ) : (
-              <div className="grid size-8 place-items-center rounded-xl bg-primary text-white font-bold text-sm">
-                S
-              </div>
+              <SlotlyLogo variant="icon" className="size-8" />
             )}
             <div>
               <span className="font-bold text-base tracking-tight text-foreground">

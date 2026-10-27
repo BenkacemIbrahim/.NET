@@ -40,6 +40,7 @@ import { z } from "zod";
 import { api, apiMessage, type ApiSchemas } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { EmptyState } from "../components/empty-state";
+import { SlotlyLogo } from "../components/slotly-logo";
 import { ThemeToggle } from "../components/theme-toggle";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -131,12 +132,9 @@ export function LoginPage() {
       <section className="flex items-center justify-center p-6 pb-24 sm:p-12 sm:pb-28">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-2.5 font-bold lg:hidden">
-              <span className="grid size-8 place-items-center rounded-xl bg-primary text-white text-sm font-bold">
-                S
-              </span>
-              <span className="text-lg tracking-tight">Slotly</span>
-            </div>
+            <Link to="/" className="inline-flex items-center" title="Slotly">
+              <SlotlyLogo variant="full" className="h-8 w-auto" />
+            </Link>
             <div className="ml-auto">
               <ThemeToggle />
             </div>
@@ -274,13 +272,10 @@ function AdminShell() {
             className="flex items-center gap-2.5 overflow-hidden"
             title={collapsed ? "Slotly" : undefined}
           >
-            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary text-white font-bold text-sm shadow-sm">
-              S
-            </span>
-            {!collapsed && (
-              <span className="text-lg font-bold tracking-tight text-foreground transition-opacity">
-                Slotly
-              </span>
+            {collapsed ? (
+              <SlotlyLogo variant="icon" className="size-8" />
+            ) : (
+              <SlotlyLogo variant="full" className="h-7 w-auto" />
             )}
           </Link>
 
@@ -880,9 +875,9 @@ function BookingRows({ items }: { items: Booking[] }) {
       {items.map((item) => (
         <div
           key={item.id}
-          className="grid gap-3 py-3.5 text-sm sm:grid-cols-[1fr_140px_110px_auto] sm:items-center"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3.5 text-sm sm:flex-nowrap"
         >
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">Appointment</span>
               <span className="font-mono text-[11px] text-muted-foreground">
@@ -899,13 +894,13 @@ function BookingRows({ items }: { items: Booking[] }) {
               })}
             </p>
           </div>
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="shrink-0 font-mono text-xs text-muted-foreground">
             Staff: {item.staffId?.slice(0, 8)}
           </span>
-          <div>
+          <div className="shrink-0">
             <Status value={item.status} />
           </div>
-          <div className="flex flex-wrap justify-end gap-1.5">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {item.status === 2 && (
               <>
                 <Button
