@@ -1,6 +1,12 @@
 <div align="center">
 
-# ⚡ Slotly
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/slotly-logo-white.png">
+  <img alt="Slotly" src="docs/slotly-logo.png" width="300">
+</picture>
+
+<br />
+<br />
 
 **A modern, production-grade multi-tenant booking and scheduling SaaS platform.**  
 *A simplified Calendly for clinics, salons, and gyms with strict tenant isolation, zero-double-booking guarantees, and real-time availability updates.*
