@@ -19,6 +19,20 @@ for (const theme of ["light", "dark"] as const) {
       });
     });
 
+    test(`capture login page ${viewport.name} ${theme}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.addInitScript(
+        (selected) => localStorage.setItem("theme", selected),
+        theme,
+      );
+      await page.goto("/login");
+      await page.getByLabel("Workspace").waitFor();
+      await page.screenshot({
+        path: `../../docs/screenshots/login-${viewport.name}-${theme}.png`,
+        fullPage: true,
+      });
+    });
+
     test(`capture admin dashboard ${viewport.name} ${theme}`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.addInitScript(
