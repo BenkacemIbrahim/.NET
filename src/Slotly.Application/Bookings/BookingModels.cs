@@ -29,7 +29,12 @@ public sealed record BookingDto(
     string? CancellationReason,
     Guid Version,
     Guid? PaymentId = null,
-    string? CheckoutUrl = null);
+    string? CheckoutUrl = null,
+    string? CustomerName = null,
+    string? CustomerEmail = null,
+    string? CustomerPhone = null,
+    string? ServiceName = null,
+    string? StaffName = null);
 
 public sealed record AvailabilityDto(
     Guid StaffId,

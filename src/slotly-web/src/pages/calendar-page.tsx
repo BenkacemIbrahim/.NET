@@ -23,7 +23,7 @@ import "@fullcalendar/react/themes/classic/theme.css";
 
 import { Card } from "../components/ui/card";
 import { cn } from "../lib/cn";
-import { useBookings } from "./admin";
+import { useBookings, useTenantSettings } from "./admin";
 
 interface StatusBadge {
   label: string;
@@ -55,6 +55,8 @@ const statusBadges: Record<number, StatusBadge> = {
 
 export default function CalendarPage() {
   const bookings = useBookings();
+  const tenantSettings = useTenantSettings();
+  const tenantSlug = tenantSettings.data?.slug || "northstar-health";
   const calendarRef = useRef<CalendarRef>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [filterType, setFilterType] = useState<"slotly" | "all">("slotly");
@@ -69,11 +71,46 @@ export default function CalendarPage() {
     return meetings.filter((m) => {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        return m.id?.toLowerCase().includes(query);
+        const matchesId = m.id?.toLowerCase().includes(query);
+        const matchesCustomer = m.customerName?.toLowerCase().includes(query);
+        const matchesService = m.serviceName?.toLowerCase().includes(query);
+        const matchesStaff = m.staffName?.toLowerCase().includes(query);
+        const matchesEmail = m.customerEmail?.toLowerCase().includes(query);
+        if (!matchesId && !matchesCustomer && !matchesService && !matchesStaff && !matchesEmail) {
+          return false;
+        }
+      }
+      if (dateRange === "today") {
+        const d = new Date(m.startsAt!);
+        const now = new Date();
+        return d.toDateString() === now.toDateString();
+      }
+      if (dateRange === "upcoming") {
+        return new Date(m.startsAt!) >= new Date();
+      }
+      if (dateRange === "week") {
+        const d = new Date(m.startsAt!);
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        return d >= startOfWeek && d <= endOfWeek;
+      }
+      if (dateRange === "last_week") {
+        const d = new Date(m.startsAt!);
+        const now = new Date();
+        const startOfLastWeek = new Date(now);
+        startOfLastWeek.setDate(now.getDate() - now.getDay() - 7);
+        startOfLastWeek.setHours(0, 0, 0, 0);
+        const endOfLastWeek = new Date(startOfLastWeek);
+        endOfLastWeek.setDate(startOfLastWeek.getDate() + 7);
+        return d >= startOfLastWeek && d <= endOfLastWeek;
       }
       return true;
     });
-  }, [meetings, searchQuery]);
+  }, [meetings, searchQuery, dateRange]);
 
   return (
     <div className="space-y-6 text-white">
@@ -209,7 +246,7 @@ export default function CalendarPage() {
                 </p>
                 <div className="pt-1">
                   <Link
-                    to="/book/northstar-health"
+                    to={`/book/${tenantSlug}`}
                     className="inline-flex items-center gap-1 text-xs font-bold text-[#4D9BFF] hover:underline"
                   >
                     <HelpCircle className="size-3.5" />
@@ -218,7 +255,7 @@ export default function CalendarPage() {
                 </div>
                 <div className="pt-2">
                   <Link
-                    to="/book/northstar-health"
+                    to={`/book/${tenantSlug}`}
                     target="_blank"
                     className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
                   >
@@ -278,44 +315,65 @@ export default function CalendarPage() {
         ) : (
           /* List of meetings */
           <div className="divide-y divide-[#1C283A] rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
-            {filteredMeetings.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-2"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-[#0069FF]/20 text-[#4D9BFF] font-bold text-sm">
-                    S
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">
-                      Appointment #{item.id?.slice(0, 8)}
-                    </h3>
-                    <p className="text-xs text-[#8B9CB0]">
-                      {new Date(item.startsAt!).toLocaleString([], {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
+            {filteredMeetings.map((item) => {
+              const status = item.status ?? 2;
+              const badge = statusBadges[status] ?? statusBadges[2];
+              const initials = (item.customerName || item.serviceName || "A")
+                .split(" ")
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
 
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 px-3 py-1 text-xs font-bold">
-                    Confirmed
-                  </span>
-                  <Link
-                    to="/admin/bookings"
-                    className="rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
-                  >
-                    View Details
-                  </Link>
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-2 hover:bg-[#162234]/40 rounded-xl transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-[#0069FF]/20 text-[#4D9BFF] font-bold text-sm shrink-0">
+                      {initials}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-white">
+                          {item.customerName || `Appointment #${item.id?.slice(0, 8)}`}
+                        </h3>
+                        {item.customerEmail && (
+                          <span className="text-xs text-[#8B9CB0]">
+                            ({item.customerEmail})
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-xs text-[#8B9CB0]">
+                        <span className="text-white font-medium">{item.serviceName || "Consultation"}</span>
+                        {item.staffName && <span> • with {item.staffName}</span>}
+                        <span> • </span>
+                        {new Date(item.startsAt!).toLocaleString([], {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={cn("rounded-full px-3 py-1 text-xs font-bold", badge.cardClass)}>
+                      {badge.label}
+                    </span>
+                    <Link
+                      to="/admin/bookings"
+                      className="rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                    >
+                      Manage
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       ) : (
@@ -338,9 +396,12 @@ export default function CalendarPage() {
             events={meetings.map((booking) => {
               const status = booking.status ?? 2;
               const badge = statusBadges[status] ?? statusBadges[2];
+              const title = booking.customerName
+                ? `${booking.customerName} - ${booking.serviceName || "Session"}`
+                : `${badge.label} Session`;
               return {
                 id: booking.id,
-                title: `${badge.label} Session`,
+                title,
                 start: booking.startsAt,
                 end: booking.endsAt,
                 extendedProps: {

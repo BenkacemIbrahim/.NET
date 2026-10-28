@@ -21,14 +21,17 @@ Label.displayName = "Label";
 export function FieldError({
   id,
   children,
+  error,
 }: {
   id?: string;
   children?: string | undefined;
+  error?: { message?: string } | undefined;
 }) {
-  if (!children) return null;
+  const message = children || error?.message;
+  if (!message) return null;
   return (
     <p id={id} className="text-sm font-medium text-destructive">
-      {children}
+      {message}
     </p>
   );
 }

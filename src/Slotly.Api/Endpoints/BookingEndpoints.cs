@@ -275,7 +275,19 @@ public static class BookingEndpoints
     {
         var booking = await dbContext.Bookings.AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
-        return booking is null ? Results.NotFound() : Results.Ok(ToDto(booking));
+        if (booking is null)
+        {
+            return Results.NotFound();
+        }
+
+        var customer = await dbContext.Customers.AsNoTracking()
+            .SingleOrDefaultAsync(c => c.Id == booking.CustomerId, cancellationToken);
+        var service = await dbContext.Services.AsNoTracking()
+            .SingleOrDefaultAsync(s => s.Id == booking.ServiceId, cancellationToken);
+        var staff = await dbContext.Staff.AsNoTracking()
+            .SingleOrDefaultAsync(st => st.Id == booking.StaffId, cancellationToken);
+
+        return Results.Ok(ToDto(booking, customer, service, staff));
     }
 
     private static async Task<IResult> ListBookingsAsync(
@@ -328,7 +340,31 @@ public static class BookingEndpoints
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
-        return Results.Ok(new PagedResponse<BookingDto>(entities.Select(ToDto).ToArray(), page, pageSize, total));
+
+        var customerIds = entities.Select(b => b.CustomerId).Distinct().ToList();
+        var customers = await dbContext.Customers.AsNoTracking()
+            .Where(c => customerIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, cancellationToken);
+
+        var serviceIds = entities.Select(b => b.ServiceId).Distinct().ToList();
+        var services = await dbContext.Services.AsNoTracking()
+            .Where(s => serviceIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, cancellationToken);
+
+        var staffIds = entities.Select(b => b.StaffId).Distinct().ToList();
+        var staffMembers = await dbContext.Staff.AsNoTracking()
+            .Where(s => staffIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, cancellationToken);
+
+        var dtos = entities.Select(b =>
+        {
+            customers.TryGetValue(b.CustomerId, out var c);
+            services.TryGetValue(b.ServiceId, out var s);
+            staffMembers.TryGetValue(b.StaffId, out var st);
+            return ToDto(b, c, s, st);
+        }).ToArray();
+
+        return Results.Ok(new PagedResponse<BookingDto>(dtos, page, pageSize, total));
     }
 
     private static async Task<IResult> CancelBookingAsync(
@@ -640,7 +676,13 @@ public static class BookingEndpoints
         }
     }
 
-    private static BookingDto ToDto(Booking booking)
+    private static BookingDto ToDto(
+        Booking booking,
+        Customer? customer = null,
+        Service? service = null,
+        Staff? staff = null,
+        Guid? paymentId = null,
+        string? checkoutUrl = null)
         => new(
             booking.Id,
             booking.CustomerId,
@@ -651,7 +693,14 @@ public static class BookingEndpoints
             booking.BlockedUntil,
             booking.Status,
             booking.CancellationReason,
-            booking.Version);
+            booking.Version,
+            paymentId,
+            checkoutUrl,
+            customer?.Name,
+            customer?.Email,
+            customer?.Phone,
+            service?.Name,
+            staff?.DisplayName);
 
     private static Guid RequiredTenantId(ITenantContext tenantContext)
         => tenantContext.TenantId

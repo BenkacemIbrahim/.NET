@@ -208,6 +208,54 @@
   --fc-classic-faint: rgba(255, 255, 255, 0.04) !important;
   --fc-classic-muted: rgba(255, 255, 255, 0.08) !important;
   --fc-classic-strong: rgba(255, 255, 255, 0.12) !important;
+
+  /* FullCalendar internal white overrides */
+  --fc-page-bg-color: var(--card) !important;
+  --fc-neutral-bg-color: var(--card) !important;
+  --fc-neutral-text-color: var(--foreground) !important;
+  --fc-border-color: var(--border) !important;
+  --fc-button-bg-color: var(--secondary) !important;
+  --fc-button-border-color: var(--border) !important;
+  --fc-button-text-color: var(--foreground) !important;
+  --fc-button-hover-bg-color: var(--accent) !important;
+  --fc-button-hover-border-color: var(--border) !important;
+  --fc-button-active-bg-color: var(--primary) !important;
+  --fc-button-active-border-color: var(--primary) !important;
+  --fc-today-bg-color: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  --fc-non-business-color: rgba(255,255,255,0.02) !important;
+  --fc-highlight-color: color-mix(in srgb, var(--primary) 15%, transparent) !important;
+  --fc-event-bg-color: var(--primary) !important;
+  --fc-event-border-color: transparent !important;
+  --fc-event-text-color: #fff !important;
+  color-scheme: dark;
+}
+
+/* Dark mode: native select, input elements */
+.dark select,
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"],
+.dark input[type="number"] {
+  background-color: var(--input) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+  color-scheme: dark;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #1C283A;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #27374E;
 }
 
 .fc {

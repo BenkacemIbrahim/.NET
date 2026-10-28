@@ -1,40 +1,41 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
   Calendar,
   CalendarDays,
+  CalendarCheck,
   Check,
   ChevronDown,
   Clock,
+  Copy,
   ExternalLink,
   FileText,
+  Globe,
   HelpCircle,
   Hourglass,
   Info,
-  Lightbulb,
   Link as LinkIcon,
   LogOut,
-  Mail,
   Menu,
   MessageCircle,
   Mic,
-  MoreVertical,
-  Mountain,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  Pencil,
   Plus,
   Scissors,
   Search,
   Settings,
   Share2,
   Sparkles,
+  Trash2,
   User,
   Users,
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import {
   useForm,
   type FieldValues,
@@ -65,9 +66,12 @@ import {
 import { Input } from "../components/ui/input";
 import { FieldError, Label } from "../components/ui/label";
 import { Skeleton } from "../components/ui/skeleton";
+import { SlotlyLogo } from "../components/slotly-logo";
 import { cn } from "../lib/cn";
 
 type Booking = ApiSchemas["BookingDto"];
+type Service = ApiSchemas["ServiceDto"];
+type StaffMember = ApiSchemas["StaffDto"];
 
 export interface NavItem {
   href: string;
@@ -78,19 +82,353 @@ export interface NavItem {
 const mainNavItems: NavItem[] = [
   { href: "/admin", label: "Scheduling", icon: Hourglass },
   { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/admin/bookings", label: "Notetaker", icon: FileText },
-  { href: "/admin/staff", label: "Contacts", icon: Users },
-  { href: "/admin/schedule", label: "Automations", icon: Sparkles },
+  { href: "/admin/bookings", label: "Notetaker & Bookings", icon: FileText },
+  { href: "/admin/services", label: "Event Types", icon: Scissors },
+  { href: "/admin/staff", label: "Contacts & Team", icon: Users },
+  { href: "/admin/schedule", label: "Availability & Hours", icon: Sparkles },
 ];
+
+export function useTenantSettings() {
+  return useQuery({
+    queryKey: ["tenant-settings"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/settings");
+      if (!data) throw error;
+      return data;
+    },
+  });
+}
+
+export function useBookings() {
+  return useQuery({
+    queryKey: ["bookings"],
+    queryFn: async () => {
+      const now = new Date();
+      const end = new Date(now);
+      end.setMonth(end.getMonth() + 2);
+      const start = new Date(now);
+      start.setMonth(start.getMonth() - 2);
+      const { data, error } = await api.GET("/api/v1/bookings", {
+        params: {
+          query: {
+            page: 1,
+            pageSize: 100,
+            startsAfter: start.toISOString(),
+            startsBefore: end.toISOString(),
+          },
+        },
+      });
+      if (!data) throw error;
+      return data.items ?? [];
+    },
+  });
+}
+
+export function useServices() {
+  return useQuery({
+    queryKey: ["services-admin"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/services", {
+        params: { query: { page: 1, pageSize: 100, includeInactive: true } },
+      });
+      if (!data) throw error;
+      return data.items ?? [];
+    },
+  });
+}
+
+export function useStaff() {
+  return useQuery({
+    queryKey: ["staff-admin"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/staff", {
+        params: { query: { page: 1, pageSize: 100, includeInactive: true } },
+      });
+      if (!data) throw error;
+      return data.items ?? [];
+    },
+  });
+}
 
 export function AdminGuard() {
   const { session } = useAuth();
   return session ? <AdminShell /> : <Navigate to="/login" replace />;
 }
 
+/* -----------------------------------------------------------------------
+ * Known demo workspaces – stored/extended in localStorage
+ * --------------------------------------------------------------------- */
+interface KnownWorkspace {
+  slug: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
+const DEMO_WORKSPACES: KnownWorkspace[] = [
+  {
+    slug: "northstar-health",
+    name: "Northstar Health",
+    email: "amira.benali@northstarhealth.ma",
+    password: "Password123!",
+  },
+  {
+    slug: "atlas-wellness",
+    name: "Atlas Wellness",
+    email: "youssef.idrissi@atlaswellness.ma",
+    password: "Password123!",
+  },
+];
+
+const WORKSPACES_STORAGE_KEY = "slotly.workspaces";
+
+function loadWorkspaces(): KnownWorkspace[] {
+  try {
+    const raw = localStorage.getItem(WORKSPACES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as KnownWorkspace[];
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return DEMO_WORKSPACES;
+}
+
+function saveWorkspace(ws: KnownWorkspace) {
+  const existing = loadWorkspaces();
+  const idx = existing.findIndex((w) => w.slug === ws.slug);
+  if (idx >= 0) {
+    existing[idx] = ws;
+  } else {
+    existing.push(ws);
+  }
+  try {
+    localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(existing));
+  } catch {
+    // ignore
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * SwitchTeamDropdown – appears in the sidebar header
+ * --------------------------------------------------------------------- */
+function SwitchTeamDropdown({
+  collapsed,
+  currentSlug,
+  currentName,
+  currentUser,
+}: {
+  collapsed: boolean;
+  currentSlug: string;
+  currentName: string;
+  currentUser: string;
+}) {
+  const { login } = useAuth();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addSlug, setAddSlug] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addPassword, setAddPassword] = useState("");
+  const [addName, setAddName] = useState("");
+  const [workspaces, setWorkspaces] = useState<KnownWorkspace[]>(() => loadWorkspaces());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  async function switchTo(ws: KnownWorkspace) {
+    if (ws.slug === currentSlug) { setOpen(false); return; }
+    setSwitching(ws.slug);
+    try {
+      await login(ws.email, ws.password, ws.slug);
+      qc.clear();
+      setOpen(false);
+      toast.success(`Switched to ${ws.name}`);
+    } catch {
+      toast.error(`Could not switch to ${ws.name}. Check credentials.`);
+    } finally {
+      setSwitching(null);
+    }
+  }
+
+  async function addAndSwitch() {
+    if (!addSlug || !addEmail || !addPassword) {
+      toast.error("Slug, email and password are required.");
+      return;
+    }
+    const ws: KnownWorkspace = {
+      slug: addSlug.trim(),
+      name: addName.trim() || addSlug.trim(),
+      email: addEmail.trim(),
+      password: addPassword,
+    };
+    setSwitching(ws.slug);
+    try {
+      await login(ws.email, ws.password, ws.slug);
+      saveWorkspace(ws);
+      setWorkspaces(loadWorkspaces());
+      qc.clear();
+      setOpen(false);
+      setShowAdd(false);
+      toast.success(`Switched to ${ws.name}`);
+    } catch {
+      toast.error("Could not sign in with those credentials.");
+    } finally {
+      setSwitching(null);
+    }
+  }
+
+  const initials = currentUser.charAt(0).toUpperCase();
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-colors hover:bg-[#162234] w-full",
+          open && "bg-[#162234]"
+        )}
+        title={collapsed ? `${currentUser} — Switch workspace` : undefined}
+      >
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
+          {initials}
+        </div>
+        {!collapsed && (
+          <>
+            <div className="min-w-0 flex-1 text-left">
+              <p className="truncate text-xs font-semibold text-white">{currentUser}</p>
+              <p className="truncate text-[10px] text-gray-400">{currentName}</p>
+            </div>
+            <ChevronDown
+              className={cn(
+                "size-3.5 shrink-0 text-gray-500 transition-transform duration-200",
+                open && "rotate-180"
+              )}
+            />
+          </>
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className={cn(
+            "absolute z-50 w-64 rounded-2xl border border-[#1C283A] bg-[#0F1724] shadow-2xl",
+            collapsed ? "left-12 top-0" : "left-0 top-[calc(100%+6px)]"
+          )}
+        >
+          {/* Header */}
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
+              Workspaces
+            </p>
+          </div>
+
+          {/* Workspace list */}
+          <div className="max-h-56 overflow-y-auto px-2 pb-2">
+            {workspaces.map((ws) => (
+              <button
+                key={ws.slug}
+                onClick={() => switchTo(ws)}
+                disabled={switching === ws.slug}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[#152B46] disabled:opacity-60"
+              >
+                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#0069FF] to-[#00897B] text-xs font-bold text-white">
+                  {ws.name.charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-white">{ws.name}</p>
+                  <p className="truncate text-[10px] text-gray-500">{ws.slug}</p>
+                </div>
+                {ws.slug === currentSlug && (
+                  <Check className="size-3.5 shrink-0 text-[#4D9BFF]" />
+                )}
+                {switching === ws.slug && (
+                  <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="mx-3 border-t border-[#1C283A]" />
+
+          {/* Add workspace */}
+          {!showAdd ? (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-xs font-semibold text-[#4D9BFF] hover:bg-[#152B46] rounded-b-2xl transition-colors"
+            >
+              <Plus className="size-3.5" />
+              Add another workspace
+            </button>
+          ) : (
+            <div className="p-3 space-y-2">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Add workspace</p>
+              <input
+                placeholder="Workspace slug"
+                value={addSlug}
+                onChange={(e) => setAddSlug(e.target.value)}
+                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
+              />
+              <input
+                placeholder="Display name (optional)"
+                value={addName}
+                onChange={(e) => setAddName(e.target.value)}
+                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
+              />
+              <input
+                placeholder="Email"
+                type="email"
+                value={addEmail}
+                onChange={(e) => setAddEmail(e.target.value)}
+                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
+              />
+              <input
+                placeholder="Password"
+                type="password"
+                value={addPassword}
+                onChange={(e) => setAddPassword(e.target.value)}
+                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
+              />
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={addAndSwitch}
+                  disabled={!!switching}
+                  className="flex-1 rounded-lg bg-[#0069FF] py-1.5 text-xs font-bold text-white hover:bg-[#1A7BFF] transition-colors disabled:opacity-60"
+                >
+                  {switching ? "Switching…" : "Connect"}
+                </button>
+                <button
+                  onClick={() => setShowAdd(false)}
+                  className="rounded-lg border border-[#1C283A] px-3 text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LoginPage() {
   const { session, login } = useAuth();
-  const navigate = useNavigate();
   const schema = z.object({
     tenantSlug: z.string().min(2, "Enter your workspace slug."),
     email: z.email("Enter a valid email address."),
@@ -102,107 +440,106 @@ export function LoginPage() {
     defaultValues: {
       tenantSlug: "northstar-health",
       email: "amira.benali@northstarhealth.ma",
-      password: "",
+      password: "Password123!",
     },
   });
+
+  const selectTenant = (slug: string, email: string) => {
+    form.setValue("tenantSlug", slug);
+    form.setValue("email", email);
+    form.setValue("password", "Password123!");
+  };
 
   if (session) return <Navigate to="/admin" replace />;
 
   return (
-    <main className="grid min-h-dvh bg-[#0B111A] text-white lg:grid-cols-2">
-      <section className="relative hidden items-center justify-center overflow-hidden border-r border-[#1C283A] bg-[#070D15] p-12 lg:flex">
-        <div className="max-w-md text-center space-y-6">
-          <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-[#0069FF] text-white shadow-xl">
-            <Hourglass className="size-8" />
-          </div>
-          <h2 className="font-serif text-4xl font-normal text-white">
-            Easy scheduling ahead.
-          </h2>
-          <p className="text-sm text-[#8B9CB0] leading-relaxed">
-            Join millions of professionals who use Slotly to streamline appointments, calendars, and client meetings.
-          </p>
-        </div>
+    <main className="grid min-h-dvh bg-background lg:grid-cols-2">
+      <section className="relative hidden items-center justify-center overflow-hidden border-r border-primary bg-primary p-12 lg:flex">
+        <img
+          src="/slotly-auth-illustration.png"
+          alt=""
+          className="h-auto max-h-[82vh] w-full max-w-[540px] object-contain drop-shadow-2xl"
+        />
       </section>
 
       {/* Login Form */}
-      <section className="flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-md space-y-8 rounded-3xl bg-[#111A28] border border-[#1C283A] p-8 sm:p-10 shadow-2xl">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="grid size-8 place-items-center rounded-lg bg-[#0069FF] text-white">
-                <Hourglass className="size-4" />
-              </div>
-              <span className="font-bold text-lg text-white">Slotly</span>
+      <section className="flex items-center justify-center p-6 pb-24 sm:p-12 sm:pb-28">
+        <div className="w-full max-w-md">
+          <div className="mb-8 flex items-center justify-between">
+            <Link to="/" className="inline-flex items-center" title="Slotly">
+              <SlotlyLogo variant="full" className="h-8 w-auto" />
             </Link>
-            <ThemeToggle />
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Log in to your account
-            </h1>
-            <p className="mt-1 text-xs text-[#8B9CB0]">
-              Enter your credentials to access your scheduling workspace.
+          <div className="mb-6 space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight">Sign in to your workspace</h1>
+            <p className="text-sm text-muted-foreground">
+              Enter your credentials to access your booking calendar and settings.
             </p>
+          </div>
+
+          {/* Quick Demo Workspace Selector */}
+          <div className="mb-6 rounded-xl border border-border bg-muted/30 p-3">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Quick Select Demo Workspace:</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => selectTenant("northstar-health", "amira.benali@northstarhealth.ma")}
+                className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors text-left"
+              >
+                <div className="font-bold">Northstar Health</div>
+                <div className="text-[10px] opacity-80">Dr. Amira Benali</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectTenant("atlas-wellness", "youssef.idrissi@atlaswellness.ma")}
+                className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-semibold hover:border-primary/50 transition-colors text-left"
+              >
+                <div className="font-bold">Atlas Wellness</div>
+                <div className="text-[10px] text-muted-foreground">Youssef Idrissi</div>
+              </button>
+            </div>
           </div>
 
           <form
             className="space-y-4"
-            onSubmit={form.handleSubmit(async (v) => {
+            onSubmit={form.handleSubmit(async (values) => {
               try {
-                await login(v.email, v.password, v.tenantSlug);
-                navigate("/admin");
-              } catch (e) {
-                toast.error(
-                  apiMessage(e, "Check your workspace, email, and password."),
-                );
+                await login(values.email, values.password, values.tenantSlug);
+                toast.success("Signed in successfully");
+              } catch (error) {
+                toast.error(apiMessage(error, "Could not sign in with these credentials."));
               }
             })}
           >
             <div className="space-y-1.5">
-              <Label htmlFor="tenantSlug" className="text-xs text-[#8B9CB0]">Workspace handle</Label>
-              <Input
-                id="tenantSlug"
-                placeholder="e.g. northstar-health"
-                className="bg-[#0B111A] border-[#1C283A] text-white"
-                {...form.register("tenantSlug")}
-                aria-invalid={!!form.formState.errors.tenantSlug}
-              />
-              <FieldError>{form.formState.errors.tenantSlug?.message}</FieldError>
+              <Label htmlFor="tenantSlug">Workspace slug</Label>
+              <Input id="tenantSlug" placeholder="northstar-health" {...form.register("tenantSlug")} />
+              <FieldError error={form.formState.errors.tenantSlug} />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs text-[#8B9CB0]">Email address</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@domain.com"
-                className="bg-[#0B111A] border-[#1C283A] text-white"
+                placeholder="amira.benali@northstarhealth.ma"
                 {...form.register("email")}
-                aria-invalid={!!form.formState.errors.email}
               />
-              <FieldError>{form.formState.errors.email?.message}</FieldError>
+              <FieldError error={form.formState.errors.email} />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs text-[#8B9CB0]">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="bg-[#0B111A] border-[#1C283A] text-white"
-                {...form.register("password")}
-                aria-invalid={!!form.formState.errors.password}
-              />
-              <FieldError>{form.formState.errors.password?.message}</FieldError>
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" {...form.register("password")} />
+              <FieldError error={form.formState.errors.password} />
             </div>
 
-            <Button
-              className="mt-2 w-full rounded-full bg-[#0069FF] text-white font-semibold hover:bg-[#0056D6]"
-              size="lg"
-              disabled={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? "Signing in…" : "Continue"}
+            <Button className="w-full" type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
         </div>
@@ -234,7 +571,10 @@ function AdminShell() {
   };
 
   const { session, logout } = useAuth();
-  const userName = session?.user.displayName || "Ibrahim Benkacem";
+  const userName = session?.user.displayName || "Admin User";
+  const tenantSettings = useTenantSettings();
+  const tenantSlug = tenantSettings.data?.slug || "northstar-health";
+  const tenantName = tenantSettings.data?.name || "Northstar Health";
 
   return (
     <div
@@ -243,7 +583,7 @@ function AdminShell() {
         collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[240px_1fr]",
       )}
     >
-      {/* Calendly Dark Left Sidebar (Image 1) */}
+      {/* Calendly Dark Left Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[#1C283A] bg-[#090E17] transition-all duration-300 lg:sticky lg:top-0 lg:h-dvh lg:translate-x-0",
@@ -251,27 +591,20 @@ function AdminShell() {
           collapsed ? "w-[72px] lg:w-[72px]" : "w-[240px] lg:w-[240px]",
         )}
       >
-        {/* Top: User Avatar Dropdown & Collapse Trigger */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-3 border-b border-[#1C283A]/40">
-          {!collapsed ? (
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
-                {userName.charAt(0)}
-              </div>
-              <span className="truncate text-xs font-semibold text-white">
-                {userName}
-              </span>
-              <ChevronDown className="size-3.5 text-gray-400 shrink-0" />
-            </div>
-          ) : (
-            <div className="mx-auto grid size-8 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
-              {userName.charAt(0)}
-            </div>
-          )}
+        {/* Top: Workspace Switcher & Collapse Trigger */}
+        <div className="flex h-16 shrink-0 items-center gap-1 px-2 border-b border-[#1C283A]/40">
+          <div className="flex-1 min-w-0">
+            <SwitchTeamDropdown
+              collapsed={collapsed}
+              currentSlug={tenantSlug}
+              currentName={tenantName}
+              currentUser={userName}
+            />
+          </div>
 
           <button
             onClick={toggleCollapse}
-            className="hidden lg:grid size-7 place-items-center rounded-md text-gray-400 hover:text-white hover:bg-[#162234]"
+            className="hidden lg:grid size-7 shrink-0 place-items-center rounded-md text-gray-400 hover:text-white hover:bg-[#162234]"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeftOpen className="size-3.5" /> : <PanelLeftClose className="size-3.5" />}
@@ -287,7 +620,7 @@ function AdminShell() {
           </Button>
         </div>
 
-        {/* "+ Create" Pill Button (Image 1) */}
+        {/* "+ Create" Button */}
         <div className="p-3">
           <Link
             to="/admin/services"
@@ -298,7 +631,6 @@ function AdminShell() {
           >
             <Plus className="size-3.5" />
             {!collapsed && <span>Create</span>}
-            {!collapsed && <ChevronDown className="size-3 text-gray-400 ml-0.5" />}
           </Link>
         </div>
 
@@ -327,23 +659,43 @@ function AdminShell() {
           ))}
         </nav>
 
-        {/* Bottom Sidebar: Upgrade Plan & Settings (Image 1) */}
+        {/* Bottom Sidebar: My link, Upgrade Plan & Settings */}
         <div className="shrink-0 space-y-2 p-3 border-t border-[#1C283A]/50">
           {!collapsed ? (
-            <button
-              onClick={() => toast.info("Slotly Enterprise trial active.")}
-              className="flex h-9 w-full items-center justify-center gap-2 rounded-full border border-white/20 text-xs font-semibold text-white hover:bg-white/5"
-            >
-              <ArrowUpRight className="size-3.5" />
-              <span>Upgrade plan</span>
-            </button>
+            <div className="rounded-xl border border-[#1C283A] bg-[#111A28] p-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-gray-300">Public Link</span>
+                <button
+                  onClick={() => {
+                    void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
+                    toast.success("Link copied to clipboard!");
+                  }}
+                  className="text-gray-400 hover:text-white"
+                  title="Copy public booking link"
+                >
+                  <Copy className="size-3" />
+                </button>
+              </div>
+              <a
+                href={`/book/${tenantSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 flex items-center gap-1 text-[11px] text-[#4D9BFF] hover:underline truncate"
+              >
+                <span>/book/{tenantSlug}</span>
+                <ExternalLink className="size-2.5 shrink-0" />
+              </a>
+            </div>
           ) : (
             <button
-              onClick={() => toast.info("Slotly Enterprise trial active.")}
+              onClick={() => {
+                void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
+                toast.success("Link copied!");
+              }}
               className="grid size-9 mx-auto place-items-center rounded-full border border-white/20 text-white hover:bg-white/5"
-              title="Upgrade plan"
+              title="Copy booking link"
             >
-              <ArrowUpRight className="size-4" />
+              <LinkIcon className="size-4" />
             </button>
           )}
 
@@ -390,7 +742,7 @@ function AdminShell() {
           >
             <Menu className="size-5" />
           </Button>
-          <span className="font-bold text-sm text-white">Slotly</span>
+          <span className="font-bold text-sm text-white">{tenantName}</span>
           <ThemeToggle />
         </div>
 
@@ -401,29 +753,6 @@ function AdminShell() {
       </div>
     </div>
   );
-}
-
-export function useBookings() {
-  return useQuery({
-    queryKey: ["bookings"],
-    queryFn: async () => {
-      const now = new Date();
-      const end = new Date(now);
-      end.setMonth(end.getMonth() + 2);
-      const { data, error } = await api.GET("/api/v1/bookings", {
-        params: {
-          query: {
-            page: 1,
-            pageSize: 100,
-            startsAfter: new Date(now.setHours(0, 0, 0, 0)).toISOString(),
-            startsBefore: end.toISOString(),
-          },
-        },
-      });
-      if (!data) throw error;
-      return data.items ?? [];
-    },
-  });
 }
 
 function status(value?: number) {
@@ -443,7 +772,9 @@ function Status({ value }: { value?: number }) {
         ? "bg-amber-400"
         : label === "Cancelled"
           ? "bg-rose-400"
-          : "bg-gray-400";
+          : label === "Completed"
+            ? "bg-blue-400"
+            : "bg-gray-400";
   return (
     <span className="inline-flex items-center gap-2 text-xs font-semibold text-white">
       <span className={cn("size-1.5 rounded-full", dot)} />
@@ -453,62 +784,83 @@ function Status({ value }: { value?: number }) {
 }
 
 /* -------------------------------------------------------------
- * DASHBOARD / SCHEDULING VIEW (Image 1)
+ * DASHBOARD / SCHEDULING VIEW
  * ------------------------------------------------------------- */
 export function DashboardPage() {
   const { session } = useAuth();
-  const userName = session?.user.displayName || "Ibrahim Benkacem";
+  const userName = session?.user.displayName || "Admin User";
   const [activeTab, setActiveTab] = useState<"event-types" | "single-use" | "polls" | "routing">("event-types");
   const [searchQuery, setSearchQuery] = useState("");
   const [getStartedOpen, setGetStartedOpen] = useState(true);
+  const [callieOpen, setCallieOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [creatingService, setCreatingService] = useState(false);
 
-  // Fetch services/event types from API
-  const services = useQuery({
-    queryKey: ["services-admin"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/services", {
-        params: { query: { page: 1, pageSize: 100, includeInactive: true } },
-      });
-      if (!data) throw error;
-      return data.items ?? [];
-    },
-  });
+  const qc = useQueryClient();
+  const tenantSettings = useTenantSettings();
+  const tenantSlug = tenantSettings.data?.slug || "northstar-health";
+
+  const services = useServices();
+  const bookings = useBookings();
+  const staff = useStaff();
+
+  // Metrics
+  const todayCount = useMemo(() => {
+    if (!bookings.data) return 0;
+    const todayStr = new Date().toDateString();
+    return bookings.data.filter((b) => new Date(b.startsAt!).toDateString() === todayStr).length;
+  }, [bookings.data]);
+
+  const upcomingCount = useMemo(() => {
+    if (!bookings.data) return 0;
+    const now = new Date();
+    return bookings.data.filter((b) => new Date(b.startsAt!) >= now && (b.status === 1 || b.status === 2)).length;
+  }, [bookings.data]);
+
+  const activeServicesCount = useMemo(() => {
+    if (!services.data) return 0;
+    return services.data.filter((s) => s.isActive).length;
+  }, [services.data]);
 
   const filteredServices = useMemo(() => {
-    if (!services.data?.length) {
-      // Default fallback demo service matching Image 1
-      return [
-        {
-          id: "demo-30m",
-          name: "30 Minute Meeting",
-          durationMinutes: 30,
-          priceAmount: 0,
-          currency: "USD",
-          bufferMinutes: 0,
-          isActive: true,
-        },
-      ];
-    }
+    if (!services.data) return [];
     return services.data.filter((s) =>
       s.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [services.data, searchQuery]);
 
-  const copyPublicLink = () => {
-    const url = `${window.location.origin}/book/northstar-health`;
+  const copyPublicLink = (serviceId?: string) => {
+    const url = serviceId
+      ? `${window.location.origin}/book/${tenantSlug}?serviceId=${serviceId}`
+      : `${window.location.origin}/book/${tenantSlug}`;
     void navigator.clipboard.writeText(url);
     toast.success("Booking link copied to clipboard!");
   };
 
+  // Delete service mutation
+  const deleteService = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.DELETE("/api/v1/services/{id}", {
+        params: { path: { id } },
+      });
+      if (!res.response.ok) throw new Error("Could not deactivate service.");
+    },
+    onSuccess: () => {
+      toast.success("Service deactivated");
+      void qc.invalidateQueries({ queryKey: ["services-admin"] });
+    },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
   return (
     <div className="space-y-6">
-      {/* Top Header Bar (Scheduling Title + Ask Callie + Manage Availability + Create - Image 1) */}
+      {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight text-white">Scheduling</h1>
           <button
             className="text-gray-400 hover:text-white"
-            title="Scheduling event types and meeting links"
+            title="Manage your event types and booking links"
           >
             <Info className="size-4" />
           </button>
@@ -523,9 +875,9 @@ export function DashboardPage() {
             <HelpCircle className="size-4" />
           </button>
 
-          {/* Ask Callie AI Button (Image 1) */}
+          {/* Ask Callie AI Button */}
           <button
-            onClick={() => toast.info("Callie AI Assistant is ready to help coordinate your meetings.")}
+            onClick={() => setCallieOpen(!callieOpen)}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/20 px-3.5 text-xs font-bold text-purple-300 hover:bg-purple-900/30 transition-colors"
           >
             <Sparkles className="size-3.5 text-purple-400" />
@@ -540,18 +892,88 @@ export function DashboardPage() {
             <span>Manage availability</span>
           </Link>
 
-          <Link
-            to="/admin/services"
+          <button
+            onClick={() => setCreatingService(true)}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-4 text-xs font-bold text-[#0B1A2C] shadow-sm hover:bg-neutral-100 transition-colors"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
-            <ChevronDown className="size-3 text-gray-500" />
-          </Link>
+          </button>
         </div>
       </div>
 
-      {/* Sub-Navigation Tabs (Event types, Single-use links, Meeting polls, Routing forms - Image 1) */}
+      {/* Stats Metric Row */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
+          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
+            <span>Today's Sessions</span>
+            <CalendarCheck className="size-4 text-[#4D9BFF]" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">{todayCount}</p>
+        </div>
+
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
+          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
+            <span>Upcoming Bookings</span>
+            <Clock className="size-4 text-emerald-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">{upcomingCount}</p>
+        </div>
+
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
+          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
+            <span>Active Event Types</span>
+            <Scissors className="size-4 text-purple-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">{activeServicesCount}</p>
+        </div>
+
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
+          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
+            <span>Team Members</span>
+            <Users className="size-4 text-amber-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">{staff.data?.length ?? 0}</p>
+        </div>
+      </div>
+
+      {/* Callie AI Drawer */}
+      {callieOpen && (
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/20 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-purple-400" />
+              <h3 className="font-bold text-sm text-purple-200">Callie AI Scheduling Assistant</h3>
+            </div>
+            <button onClick={() => setCallieOpen(false)} className="text-gray-400 hover:text-white">
+              <X className="size-4" />
+            </button>
+          </div>
+          <p className="text-xs text-purple-300">
+            I analyzed your active schedule: You have {todayCount} appointment(s) scheduled today and {upcomingCount} upcoming.
+            Your buffer times are optimized across {activeServicesCount} active service types.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                copyPublicLink();
+                toast.success("Public booking link copied to clipboard!");
+              }}
+              className="rounded-lg bg-purple-900/40 border border-purple-500/30 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-800/40"
+            >
+              Share today's availability
+            </button>
+            <Link
+              to="/admin/calendar"
+              className="rounded-lg bg-purple-900/40 border border-purple-500/30 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-800/40"
+            >
+              Open Calendar view
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Navigation Tabs */}
       <div className="border-b border-[#1C283A]">
         <div className="flex gap-6 text-sm font-semibold">
           {[
@@ -579,182 +1001,252 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Grid: Left Event Types + Right Get Started Drawer (Image 1) */}
-      <div className={cn("grid gap-8 items-start", getStartedOpen ? "xl:grid-cols-[1fr_360px]" : "grid-cols-1")}>
-        {/* Left Column */}
-        <div className="space-y-5">
-          {/* Search Bar */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search event types"
-              className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#111A28] pl-10 pr-4 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
-            />
-          </div>
+      {/* Main Tab Content */}
+      {activeTab === "event-types" && (
+        <div className={cn("grid gap-8 items-start", getStartedOpen ? "xl:grid-cols-[1fr_360px]" : "grid-cols-1")}>
+          {/* Left Column */}
+          <div className="space-y-5">
+            {/* Search Bar */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search event types"
+                className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#111A28] pl-10 pr-4 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
+              />
+            </div>
 
-          {/* User Row (Image 1) */}
-          <div className="flex items-center justify-between border-b border-[#1C283A] pb-3 pt-1">
-            <div className="flex items-center gap-3">
-              <div className="grid size-7 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
-                {userName.charAt(0)}
+            {/* User Row */}
+            <div className="flex items-center justify-between border-b border-[#1C283A] pb-3 pt-1">
+              <div className="flex items-center gap-3">
+                <div className="grid size-7 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
+                  {userName.charAt(0)}
+                </div>
+                <span className="text-sm font-bold text-white">{userName}</span>
               </div>
-              <span className="text-sm font-bold text-white">{userName}</span>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Link
-                to="/book/northstar-health"
-                target="_blank"
-                className="flex items-center gap-1 text-xs font-semibold text-[#4D9BFF] hover:underline"
-              >
-                <span>View landing page</span>
-                <ExternalLink className="size-3" />
-              </Link>
-              <button className="text-gray-400 hover:text-white">
-                <MoreVertical className="size-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Event Type Cards List (Image 1) */}
-          <div className="space-y-3">
-            {filteredServices.map((service, index) => {
-              const accentColors = ["bg-purple-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"];
-              const accentColor = accentColors[index % accentColors.length];
-
-              return (
-                <div
-                  key={service.id}
-                  className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#1C283A] bg-[#111A28] p-4 transition-all hover:border-[#27374E]"
+              <div className="flex items-center gap-3">
+                <a
+                  href={`/book/${tenantSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-xs font-semibold text-[#4D9BFF] hover:underline"
                 >
-                  {/* Left Accent Bar */}
-                  <div className={cn("absolute left-0 top-3 bottom-3 w-1 rounded-r-md", accentColor)} />
+                  <span>View landing page</span>
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            </div>
 
-                  <div className="flex items-start gap-3.5 pl-2">
-                    <input
-                      type="checkbox"
-                      className="mt-1 rounded border-[#1C283A] bg-[#0B111A] text-[#0069FF] focus:ring-0"
-                    />
-                    <div>
-                      <h3 className="text-sm font-bold text-white group-hover:text-[#4D9BFF] transition-colors">
-                        {service.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-[#8B9CB0] leading-relaxed">
-                        {service.durationMinutes} min • Google Meet • One-on-One
-                        <br />
-                        Weekdays, 09:00 - 17:00
-                      </p>
+            {/* Event Type Cards List */}
+            <div className="space-y-3">
+              {filteredServices.map((service, index) => {
+                const accentColors = ["bg-purple-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"];
+                const accentColor = accentColors[index % accentColors.length];
+
+                return (
+                  <div
+                    key={service.id}
+                    className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#1C283A] bg-[#111A28] p-4 transition-all hover:border-[#27374E]"
+                  >
+                    {/* Left Accent Bar */}
+                    <div className={cn("absolute left-0 top-3 bottom-3 w-1 rounded-r-md", accentColor)} />
+
+                    <div className="flex items-start gap-3.5 pl-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-white group-hover:text-[#4D9BFF] transition-colors">
+                            {service.name}
+                          </h3>
+                          <Badge variant={service.isActive ? "success" : "neutral"} className="text-[10px]">
+                            {service.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-[#8B9CB0] leading-relaxed">
+                          {service.durationMinutes} min • {service.priceAmount} {service.currency} • {service.bufferMinutes}m buffer
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions on Right */}
+                    <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                      <button
+                        onClick={() => copyPublicLink(service.id)}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-transparent px-3 text-xs font-semibold text-white hover:bg-white/5 transition-colors"
+                      >
+                        <LinkIcon className="size-3" />
+                        <span>Copy link</span>
+                      </button>
+
+                      <a
+                        href={`/book/${tenantSlug}?serviceId=${service.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#162234]"
+                        title="Open booking page"
+                      >
+                        <Share2 className="size-3.5" />
+                      </a>
+
+                      <button
+                        onClick={() => setEditingService(service)}
+                        className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#162234]"
+                        title="Edit event type"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Deactivate service "${service.name}"?`)) {
+                            deleteService.mutate(service.id!);
+                          }
+                        }}
+                        className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
+                        title="Deactivate event type"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
                   </div>
+                );
+              })}
 
-                  {/* Actions on Right (Copy link, Share, Menu) */}
-                  <div className="flex items-center gap-2 ml-auto sm:ml-0">
-                    <button
-                      onClick={copyPublicLink}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-transparent px-3 text-xs font-semibold text-white hover:bg-white/5 transition-colors"
-                    >
-                      <LinkIcon className="size-3" />
-                      <span>Copy link</span>
-                    </button>
+              {!filteredServices.length && (
+                <EmptyState
+                  icon={Scissors}
+                  title="No event types found"
+                  description="Create a new event type to allow clients to book appointments with you."
+                />
+              )}
+            </div>
+          </div>
 
-                    <Link
-                      to="/book/northstar-health"
-                      target="_blank"
-                      className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#162234]"
-                      title="Open booking page"
-                    >
-                      <Share2 className="size-3.5" />
-                    </Link>
+          {/* Right "Get started" Drawer */}
+          {getStartedOpen && (
+            <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
+                <h2 className="text-base font-bold text-white">Get started</h2>
+                <button
+                  onClick={() => setGetStartedOpen(false)}
+                  className="text-gray-400 hover:text-white"
+                  aria-label="Close"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
 
-                    <Link
-                      to="/admin/services"
-                      className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#162234]"
-                      title="Settings"
-                    >
-                      <MoreVertical className="size-4" />
-                    </Link>
+              <div className="space-y-4">
+                <div
+                  onClick={() => copyPublicLink()}
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer"
+                >
+                  <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
+                    <Globe className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Share your public link</p>
+                    <p className="text-[11px] text-[#8B9CB0]">Copy link for clients</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Right "Get started" Drawer (Image 1) */}
-        {getStartedOpen && (
-          <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
-              <h2 className="text-base font-bold text-white">Get started</h2>
+                <Link
+                  to="/admin/calendar"
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer"
+                >
+                  <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
+                    <Calendar className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Calendar overview</p>
+                    <p className="text-[11px] text-[#8B9CB0]">Review scheduled appointments</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/admin/schedule"
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer"
+                >
+                  <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
+                    <Clock className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Set working hours</p>
+                    <p className="text-[11px] text-[#8B9CB0]">Manage weekly availability</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/admin/staff"
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer"
+                >
+                  <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
+                    <Users className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Invite team members</p>
+                    <p className="text-[11px] text-[#8B9CB0]">Add practitioners to workspace</p>
+                  </div>
+                </Link>
+              </div>
+
               <button
                 onClick={() => setGetStartedOpen(false)}
-                className="text-gray-400 hover:text-white"
-                aria-label="Close"
+                className="w-full rounded-xl border border-white/20 py-2.5 text-xs font-bold text-white hover:bg-white/5 transition-colors"
               >
-                <X className="size-4" />
+                Hide guide
               </button>
             </div>
+          )}
+        </div>
+      )}
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer">
-                <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
-                  <Lightbulb className="size-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">Get to know Slotly</p>
-                  <p className="text-[11px] text-[#8B9CB0]">1 video</p>
-                </div>
-              </div>
+      {/* Single-use Links Tab */}
+      {activeTab === "single-use" && (
+        <SingleUseLinksSection tenantSlug={tenantSlug} services={services.data ?? []} />
+      )}
 
-              <div className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer">
-                <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
-                  <Calendar className="size-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">The perfect scheduling setup</p>
-                  <p className="text-[11px] text-[#8B9CB0]">2 tasks</p>
-                </div>
-              </div>
+      {/* Meeting Polls Tab */}
+      {activeTab === "polls" && (
+        <MeetingPollsSection tenantSlug={tenantSlug} />
+      )}
 
-              <div className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer">
-                <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
-                  <Mail className="size-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">Automate meeting prep and follow-up</p>
-                  <p className="text-[11px] text-[#8B9CB0]">2 tasks</p>
-                </div>
-              </div>
+      {/* Routing Forms Tab */}
+      {activeTab === "routing" && (
+        <RoutingFormsSection staff={staff.data ?? []} />
+      )}
 
-              <div className="flex items-start gap-3 p-2 rounded-xl hover:bg-[#162234] transition-colors cursor-pointer">
-                <div className="grid size-9 place-items-center rounded-lg bg-blue-900/40 text-[#4D9BFF] shrink-0">
-                  <Mountain className="size-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">Using Slotly with a team</p>
-                  <p className="text-[11px] text-[#8B9CB0]">2 tasks</p>
-                </div>
-              </div>
-            </div>
+      {/* Create Service Modal */}
+      {creatingService && (
+        <ServiceModal
+          onClose={() => setCreatingService(false)}
+          onSuccess={() => {
+            setCreatingService(false);
+            void qc.invalidateQueries({ queryKey: ["services-admin"] });
+          }}
+        />
+      )}
 
-            <button
-              onClick={() => setGetStartedOpen(false)}
-              className="w-full rounded-xl border border-white/20 py-2.5 text-xs font-bold text-white hover:bg-white/5 transition-colors"
-            >
-              Don't show again
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Edit Service Modal */}
+      {editingService && (
+        <ServiceModal
+          service={editingService}
+          onClose={() => setEditingService(null)}
+          onSuccess={() => {
+            setEditingService(null);
+            void qc.invalidateQueries({ queryKey: ["services-admin"] });
+          }}
+        />
+      )}
 
-      {/* Floating Chat Bubble at Bottom Right (Image 1 & 2) */}
+      {/* Floating Support Chat Trigger */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
-          onClick={() => toast.info("Slotly Assistant: Callie is standing by.")}
+          onClick={() => setCallieOpen(!callieOpen)}
           className="grid size-12 place-items-center rounded-full bg-[#0069FF] text-white shadow-2xl transition-all hover:scale-105"
-          aria-label="Support chat"
+          aria-label="Callie Assistant"
         >
           <MessageCircle className="size-5" />
         </button>
@@ -764,37 +1256,546 @@ export function DashboardPage() {
 }
 
 /* -------------------------------------------------------------
- * BOOKINGS PAGE
+ * SINGLE-USE LINKS SECTION
  * ------------------------------------------------------------- */
-export function BookingsPage() {
-  const bookings = useBookings();
-  const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "cancelled">("all");
+function SingleUseLinksSection({
+  tenantSlug,
+  services,
+}: {
+  tenantSlug: string;
+  services: Service[];
+}) {
+  const [selectedServiceId, setSelectedServiceId] = useState(services[0]?.id || "");
+  const [links, setLinks] = useState<
+    { id: string; serviceName: string; url: string; createdAt: string; status: "Active" | "Used" }[]
+  >(() => {
+    try {
+      const stored = localStorage.getItem("slotly_single_use_links");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  const filteredItems = useMemo(() => {
-    if (!bookings.data) return [];
-    if (filter === "confirmed") return bookings.data.filter((x) => x.status === 2);
-    if (filter === "pending") return bookings.data.filter((x) => x.status === 1);
-    if (filter === "cancelled") return bookings.data.filter((x) => x.status === 3);
-    return bookings.data;
-  }, [bookings.data, filter]);
+  const generateLink = () => {
+    const s = services.find((x) => x.id === selectedServiceId) || services[0];
+    if (!s) return;
+    const token = Math.random().toString(36).substring(2, 10);
+    const linkUrl = `${window.location.origin}/book/${tenantSlug}?serviceId=${s.id}&single_use=${token}`;
+    const newEntry = {
+      id: token,
+      serviceName: s.name || "Consultation",
+      url: linkUrl,
+      createdAt: new Date().toLocaleDateString(),
+      status: "Active" as const,
+    };
+    const updated = [newEntry, ...links];
+    setLinks(updated);
+    try {
+      localStorage.setItem("slotly_single_use_links", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    void navigator.clipboard.writeText(linkUrl);
+    toast.success("Single-use link generated and copied to clipboard!");
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Notetaker & Bookings</h1>
-          <p className="mt-1 text-xs text-[#8B9CB0]">
-            Review all scheduled meetings, client details, and AI summaries.
-          </p>
+      <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-4">
+        <h2 className="text-lg font-bold text-white">Generate Single-Use Booking Link</h2>
+        <p className="text-xs text-[#8B9CB0]">
+          Single-use links prevent double booking and ensure a client can only reserve one specific appointment slot.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <select
+            value={selectedServiceId}
+            onChange={(e) => setSelectedServiceId(e.target.value)}
+            className="h-10 rounded-xl border border-[#1C283A] bg-[#0B111A] px-3.5 text-xs text-white focus:border-[#0069FF] focus:outline-none"
+          >
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.durationMinutes} min - {s.priceAmount} {s.currency})
+              </option>
+            ))}
+          </select>
+
+          <Button
+            onClick={generateLink}
+            className="rounded-xl bg-[#0069FF] px-4 text-xs font-bold text-white hover:bg-[#0056D6]"
+          >
+            <Plus className="size-3.5 mr-1.5" />
+            Generate Link
+          </Button>
         </div>
       </div>
 
+      <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+        <h3 className="text-sm font-bold text-white mb-4">Active Single-Use Links</h3>
+        {links.length ? (
+          <div className="divide-y divide-[#1C283A]">
+            {links.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white text-xs">{item.serviceName}</span>
+                    <Badge variant="success" className="text-[10px]">
+                      {item.status}
+                    </Badge>
+                  </div>
+                  <p className="font-mono text-[11px] text-gray-400 truncate max-w-md mt-0.5">{item.url}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(item.url);
+                      toast.success("Link copied!");
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                  >
+                    <Copy className="size-3" />
+                    <span>Copy</span>
+                  </button>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                  >
+                    <ExternalLink className="size-3" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-[#8B9CB0]">No single-use links created yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------
+ * MEETING POLLS SECTION
+ * ------------------------------------------------------------- */
+function MeetingPollsSection({ tenantSlug }: { tenantSlug: string }) {
+  const [polls, setPolls] = useState<
+    { id: string; title: string; duration: number; optionsCount: number; votes: number }[]
+  >(() => {
+    try {
+      const stored = localStorage.getItem("slotly_meeting_polls");
+      return stored
+        ? JSON.parse(stored)
+        : [
+            {
+              id: "poll-1",
+              title: "Clinical Staff Alignment Meeting",
+              duration: 45,
+              optionsCount: 3,
+              votes: 2,
+            },
+          ];
+    } catch {
+      return [];
+    }
+  });
+
+  const [title, setTitle] = useState("");
+  const [duration, setDuration] = useState(30);
+
+  const createPoll = () => {
+    if (!title.trim()) {
+      toast.error("Please enter a poll title.");
+      return;
+    }
+    const newPoll = {
+      id: `poll-${Date.now()}`,
+      title: title.trim(),
+      duration,
+      optionsCount: 3,
+      votes: 0,
+    };
+    const updated = [newPoll, ...polls];
+    setPolls(updated);
+    try {
+      localStorage.setItem("slotly_meeting_polls", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    setTitle("");
+    toast.success("Meeting poll created successfully!");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-4">
+        <h2 className="text-lg font-bold text-white">Create a Meeting Poll</h2>
+        <p className="text-xs text-[#8B9CB0]">
+          Poll invitees on preferred dates and times. The slot with the most votes can automatically be booked.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Quarterly Team Planning"
+            className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-sm"
+          />
+
+          <select
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className="h-10 rounded-xl border border-[#1C283A] bg-[#0B111A] px-3.5 text-xs text-white"
+          >
+            <option value={15}>15 minutes</option>
+            <option value={30}>30 minutes</option>
+            <option value={45}>45 minutes</option>
+            <option value={60}>60 minutes</option>
+          </select>
+
+          <Button
+            onClick={createPoll}
+            className="rounded-xl bg-[#0069FF] px-4 text-xs font-bold text-white hover:bg-[#0056D6]"
+          >
+            <Plus className="size-3.5 mr-1.5" />
+            Create Poll
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+        <h3 className="text-sm font-bold text-white mb-4">Active Meeting Polls</h3>
+        {polls.length ? (
+          <div className="divide-y divide-[#1C283A]">
+            {polls.map((poll) => (
+              <div key={poll.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+                <div>
+                  <h4 className="font-semibold text-white text-xs">{poll.title}</h4>
+                  <p className="text-[11px] text-[#8B9CB0] mt-0.5">
+                    {poll.duration} min • {poll.optionsCount} time slots • {poll.votes} votes received
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}?poll=${poll.id}`);
+                      toast.success("Poll link copied to clipboard!");
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                  >
+                    <Copy className="size-3" />
+                    <span>Share Poll</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-[#8B9CB0]">No polls created yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------
+ * ROUTING FORMS SECTION
+ * ------------------------------------------------------------- */
+function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
+  const [ruleType, setRuleType] = useState<"round-robin" | "specialty">("round-robin");
+  const [enabled, setEnabled] = useState(true);
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Intelligent Booking Routing</h2>
+            <p className="text-xs text-[#8B9CB0] mt-1">
+              Automatically distribute client appointments across your team members.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEnabled(!enabled);
+              toast.success(`Routing ${!enabled ? "enabled" : "disabled"}`);
+            }}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-bold transition-colors",
+              enabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" : "bg-gray-800 text-gray-400"
+            )}
+          >
+            {enabled ? "Active" : "Disabled"}
+          </button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 pt-2">
+          <div
+            onClick={() => setRuleType("round-robin")}
+            className={cn(
+              "cursor-pointer rounded-xl border p-4 transition-all",
+              ruleType === "round-robin"
+                ? "border-[#0069FF] bg-[#0069FF]/10 text-white"
+                : "border-[#1C283A] bg-[#0B111A] text-gray-400 hover:border-gray-600"
+            )}
+          >
+            <h4 className="font-bold text-xs">Round-Robin Assignment</h4>
+            <p className="text-[11px] mt-1 opacity-80">
+              Evenly balances appointment distribution across all available staff members on duty.
+            </p>
+          </div>
+
+          <div
+            onClick={() => setRuleType("specialty")}
+            className={cn(
+              "cursor-pointer rounded-xl border p-4 transition-all",
+              ruleType === "specialty"
+                ? "border-[#0069FF] bg-[#0069FF]/10 text-white"
+                : "border-[#1C283A] bg-[#0B111A] text-gray-400 hover:border-gray-600"
+            )}
+          >
+            <h4 className="font-bold text-xs">Practitioner Specialty Matching</h4>
+            <p className="text-[11px] mt-1 opacity-80">
+              Routes client bookings based on requested medical service discipline.
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t border-[#1C283A] pt-4">
+          <h4 className="text-xs font-bold text-white mb-2">Team Members Participating ({staff.length})</h4>
+          <div className="flex flex-wrap gap-2">
+            {staff.map((s) => (
+              <span
+                key={s.id}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#1C283A] bg-[#0B111A] px-2.5 py-1 text-xs text-white"
+              >
+                <span className="size-1.5 rounded-full bg-emerald-400" />
+                {s.displayName}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------
+ * SERVICE CREATE/EDIT MODAL
+ * ------------------------------------------------------------- */
+function ServiceModal({
+  service,
+  onClose,
+  onSuccess,
+}: {
+  service?: Service;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const schema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters."),
+    durationMinutes: z.number().min(5, "Minimum duration is 5 minutes."),
+    priceAmount: z.number().min(0),
+    currency: z.string().length(3),
+    bufferMinutes: z.number().min(0),
+  });
+
+  type ServiceForm = z.infer<typeof schema>;
+
+  const form = useForm<ServiceForm>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: service?.name || "",
+      durationMinutes: service?.durationMinutes || 30,
+      priceAmount: service?.priceAmount || 0,
+      currency: service?.currency || "MAD",
+      bufferMinutes: service?.bufferMinutes || 0,
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (v: ServiceForm) => {
+      if (service?.id) {
+        const res = await api.PUT("/api/v1/services/{id}", {
+          params: { path: { id: service.id } },
+          body: v,
+        });
+        if (!res.response.ok) throw new Error("Could not update service.");
+        return res.data;
+      } else {
+        const res = await api.POST("/api/v1/services", { body: v });
+        if (!res.response.ok) throw new Error("Could not create service.");
+        return res.data;
+      }
+    },
+    onSuccess: () => {
+      toast.success(service ? "Service updated" : "Service created");
+      onSuccess();
+    },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 shadow-2xl space-y-5">
+        <div className="flex items-center justify-between border-b border-[#1C283A] pb-3">
+          <h2 className="text-lg font-bold text-white">
+            {service ? "Edit Event Type" : "New Event Type"}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <form
+          className="space-y-4"
+          onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-xs text-[#8B9CB0]">Service Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g. Physiotherapy Consultation"
+              className="bg-[#0B111A] border-[#1C283A] text-white"
+              {...form.register("name")}
+            />
+            <FieldError error={form.formState.errors.name} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="durationMinutes" className="text-xs text-[#8B9CB0]">Duration (minutes)</Label>
+              <Input
+                id="durationMinutes"
+                type="number"
+                className="bg-[#0B111A] border-[#1C283A] text-white"
+                {...form.register("durationMinutes", { valueAsNumber: true })}
+              />
+              <FieldError error={form.formState.errors.durationMinutes} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="bufferMinutes" className="text-xs text-[#8B9CB0]">Buffer (minutes)</Label>
+              <Input
+                id="bufferMinutes"
+                type="number"
+                className="bg-[#0B111A] border-[#1C283A] text-white"
+                {...form.register("bufferMinutes", { valueAsNumber: true })}
+              />
+              <FieldError error={form.formState.errors.bufferMinutes} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="priceAmount" className="text-xs text-[#8B9CB0]">Price</Label>
+              <Input
+                id="priceAmount"
+                type="number"
+                className="bg-[#0B111A] border-[#1C283A] text-white"
+                {...form.register("priceAmount", { valueAsNumber: true })}
+              />
+              <FieldError error={form.formState.errors.priceAmount} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="currency" className="text-xs text-[#8B9CB0]">Currency</Label>
+              <Input
+                id="currency"
+                maxLength={3}
+                className="bg-[#0B111A] border-[#1C283A] text-white uppercase"
+                {...form.register("currency")}
+              />
+              <FieldError error={form.formState.errors.currency} />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-[#1C283A]">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-[#1C283A] text-white hover:bg-[#162234]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="bg-[#0069FF] text-white hover:bg-[#0056D6]"
+            >
+              {mutation.isPending ? "Saving…" : service ? "Save Changes" : "Create Event Type"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------
+ * BOOKINGS PAGE ("Notetaker & Bookings")
+ * ------------------------------------------------------------- */
+export function BookingsPage() {
+  const bookings = useBookings();
+  const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "completed" | "cancelled">("all");
+  const [search, setSearch] = useState("");
+
+  const filteredItems = useMemo(() => {
+    if (!bookings.data) return [];
+    let items = bookings.data;
+    if (filter === "confirmed") items = items.filter((x) => x.status === 2);
+    if (filter === "pending") items = items.filter((x) => x.status === 1);
+    if (filter === "completed") items = items.filter((x) => x.status === 4);
+    if (filter === "cancelled") items = items.filter((x) => x.status === 3);
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter(
+        (b) =>
+          b.customerName?.toLowerCase().includes(q) ||
+          b.customerEmail?.toLowerCase().includes(q) ||
+          b.serviceName?.toLowerCase().includes(q) ||
+          b.staffName?.toLowerCase().includes(q) ||
+          b.id?.toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [bookings.data, filter, search]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Notetaker & Scheduled Events</h1>
+          <p className="mt-1 text-xs text-[#8B9CB0]">
+            Review all scheduled meetings, client details, consultation notes, and appointment status.
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-gray-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by client or service"
+            className="h-9 w-full rounded-xl border border-[#1C283A] bg-[#111A28] pl-9 pr-3 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
       <div className="flex gap-2 border-b border-[#1C283A] pb-3">
         {(
           [
             ["all", "All bookings"],
             ["confirmed", "Confirmed"],
             ["pending", "Pending"],
+            ["completed", "Completed"],
             ["cancelled", "Cancelled"],
           ] as const
         ).map(([key, label]) => (
@@ -822,7 +1823,7 @@ export function BookingsPage() {
           <EmptyState
             icon={Clock}
             title="No bookings match your filter"
-            description="Appointments matching your current filter will show here."
+            description="Appointments matching your criteria will appear here."
           />
         )}
       </div>
@@ -832,20 +1833,26 @@ export function BookingsPage() {
 
 function BookingRows({ items }: { items: Booking[] }) {
   const qc = useQueryClient();
+  const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
+  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [notetakerBooking, setNotetakerBooking] = useState<Booking | null>(null);
+
   const updateStatus = useMutation({
     mutationFn: async ({
       booking,
       action,
+      reason,
     }: {
       booking: Booking;
       action: "cancel" | "complete" | "no-show";
+      reason?: string;
     }) => {
       const params = { path: { id: booking.id! } };
       const body =
         action === "cancel"
           ? {
               version: booking.version,
-              reason: "Cancelled by tenant administrator",
+              reason: reason || "Cancelled by tenant administrator",
             }
           : { version: booking.version };
       const result =
@@ -859,100 +1866,362 @@ function BookingRows({ items }: { items: Booking[] }) {
     },
     onSuccess: () => {
       toast.success("Booking updated");
+      setCancellingBooking(null);
       void qc.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error) => toast.error(apiMessage(error)),
   });
 
   return (
-    <div className="divide-y divide-[#1C283A]">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3.5 text-sm sm:flex-nowrap"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-white">Appointment</span>
-              <span className="font-mono text-[11px] text-[#8B9CB0]">
-                #{item.id?.slice(0, 8)}
-              </span>
+    <>
+      <div className="divide-y divide-[#1C283A]">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 text-sm sm:flex-nowrap hover:bg-[#162234]/30 px-2 rounded-xl transition-colors"
+          >
+            {/* Client avatar & info */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white">
+                  {item.customerName || `Client #${item.customerId?.slice(0, 8)}`}
+                </span>
+                {item.customerEmail && (
+                  <span className="text-xs text-[#8B9CB0]">({item.customerEmail})</span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-[#8B9CB0]">
+                <span className="text-white font-medium">{item.serviceName || "Consultation"}</span>
+                {item.staffName && <span> • Practitioner: {item.staffName}</span>}
+                <span> • </span>
+                <span className="tabular-nums">
+                  {new Date(item.startsAt!).toLocaleString([], {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </p>
             </div>
-            <p className="mt-0.5 text-xs text-[#8B9CB0] tabular-nums">
-              {new Date(item.startsAt!).toLocaleString([], {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-          <span className="shrink-0 font-mono text-xs text-[#8B9CB0]">
-            Staff: {item.staffId?.slice(0, 8)}
-          </span>
-          <div className="shrink-0">
-            <Status value={item.status} />
-          </div>
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
-            {item.status === 2 && (
-              <>
+
+            {/* Status */}
+            <div className="shrink-0">
+              <Status value={item.status} />
+            </div>
+
+            {/* Action buttons */}
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
+              {/* Notetaker button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-[#4D9BFF] hover:bg-[#0069FF]/10"
+                onClick={() => setNotetakerBooking(item)}
+                title="View/Add Meeting Notes"
+              >
+                <Mic className="size-3.5 mr-1" />
+                Notes
+              </Button>
+
+              {/* Reschedule button for pending/confirmed */}
+              {(item.status === 1 || item.status === 2) && (
                 <Button
                   size="sm"
                   variant="outline"
                   className="border-[#1C283A] text-white hover:bg-[#162234]"
-                  onClick={() =>
-                    updateStatus.mutate({ booking: item, action: "complete" })
-                  }
+                  onClick={() => setReschedulingBooking(item)}
                 >
-                  Complete
+                  Reschedule
                 </Button>
+              )}
+
+              {/* Complete / No-show for confirmed */}
+              {item.status === 2 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/30"
+                    onClick={() => updateStatus.mutate({ booking: item, action: "complete" })}
+                  >
+                    Complete
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-gray-400 hover:text-white"
+                    onClick={() => updateStatus.mutate({ booking: item, action: "no-show" })}
+                  >
+                    No show
+                  </Button>
+                </>
+              )}
+
+              {/* Cancel button */}
+              {(item.status === 1 || item.status === 2) && (
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-gray-400 hover:text-white"
-                  onClick={() =>
-                    updateStatus.mutate({ booking: item, action: "no-show" })
-                  }
+                  className="text-red-400 hover:bg-red-950/20 hover:text-red-300"
+                  onClick={() => setCancellingBooking(item)}
                 >
-                  No show
+                  Cancel
                 </Button>
-              </>
-            )}
-            {(item.status === 1 || item.status === 2) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-400 hover:bg-red-950/20 hover:text-red-300"
-                onClick={() =>
-                  updateStatus.mutate({ booking: item, action: "cancel" })
-                }
-              >
-                Cancel
-              </Button>
-            )}
+              )}
+            </div>
           </div>
+        ))}
+      </div>
+
+      {/* Reschedule Modal */}
+      {reschedulingBooking && (
+        <RescheduleModal
+          booking={reschedulingBooking}
+          onClose={() => setReschedulingBooking(null)}
+          onSuccess={() => {
+            setReschedulingBooking(null);
+            void qc.invalidateQueries({ queryKey: ["bookings"] });
+          }}
+        />
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {cancellingBooking && (
+        <CancelModal
+          booking={cancellingBooking}
+          onClose={() => setCancellingBooking(null)}
+          onConfirm={(reason) =>
+            updateStatus.mutate({ booking: cancellingBooking, action: "cancel", reason })
+          }
+          isPending={updateStatus.isPending}
+        />
+      )}
+
+      {/* Notetaker Notes Modal */}
+      {notetakerBooking && (
+        <NotetakerModal
+          booking={notetakerBooking}
+          onClose={() => setNotetakerBooking(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function RescheduleModal({
+  booking,
+  onClose,
+  onSuccess,
+}: {
+  booking: Booking;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const currentIso = new Date(booking.startsAt!).toISOString().slice(0, 16);
+  const [newDateTime, setNewDateTime] = useState(currentIso);
+
+  const rescheduleMutation = useMutation({
+    mutationFn: async () => {
+      const startsAt = new Date(newDateTime).toISOString();
+      const res = await api.POST("/api/v1/bookings/{id}/reschedule", {
+        params: { path: { id: booking.id! } },
+        body: {
+          version: booking.version,
+          startsAt,
+        },
+      });
+      if (!res.response.ok) throw new Error("Could not reschedule appointment.");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Appointment successfully rescheduled");
+      onSuccess();
+    },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#1C283A] pb-3">
+          <h3 className="font-bold text-white text-base">Reschedule Appointment</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="size-4" />
+          </button>
         </div>
-      ))}
+
+        <p className="text-xs text-[#8B9CB0]">
+          Moving appointment for <span className="font-semibold text-white">{booking.customerName || "Client"}</span> ({booking.serviceName}).
+        </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="rescheduleTime" className="text-xs text-white">Select New Date & Time</Label>
+          <Input
+            id="rescheduleTime"
+            type="datetime-local"
+            value={newDateTime}
+            onChange={(e) => setNewDateTime(e.target.value)}
+            className="bg-[#0B111A] border-[#1C283A] text-white"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-3 border-t border-[#1C283A]">
+          <Button variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => rescheduleMutation.mutate()}
+            disabled={rescheduleMutation.isPending}
+            className="bg-[#0069FF] text-white hover:bg-[#0056D6]"
+          >
+            {rescheduleMutation.isPending ? "Rescheduling…" : "Confirm Reschedule"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CancelModal({
+  booking,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  booking: Booking;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isPending: boolean;
+}) {
+  const [reason, setReason] = useState("Client requested cancellation");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#1C283A] pb-3">
+          <h3 className="font-bold text-white text-base">Cancel Appointment</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <p className="text-xs text-[#8B9CB0]">
+          Are you sure you want to cancel the appointment for{" "}
+          <span className="font-semibold text-white">{booking.customerName || "this client"}</span>?
+        </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="cancelReason" className="text-xs text-white">Cancellation Reason</Label>
+          <Input
+            id="cancelReason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="bg-[#0B111A] border-[#1C283A] text-white"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-3 border-t border-[#1C283A]">
+          <Button variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
+            Back
+          </Button>
+          <Button
+            onClick={() => onConfirm(reason)}
+            disabled={isPending}
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            {isPending ? "Cancelling…" : "Confirm Cancellation"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotetakerModal({
+  booking,
+  onClose,
+}: {
+  booking: Booking;
+  onClose: () => void;
+}) {
+  const noteKey = `slotly_notes_${booking.id}`;
+  const [notes, setNotes] = useState(() => {
+    try {
+      return localStorage.getItem(noteKey) || "";
+    } catch {
+      return "";
+    }
+  });
+
+  const saveNotes = () => {
+    try {
+      localStorage.setItem(noteKey, notes);
+      toast.success("Meeting notes saved!");
+    } catch {
+      // ignore
+    }
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#1C283A] pb-3">
+          <div className="flex items-center gap-2">
+            <Mic className="size-4 text-[#4D9BFF]" />
+            <h3 className="font-bold text-white text-base">Notetaker & Consultation Notes</h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3 text-xs space-y-1">
+          <p className="text-white font-semibold">
+            {booking.customerName || "Client"} • {booking.serviceName || "Session"}
+          </p>
+          <p className="text-[#8B9CB0]">
+            {new Date(booking.startsAt!).toLocaleString()} • Practitioner: {booking.staffName || "Staff"}
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="sessionNotes" className="text-xs text-white">Private Clinical / Meeting Notes</Label>
+          <textarea
+            id="sessionNotes"
+            rows={6}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Type meeting discussion notes, treatment observations, diagnosis, or follow-up instructions here..."
+            className="w-full rounded-xl border border-[#1C283A] bg-[#0B111A] p-3 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-3 border-t border-[#1C283A]">
+          <Button variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
+            Close
+          </Button>
+          <Button onClick={saveNotes} className="bg-[#0069FF] text-white hover:bg-[#0056D6]">
+            Save Notes
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
 /* -------------------------------------------------------------
- * SERVICES PAGE
+ * SERVICES PAGE ("Event Types & Services")
  * ------------------------------------------------------------- */
 export function ServicesPage() {
   const qc = useQueryClient();
-  const services = useQuery({
-    queryKey: ["services-admin"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/services", {
-        params: { query: { page: 1, pageSize: 100, includeInactive: true } },
-      });
-      if (!data) throw error;
-      return data.items ?? [];
-    },
-  });
+  const services = useServices();
+  const tenantSettings = useTenantSettings();
+  const tenantSlug = tenantSettings.data?.slug || "northstar-health";
+  const [editingService, setEditingService] = useState<Service | null>(null);
+
   const schema = z.object({
     name: z.string().min(2, "Service name required"),
     durationMinutes: z.number().min(5),
@@ -961,6 +2230,7 @@ export function ServicesPage() {
     bufferMinutes: z.number().min(0),
   });
   type Form = z.infer<typeof schema>;
+
   const form = useForm<Form>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -971,6 +2241,7 @@ export function ServicesPage() {
       bufferMinutes: 0,
     },
   });
+
   const create = useMutation({
     mutationFn: async (v: Form) => {
       const { data, error } = await api.POST("/api/v1/services", { body: v });
@@ -985,12 +2256,26 @@ export function ServicesPage() {
     onError: (e) => toast.error(apiMessage(e)),
   });
 
+  const deleteService = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.DELETE("/api/v1/services/{id}", {
+        params: { path: { id } },
+      });
+      if (!res.response.ok) throw new Error("Could not deactivate service.");
+    },
+    onSuccess: () => {
+      toast.success("Service deactivated");
+      void qc.invalidateQueries({ queryKey: ["services-admin"] });
+    },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
         <p className="mt-1 text-xs text-[#8B9CB0]">
-          Configure durations, pricing, buffer times, and public booking settings.
+          Configure appointment lengths, pricing, buffers, and public booking settings.
         </p>
       </div>
 
@@ -1001,18 +2286,53 @@ export function ServicesPage() {
               {services.data.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between py-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4"
                 >
                   <div>
-                    <p className="font-semibold text-white">{s.name}</p>
-                    <p className="text-xs text-[#8B9CB0] tabular-nums">
-                      {s.durationMinutes} min · {s.priceAmount} {s.currency} ·{" "}
-                      {s.bufferMinutes} min buffer
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-white">{s.name}</p>
+                      <Badge variant={s.isActive ? "success" : "neutral"} className="text-[10px]">
+                        {s.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-[#8B9CB0] tabular-nums mt-0.5">
+                      {s.durationMinutes} min · {s.priceAmount} {s.currency} · {s.bufferMinutes} min buffer
                     </p>
                   </div>
-                  <Badge variant={s.isActive ? "success" : "neutral"}>
-                    {s.isActive ? "Active" : "Inactive"}
-                  </Badge>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}?serviceId=${s.id}`);
+                        toast.success("Service booking link copied!");
+                      }}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-2.5 py-1 text-xs text-white hover:bg-[#162234]"
+                      title="Copy Link"
+                    >
+                      <Copy className="size-3" />
+                      <span>Link</span>
+                    </button>
+
+                    <button
+                      onClick={() => setEditingService(s)}
+                      className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#162234]"
+                      title="Edit"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (confirm(`Deactivate "${s.name}"?`)) {
+                          deleteService.mutate(s.id!);
+                        }
+                      }}
+                      className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
+                      title="Deactivate"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1039,84 +2359,284 @@ export function ServicesPage() {
           pending={create.isPending}
         />
       </div>
+
+      {editingService && (
+        <ServiceModal
+          service={editingService}
+          onClose={() => setEditingService(null)}
+          onSuccess={() => {
+            setEditingService(null);
+            void qc.invalidateQueries({ queryKey: ["services-admin"] });
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /* -------------------------------------------------------------
- * STAFF PAGE
+ * STAFF PAGE ("Contacts & Team")
  * ------------------------------------------------------------- */
 export function StaffPage() {
   const qc = useQueryClient();
-  const staff = useQuery({
-    queryKey: ["staff-admin"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/staff", {
-        params: { query: { page: 1, pageSize: 100, includeInactive: true } },
+  const staff = useStaff();
+  const bookings = useBookings();
+  const [subTab, setSubTab] = useState<"staff" | "clients">("staff");
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
+  // Deactivate staff
+  const deleteStaff = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.DELETE("/api/v1/staff/{id}", {
+        params: { path: { id } },
       });
-      if (!data) throw error;
-      return data.items ?? [];
+      if (!res.response.ok) throw new Error("Could not deactivate staff member.");
     },
-  });
-  const schema = z.object({
-    displayName: z.string().min(2, "Name required"),
-    email: z.email("Valid email required"),
-  });
-  type Form = z.infer<typeof schema>;
-  const form = useForm<Form>({
-    resolver: zodResolver(schema),
-    defaultValues: { displayName: "", email: "" },
-  });
-  const create = useMutation({
-    mutationFn: async (v: Form) => {
-      const { data, error } = await api.POST("/api/v1/staff", { body: v });
-      if (!data) throw error;
-      return data;
-    },
-    onSuccess() {
-      toast.success("Team member added");
-      form.reset();
+    onSuccess: () => {
+      toast.success("Staff profile deactivated");
       void qc.invalidateQueries({ queryKey: ["staff-admin"] });
     },
+    onError: (e) => toast.error(apiMessage(e)),
   });
+
+  // Aggregate unique client contacts from bookings
+  const clientContacts = useMemo(() => {
+    if (!bookings.data) return [];
+    const map = new Map<string, { id: string; name: string; email: string; phone?: string; totalBookings: number; lastBooking: string }>();
+    for (const b of bookings.data) {
+      const email = b.customerEmail || b.customerId || "unknown";
+      const existing = map.get(email);
+      if (existing) {
+        existing.totalBookings += 1;
+        if (new Date(b.startsAt!) > new Date(existing.lastBooking)) {
+          existing.lastBooking = b.startsAt!;
+        }
+      } else {
+        map.set(email, {
+          id: b.customerId || b.id || "",
+          name: b.customerName || "Client",
+          email: b.customerEmail || "",
+          phone: b.customerPhone || "",
+          totalBookings: 1,
+          lastBooking: b.startsAt || new Date().toISOString(),
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [bookings.data]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Contacts & Team</h1>
-        <p className="mt-1 text-xs text-[#8B9CB0]">
-          Manage practitioners and team members clients can book with.
-        </p>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
-          {staff.data?.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-4 border-b border-[#1C283A] py-4 last:border-0"
-            >
-              <div className="grid size-10 place-items-center rounded-full bg-[#0069FF]/20 font-bold text-sm text-[#4D9BFF]">
-                {p.displayName?.slice(0, 1)}
-              </div>
-              <div>
-                <p className="font-semibold text-white">{p.displayName}</p>
-                <p className="text-xs text-[#8B9CB0]">{p.email}</p>
-              </div>
-            </div>
-          ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Contacts & Team</h1>
+          <p className="mt-1 text-xs text-[#8B9CB0]">
+            Manage practitioners clients can book with and view your customer contact directory.
+          </p>
         </div>
 
-        <QuickForm
-          title="Add team member"
-          form={form}
-          fields={[
-            ["displayName", "Full name"],
-            ["email", "Email address"],
-          ]}
-          onSubmit={(v) => create.mutate(v)}
-          pending={create.isPending}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setInviteModalOpen(true)}
+            className="rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6] text-xs font-bold"
+          >
+            <Plus className="size-3.5 mr-1.5" />
+            Invite Team Member
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 border-b border-[#1C283A] text-xs font-bold">
+        <button
+          onClick={() => setSubTab("staff")}
+          className={cn(
+            "pb-3 relative transition-colors",
+            subTab === "staff" ? "text-white" : "text-gray-400 hover:text-white"
+          )}
+        >
+          Practitioners & Staff ({staff.data?.length ?? 0})
+          {subTab === "staff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+        </button>
+
+        <button
+          onClick={() => setSubTab("clients")}
+          className={cn(
+            "pb-3 relative transition-colors",
+            subTab === "clients" ? "text-white" : "text-gray-400 hover:text-white"
+          )}
+        >
+          Client Contacts ({clientContacts.length})
+          {subTab === "clients" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+        </button>
+      </div>
+
+      {subTab === "staff" ? (
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+          <div className="divide-y divide-[#1C283A]">
+            {staff.data?.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="grid size-10 place-items-center rounded-full bg-[#0069FF]/20 font-bold text-sm text-[#4D9BFF]">
+                    {p.displayName?.slice(0, 1)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-white">{p.displayName}</p>
+                      <Badge variant={p.isActive ? "success" : "neutral"} className="text-[10px]">
+                        {p.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-[#8B9CB0]">{p.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/admin/schedule"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                  >
+                    <Clock className="size-3" />
+                    <span>Schedule</span>
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      if (confirm(`Deactivate staff member "${p.displayName}"?`)) {
+                        deleteStaff.mutate(p.id!);
+                      }
+                    }}
+                    className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
+                    title="Deactivate staff"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+          {clientContacts.length ? (
+            <div className="divide-y divide-[#1C283A]">
+              {clientContacts.map((c, i) => (
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5">
+                  <div className="flex items-center gap-3.5">
+                    <div className="grid size-9 place-items-center rounded-full bg-purple-500/20 text-purple-300 font-bold text-xs">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white text-xs">{c.name}</p>
+                      <p className="text-[11px] text-[#8B9CB0]">
+                        {c.email} {c.phone && `• ${c.phone}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs text-[#8B9CB0]">
+                    <span>{c.totalBookings} appointment(s)</span>
+                    <span className="tabular-nums">Last: {new Date(c.lastBooking).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Users}
+              title="No client contacts recorded yet"
+              description="Clients who book appointments will automatically show up in this directory."
+            />
+          )}
+        </div>
+      )}
+
+      {inviteModalOpen && (
+        <InviteStaffModal
+          onClose={() => setInviteModalOpen(false)}
+          onSuccess={() => {
+            setInviteModalOpen(false);
+            void qc.invalidateQueries({ queryKey: ["staff-admin"] });
+          }}
         />
+      )}
+    </div>
+  );
+}
+
+function InviteStaffModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const schema = z.object({
+    displayName: z.string().min(2, "Full name required."),
+    email: z.email("Valid email required."),
+    password: z.string().min(8, "Temporary password must be at least 8 characters."),
+  });
+  type Form = z.infer<typeof schema>;
+
+  const form = useForm<Form>({
+    resolver: zodResolver(schema),
+    defaultValues: { displayName: "", email: "", password: "Password123!" },
+  });
+
+  const invite = useMutation({
+    mutationFn: async (v: Form) => {
+      const res = await api.POST("/api/v1/auth/invite-staff", { body: v });
+      if (!res.response.ok) throw new Error("Could not invite staff member.");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Team member invited successfully");
+      onSuccess();
+    },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#1C283A] pb-3">
+          <h3 className="font-bold text-white text-base">Invite Practitioner / Team Member</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <form className="space-y-3.5" onSubmit={form.handleSubmit((v) => invite.mutate(v))}>
+          <div className="space-y-1.5">
+            <Label htmlFor="displayName" className="text-xs text-[#8B9CB0]">Full Name</Label>
+            <Input id="displayName" placeholder="Dr. Sarah Johnson" className="bg-[#0B111A] border-[#1C283A] text-white" {...form.register("displayName")} />
+            <FieldError error={form.formState.errors.displayName} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="staffEmail" className="text-xs text-[#8B9CB0]">Work Email</Label>
+            <Input id="staffEmail" type="email" placeholder="sarah@example.com" className="bg-[#0B111A] border-[#1C283A] text-white" {...form.register("email")} />
+            <FieldError error={form.formState.errors.email} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="tempPassword" className="text-xs text-[#8B9CB0]">Initial Temporary Password</Label>
+            <Input id="tempPassword" type="password" className="bg-[#0B111A] border-[#1C283A] text-white" {...form.register("password")} />
+            <FieldError error={form.formState.errors.password} />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-[#1C283A]">
+            <Button type="button" variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={invite.isPending} className="bg-[#0069FF] text-white hover:bg-[#0056D6]">
+              {invite.isPending ? "Inviting…" : "Send Invitation"}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -1127,17 +2647,9 @@ export function StaffPage() {
  * ------------------------------------------------------------- */
 export function SchedulePage() {
   const qc = useQueryClient();
-  const staff = useQuery({
-    queryKey: ["schedule-staff"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/staff", {
-        params: { query: { page: 1, pageSize: 100 } },
-      });
-      if (!data) throw error;
-      return data.items ?? [];
-    },
-  });
+  const staff = useStaff();
   const [selectedStaffId, setStaffId] = useState<string>("");
+  const [scheduleTab, setScheduleTab] = useState<"hours" | "timeoff" | "automations">("hours");
 
   useEffect(() => {
     if (staff.data?.length && !selectedStaffId) {
@@ -1217,9 +2729,10 @@ export function SchedulePage() {
       return data;
     },
     onSuccess() {
-      toast.success("Hours added");
-      void qc.invalidateQueries({ queryKey: ["working-hours", selectedStaffId] });
+      toast.success("Working hours added");
+      void qc.invalidateQueries({ queryKey: ["hours", selectedStaffId] });
     },
+    onError: (e) => toast.error(apiMessage(e)),
   });
 
   const addTimeOff = useMutation({
@@ -1246,6 +2759,7 @@ export function SchedulePage() {
       toast.success("Time off registered");
       void qc.invalidateQueries({ queryKey: ["time-off", selectedStaffId] });
     },
+    onError: (e) => toast.error(apiMessage(e)),
   });
 
   const remove = useMutation({
@@ -1271,184 +2785,285 @@ export function SchedulePage() {
       toast.success("Removed");
       void qc.invalidateQueries({
         queryKey: [
-          variables.kind === "hours" ? "working-hours" : "time-off",
+          variables.kind === "hours" ? "hours" : "time-off",
           selectedStaffId,
         ],
       });
     },
+    onError: (e) => toast.error(apiMessage(e)),
   });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Availability & Working Hours</h1>
-        <p className="mt-1 text-xs text-[#8B9CB0]">
-          Set recurring schedules and blackout dates per team member.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Availability & Working Hours</h1>
+          <p className="mt-1 text-xs text-[#8B9CB0]">
+            Set recurring schedules, blackout dates, and automated notification rules per practitioner.
+          </p>
+        </div>
+
+        {/* Staff Selector */}
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-[#8B9CB0]">Practitioner:</Label>
+          <select
+            value={selectedStaffId}
+            onChange={(e) => setStaffId(e.target.value)}
+            className="h-10 rounded-xl border border-[#1C283A] bg-[#111A28] px-3.5 text-xs text-white"
+          >
+            {staff.data?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="max-w-sm">
-        <Label htmlFor="schedule-staff" className="text-xs text-[#8B9CB0]">Select team member</Label>
-        <select
-          id="schedule-staff"
-          className="mt-1.5 h-11 w-full rounded-xl border border-[#1C283A] bg-[#111A28] px-3 text-sm text-white"
-          value={selectedStaffId}
-          onChange={(event) => setStaffId(event.target.value)}
+      {/* Tabs */}
+      <div className="flex gap-4 border-b border-[#1C283A] text-xs font-bold">
+        <button
+          onClick={() => setScheduleTab("hours")}
+          className={cn(
+            "pb-3 relative transition-colors",
+            scheduleTab === "hours" ? "text-white" : "text-gray-400 hover:text-white"
+          )}
         >
-          {staff.data?.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.displayName}
-            </option>
-          ))}
-        </select>
+          Weekly Working Hours
+          {scheduleTab === "hours" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+        </button>
+
+        <button
+          onClick={() => setScheduleTab("timeoff")}
+          className={cn(
+            "pb-3 relative transition-colors",
+            scheduleTab === "timeoff" ? "text-white" : "text-gray-400 hover:text-white"
+          )}
+        >
+          Time Off & Blackouts ({timeOff.data?.length ?? 0})
+          {scheduleTab === "timeoff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+        </button>
+
+        <button
+          onClick={() => setScheduleTab("automations")}
+          className={cn(
+            "pb-3 relative transition-colors",
+            scheduleTab === "automations" ? "text-white" : "text-gray-400 hover:text-white"
+          )}
+        >
+          Automated Reminders
+          {scheduleTab === "automations" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+        </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
-          <h2 className="text-base font-bold text-white mb-4">Weekly working hours</h2>
-          <div className="divide-y divide-[#1C283A]">
-            {hours.data?.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between py-3 text-sm"
-              >
-                <span className="tabular-nums">
-                  <strong className="text-white">
-                    {dayNames[entry.dayOfWeek ?? 0]}
-                  </strong>{" "}
-                  <span className="text-[#8B9CB0]">
-                    {entry.startsAt?.slice(0, 5)} - {entry.endsAt?.slice(0, 5)}
-                  </span>
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-400 hover:bg-red-950/20"
-                  onClick={() =>
-                    remove.mutate({ kind: "hours", id: entry.id! })
-                  }
-                >
-                  Remove
-                </Button>
+      {scheduleTab === "hours" && (
+        <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+          <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+            <h3 className="text-sm font-bold text-white mb-4">Configured Weekly Hours</h3>
+            {hours.data?.length ? (
+              <div className="divide-y divide-[#1C283A]">
+                {hours.data.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-center justify-between py-3.5"
+                  >
+                    <div>
+                      <span className="font-semibold text-white text-xs">{dayNames[h.dayOfWeek ?? 1]}</span>
+                      <p className="text-xs text-[#8B9CB0] tabular-nums mt-0.5">
+                        {h.startsAt?.slice(0, 5)} - {h.endsAt?.slice(0, 5)}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-gray-400 hover:text-red-400"
+                      onClick={() => remove.mutate({ kind: "hours", id: h.id! })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="text-xs text-[#8B9CB0]">No working hours defined for this practitioner.</p>
+            )}
           </div>
 
-          <form
-            className="mt-5 grid gap-3 border-t border-[#1C283A] pt-5 sm:grid-cols-3"
-            onSubmit={hoursForm.handleSubmit((value) => addHours.mutate(value))}
-          >
-            <select
-              aria-label="Weekday"
-              className="h-11 rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-sm text-white"
-              {...hoursForm.register("dayOfWeek", { valueAsNumber: true })}
+          <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-4">
+            <h3 className="text-sm font-bold text-white">Add Working Hours</h3>
+            <form
+              className="space-y-3.5"
+              onSubmit={hoursForm.handleSubmit((v) => addHours.mutate(v))}
             >
-              {dayNames.map((day, index) => (
-                <option key={day} value={index}>
-                  {day}
-                </option>
-              ))}
-            </select>
-            <Input
-              aria-label="Start time"
-              type="time"
-              className="bg-[#0B111A] border-[#1C283A] text-white"
-              {...hoursForm.register("startsAt")}
-            />
-            <Input
-              aria-label="End time"
-              type="time"
-              className="bg-[#0B111A] border-[#1C283A] text-white"
-              {...hoursForm.register("endsAt")}
-            />
-            <Button
-              className="sm:col-span-3 rounded-full bg-[#0069FF] text-white hover:bg-[#0056D6]"
-              disabled={addHours.isPending}
-            >
-              Add working day
-            </Button>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B9CB0]">Day of Week</Label>
+                <select
+                  className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
+                  {...hoursForm.register("dayOfWeek", { valueAsNumber: true })}
+                >
+                  {dayNames.map((day, idx) => (
+                    <option key={day} value={idx}>{day}</option>
+                  ))}
+                </select>
+              </div>
 
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
-          <h2 className="text-base font-bold text-white mb-4">Upcoming time off & holidays</h2>
-          <div className="divide-y divide-[#1C283A]">
-            {timeOff.data?.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between gap-3 py-3 text-sm"
-              >
-                <div>
-                  <strong className="text-white">
-                    {entry.reason || "Unavailable"}
-                  </strong>
-                  <p className="text-xs text-[#8B9CB0] tabular-nums">
-                    {new Date(entry.startsAt!).toLocaleString()} –{" "}
-                    {new Date(entry.endsAt!).toLocaleString()}
-                  </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-[#8B9CB0]">Starts At</Label>
+                  <Input
+                    type="time"
+                    className="bg-[#0B111A] border-[#1C283A] text-white"
+                    {...hoursForm.register("startsAt")}
+                  />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-400 hover:bg-red-950/20"
-                  onClick={() =>
-                    remove.mutate({ kind: "timeOff", id: entry.id! })
-                  }
-                >
-                  Remove
-                </Button>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-[#8B9CB0]">Ends At</Label>
+                  <Input
+                    type="time"
+                    className="bg-[#0B111A] border-[#1C283A] text-white"
+                    {...hoursForm.register("endsAt")}
+                  />
+                </div>
               </div>
-            ))}
+
+              <Button
+                type="submit"
+                disabled={addHours.isPending}
+                className="w-full rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6]"
+              >
+                {addHours.isPending ? "Adding…" : "Add Working Hours"}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {scheduleTab === "timeoff" && (
+        <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+          <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6">
+            <h3 className="text-sm font-bold text-white mb-4">Registered Blackouts & Time Off</h3>
+            {timeOff.data?.length ? (
+              <div className="divide-y divide-[#1C283A]">
+                {timeOff.data.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between py-3.5">
+                    <div>
+                      <p className="font-semibold text-white text-xs">{t.reason || "Time Off"}</p>
+                      <p className="text-xs text-[#8B9CB0] tabular-nums mt-0.5">
+                        {new Date(t.startsAt!).toLocaleDateString()} - {new Date(t.endsAt!).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-gray-400 hover:text-red-400"
+                      onClick={() => remove.mutate({ kind: "timeOff", id: t.id! })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[#8B9CB0]">No upcoming time off periods scheduled.</p>
+            )}
           </div>
 
-          <form
-            className="mt-5 grid gap-3 border-t border-[#1C283A] pt-5"
-            onSubmit={timeOffForm.handleSubmit((value) => addTimeOff.mutate(value))}
-          >
-            <Input
-              aria-label="Time off starts"
-              type="datetime-local"
-              className="bg-[#0B111A] border-[#1C283A] text-white"
-              {...timeOffForm.register("startsAt")}
-            />
-            <Input
-              aria-label="Time off ends"
-              type="datetime-local"
-              className="bg-[#0B111A] border-[#1C283A] text-white"
-              {...timeOffForm.register("endsAt")}
-            />
-            <Input
-              aria-label="Reason"
-              placeholder="Reason (e.g. Conference / Vacation)"
-              className="bg-[#0B111A] border-[#1C283A] text-white"
-              {...timeOffForm.register("reason")}
-            />
-            <Button
-              disabled={addTimeOff.isPending}
-              className="rounded-full bg-[#0069FF] text-white hover:bg-[#0056D6]"
+          <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-4">
+            <h3 className="text-sm font-bold text-white">Register Time Off</h3>
+            <form
+              className="space-y-3.5"
+              onSubmit={timeOffForm.handleSubmit((v) => addTimeOff.mutate(v))}
             >
-              Add time off
-            </Button>
-          </form>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B9CB0]">Starts At</Label>
+                <Input
+                  type="date"
+                  className="bg-[#0B111A] border-[#1C283A] text-white"
+                  {...timeOffForm.register("startsAt")}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B9CB0]">Ends At</Label>
+                <Input
+                  type="date"
+                  className="bg-[#0B111A] border-[#1C283A] text-white"
+                  {...timeOffForm.register("endsAt")}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B9CB0]">Reason / Note</Label>
+                <Input
+                  placeholder="e.g. Annual Vacation"
+                  className="bg-[#0B111A] border-[#1C283A] text-white"
+                  {...timeOffForm.register("reason")}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={addTimeOff.isPending}
+                className="w-full rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6]"
+              >
+                {addTimeOff.isPending ? "Adding…" : "Register Time Off"}
+              </Button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+
+      {scheduleTab === "automations" && (
+        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-6 space-y-6">
+          <h3 className="text-base font-bold text-white">Automated Booking Reminders</h3>
+          <p className="text-xs text-[#8B9CB0]">
+            Slotly dispatches transactional emails via your Mailpit SMTP container for all booking events.
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-xl border border-[#1C283A] bg-[#0B111A] p-4">
+              <div>
+                <p className="font-bold text-xs text-white">24h Email Reminder</p>
+                <p className="text-[11px] text-[#8B9CB0]">Send email notification 24 hours prior to appointment start</p>
+              </div>
+              <Badge variant="success">Enabled</Badge>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-[#1C283A] bg-[#0B111A] p-4">
+              <div>
+                <p className="font-bold text-xs text-white">Instant Confirmation Email</p>
+                <p className="text-[11px] text-[#8B9CB0]">Send instant calendar invitation upon booking creation</p>
+              </div>
+              <Badge variant="success">Enabled</Badge>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-[#1C283A] bg-[#0B111A] p-4">
+              <div>
+                <p className="font-bold text-xs text-white">Cancellation & Reschedule Alerts</p>
+                <p className="text-[11px] text-[#8B9CB0]">Notify both staff and client instantly if a booking changes</p>
+              </div>
+              <Badge variant="success">Enabled</Badge>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* -------------------------------------------------------------
- * SETTINGS / PROFILE MODAL (Image 3)
+ * SETTINGS PAGE
  * ------------------------------------------------------------- */
 export function SettingsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { session } = useAuth();
-  const userName = session?.user.displayName || "Ibrahim Benkacem";
+  const userName = session?.user.displayName || "Admin User";
 
   const [activeSettingsNav, setActiveSettingsNav] = useState<
-    "profile" | "scheduling" | "branding" | "mylink" | "privacy" | "workspace"
+    "profile" | "scheduling" | "branding" | "mylink" | "workspace"
   >("profile");
-  const [profileTab, setProfileTab] = useState<"general" | "login">("general");
+  const [profileTab, setProfileTab] = useState<"general" | "security">("general");
 
   const [currentTime, setCurrentTime] = useState("");
   useEffect(() => {
@@ -1463,23 +3078,12 @@ export function SettingsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const settings = useQuery({
-    queryKey: ["settings"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/settings");
-      if (!data) throw error;
-      return data;
-    },
-  });
+  const settings = useTenantSettings();
+  const tenantSlug = settings.data?.slug || "northstar-health";
 
   const schema = z.object({
     name: z.string().min(2),
-    welcomeMessage: z.string().optional(),
     timeZoneId: z.string().min(2),
-    language: z.string().optional(),
-    dateFormat: z.string().optional(),
-    timeFormat: z.string().optional(),
-    country: z.string().optional(),
     cancellationWindowHours: z.number().min(0).max(2160),
     primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
     logoUrl: z.union([z.url(), z.literal("")]),
@@ -1490,13 +3094,7 @@ export function SettingsPage() {
     resolver: zodResolver(schema),
     values: {
       name: settings.data?.name || userName,
-      welcomeMessage:
-        "Welcome to my scheduling page. Please follow the instructions to add an event to my calendar.",
       timeZoneId: settings.data?.timeZoneId || "Africa/Casablanca",
-      language: "English",
-      dateFormat: "DD/MM/YYYY",
-      timeFormat: "24h",
-      country: "Morocco",
       cancellationWindowHours: settings.data?.cancellationWindowHours || 0,
       primaryColor: settings.data?.primaryColor || "#0069FF",
       logoUrl: settings.data?.logoUrl || "",
@@ -1519,26 +3117,60 @@ export function SettingsPage() {
     },
     onSuccess() {
       toast.success("Settings saved successfully");
-      void qc.invalidateQueries({ queryKey: ["settings"] });
+      void qc.invalidateQueries({ queryKey: ["tenant-settings"] });
     },
+    onError: (e) => toast.error(apiMessage(e)),
+  });
+
+  // Change password form
+  const passSchema = z.object({
+    currentPassword: z.string().min(8, "Current password must be at least 8 characters."),
+    newPassword: z.string().min(8, "New password must be at least 8 characters."),
+    confirmPassword: z.string().min(8, "Confirm your new password."),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "New passwords do not match",
+    path: ["confirmPassword"],
+  });
+  type PassForm = z.infer<typeof passSchema>;
+
+  const passForm = useForm<PassForm>({
+    resolver: zodResolver(passSchema),
+    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
+  });
+
+  const changePassword = useMutation({
+    mutationFn: async (v: PassForm) => {
+      const res = await api.POST("/api/v1/auth/change-password", {
+        body: {
+          currentPassword: v.currentPassword,
+          newPassword: v.newPassword,
+        },
+      });
+      if (!res.response.ok) throw new Error("Could not change password.");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully!");
+      passForm.reset();
+    },
+    onError: (e) => toast.error(apiMessage(e)),
   });
 
   return (
     <div className="mx-auto max-w-5xl rounded-3xl border border-[#1C283A] bg-[#111A28] shadow-2xl overflow-hidden flex flex-col md:flex-row">
-      {/* Left Sidebar inside Settings Modal (Image 3) */}
+      {/* Left Sidebar inside Settings Modal */}
       <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#1C283A] bg-[#090E17] p-5 flex flex-col justify-between">
         <div className="space-y-6">
-          {/* Group 1: My account */}
           <div className="space-y-1">
             <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              My account
+              Workspace Settings
             </p>
             {[
               ["profile", "Profile", User],
-              ["scheduling", "Scheduling", Calendar],
-              ["branding", "Branding", Sparkles],
-              ["mylink", "My link", LinkIcon],
-              ["privacy", "Privacy", Check],
+              ["scheduling", "Scheduling Policy", Calendar],
+              ["branding", "Branding & Appearance", Palette],
+              ["mylink", "Booking Link", LinkIcon],
+              ["workspace", "Workspace Info", Hourglass],
             ].map(([key, label, Icon]: any) => (
               <button
                 key={key}
@@ -1555,55 +3187,15 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
-
-          {/* Group 2: Features */}
-          <div className="space-y-1">
-            <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Features
-            </p>
-            {[
-              ["notetaker", "Notetaker", Mic],
-              ["contacts", "Contacts settings", Users],
-            ].map(([key, label, Icon]: any) => (
-              <button
-                key={key}
-                onClick={() => setActiveSettingsNav(key)}
-                className={cn(
-                  "flex h-9 w-full items-center gap-3 rounded-xl px-3 text-xs font-semibold transition-colors text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
-                )}
-              >
-                <Icon className="size-3.5 shrink-0" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Group 3: Admin */}
-          <div className="space-y-1">
-            <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Admin
-            </p>
-          </div>
-        </div>
-
-        {/* Bottom Workspace Link (Image 3) */}
-        <div className="pt-4 border-t border-[#1C283A]/60">
-          <button
-            onClick={() => setActiveSettingsNav("workspace")}
-            className="flex items-center gap-2.5 px-3 text-xs font-semibold text-gray-400 hover:text-white w-full"
-          >
-            <Hourglass className="size-4" />
-            <span>Workspace</span>
-          </button>
         </div>
       </aside>
 
-      {/* Main Settings Panel (Image 3) */}
+      {/* Main Settings Panel */}
       <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between">
         <div>
           {/* Header & Close */}
           <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
-            <h2 className="text-xl font-bold text-white">Profile</h2>
+            <h2 className="text-xl font-bold text-white capitalize">{activeSettingsNav} Settings</h2>
             <button
               onClick={() => navigate("/admin")}
               className="text-gray-400 hover:text-white"
@@ -1612,209 +3204,265 @@ export function SettingsPage() {
             </button>
           </div>
 
-          {/* Subtabs: General & Login (Image 3) */}
-          <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
-            <button
-              onClick={() => setProfileTab("general")}
-              className={cn(
-                "pb-3 relative transition-colors",
-                profileTab === "general"
-                  ? "text-white"
-                  : "text-gray-400 hover:text-white"
-              )}
-            >
-              General
-              {profileTab === "general" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => setProfileTab("login")}
-              className={cn(
-                "pb-3 relative transition-colors",
-                profileTab === "login"
-                  ? "text-white"
-                  : "text-gray-400 hover:text-white"
-              )}
-            >
-              Login
-              {profileTab === "login" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-              )}
-            </button>
-          </div>
+          {/* Profile Tab */}
+          {activeSettingsNav === "profile" && (
+            <>
+              {/* Subtabs: General & Security */}
+              <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
+                <button
+                  onClick={() => setProfileTab("general")}
+                  className={cn(
+                    "pb-3 relative transition-colors",
+                    profileTab === "general" ? "text-white" : "text-gray-400 hover:text-white"
+                  )}
+                >
+                  General
+                  {profileTab === "general" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setProfileTab("security")}
+                  className={cn(
+                    "pb-3 relative transition-colors",
+                    profileTab === "security" ? "text-white" : "text-gray-400 hover:text-white"
+                  )}
+                >
+                  Login & Security
+                  {profileTab === "security" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                  )}
+                </button>
+              </div>
 
-          {/* Avatar Picture Section (Image 3) */}
-          <div className="mt-6 flex items-center gap-5">
-            <div className="grid size-18 place-items-center rounded-full bg-neutral-200 text-neutral-400 border border-neutral-300">
-              <User className="size-9 text-neutral-400" />
-            </div>
-            <div>
-              <button
-                type="button"
-                onClick={() => toast.info("Image upload dialog opened")}
-                className="inline-flex h-9 items-center justify-center rounded-full border border-white/20 px-4 text-xs font-bold text-white hover:bg-white/5 transition-colors"
-              >
-                Upload picture
-              </button>
-              <p className="mt-1.5 text-[11px] text-gray-400">
-                JPG, GIF or PNG. Max size of 5MB.
+              {profileTab === "general" ? (
+                <form
+                  id="settingsForm"
+                  className="mt-6 space-y-4"
+                  onSubmit={form.handleSubmit((v) => save.mutate(v))}
+                >
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-xs text-white font-semibold">Workspace Name</Label>
+                    <Input id="name" className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl" {...form.register("name")} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">Time zone</Label>
+                      <span className="text-[11px] text-gray-400">Current Time: {currentTime}</span>
+                    </div>
+                    <select
+                      id="timeZoneId"
+                      className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
+                      {...form.register("timeZoneId")}
+                    >
+                      <option value="Africa/Casablanca">Africa/Casablanca (Morocco)</option>
+                      <option value="Europe/Paris">Europe/Paris (France, Spain, Germany)</option>
+                      <option value="Europe/London">Europe/London (GMT/BST)</option>
+                      <option value="America/New_York">America/New_York (Eastern)</option>
+                      <option value="UTC">UTC (Universal Time)</option>
+                    </select>
+                  </div>
+                </form>
+              ) : (
+                <form
+                  className="mt-6 space-y-4"
+                  onSubmit={passForm.handleSubmit((v) => changePassword.mutate(v))}
+                >
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-white font-semibold">Current Password</Label>
+                    <Input
+                      type="password"
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                      {...passForm.register("currentPassword")}
+                    />
+                    <FieldError error={passForm.formState.errors.currentPassword} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-white font-semibold">New Password</Label>
+                    <Input
+                      type="password"
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                      {...passForm.register("newPassword")}
+                    />
+                    <FieldError error={passForm.formState.errors.newPassword} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-white font-semibold">Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                      {...passForm.register("confirmPassword")}
+                    />
+                    <FieldError error={passForm.formState.errors.confirmPassword} />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={changePassword.isPending}
+                    className="rounded-full bg-white text-[#0B1A2C] hover:bg-neutral-100 font-bold text-xs"
+                  >
+                    {changePassword.isPending ? "Updating password…" : "Update Password"}
+                  </Button>
+                </form>
+              )}
+            </>
+          )}
+
+          {/* Scheduling Policy */}
+          {activeSettingsNav === "scheduling" && (
+            <form
+              id="settingsForm"
+              className="mt-6 space-y-4"
+              onSubmit={form.handleSubmit((v) => save.mutate(v))}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="cancellationWindowHours" className="text-xs text-white font-semibold">
+                  Cancellation Window (Hours in advance)
+                </Label>
+                <Input
+                  id="cancellationWindowHours"
+                  type="number"
+                  className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-xs"
+                  {...form.register("cancellationWindowHours", { valueAsNumber: true })}
+                />
+                <p className="text-[11px] text-[#8B9CB0]">
+                  Clients will not be allowed to cancel within this window prior to appointment time.
+                </p>
+              </div>
+            </form>
+          )}
+
+          {/* Branding Tab */}
+          {activeSettingsNav === "branding" && (
+            <form
+              id="settingsForm"
+              className="mt-6 space-y-4"
+              onSubmit={form.handleSubmit((v) => save.mutate(v))}
+            >
+              <div className="space-y-2">
+                <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
+                    {...form.register("primaryColor")}
+                  />
+                  <Input
+                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
+                    {...form.register("primaryColor")}
+                  />
+                  <div className="flex gap-1.5">
+                    {["#0069FF", "#10B981", "#8B5CF6", "#F59E0B"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => form.setValue("primaryColor", c)}
+                        className="size-6 rounded-full border border-white/20 transition-transform hover:scale-110"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                <Label htmlFor="logoUrl" className="text-xs text-white font-semibold">Brand Logo URL</Label>
+                <Input
+                  id="logoUrl"
+                  placeholder="https://example.com/logo.png"
+                  className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                  {...form.register("logoUrl")}
+                />
+              </div>
+
+              {/* Live Preview Card */}
+              <div className="mt-6 rounded-2xl border border-[#1C283A] bg-[#0B111A] p-4">
+                <p className="text-xs font-semibold text-gray-400 mb-2">Live Preview of Public Booking Badge:</p>
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3 bg-[#111A28]">
+                  <div
+                    className="size-4 rounded-full"
+                    style={{ backgroundColor: form.watch("primaryColor") || "#0069FF" }}
+                  />
+                  <span className="font-bold text-xs text-white">{form.watch("name") || "Northstar Health"}</span>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* My Link Tab */}
+          {activeSettingsNav === "mylink" && (
+            <div className="mt-6 space-y-4">
+              <p className="text-xs text-[#8B9CB0]">
+                Your public booking page URL:
               </p>
-            </div>
-          </div>
-
-          {/* Form Fields (Image 3) */}
-          <form
-            id="settingsForm"
-            className="mt-6 space-y-5"
-            onSubmit={form.handleSubmit((v) => save.mutate(v))}
-          >
-            {/* Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-xs text-white flex items-center gap-1 font-semibold">
-                Name <Info className="size-3 text-gray-400" />
-              </Label>
-              <Input
-                id="name"
-                className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                {...form.register("name")}
-              />
-            </div>
-
-            {/* Welcome message */}
-            <div className="space-y-1.5">
-              <Label htmlFor="welcomeMessage" className="text-xs text-white flex items-center gap-1 font-semibold">
-                Welcome message <Info className="size-3 text-gray-400" />
-              </Label>
-              <textarea
-                id="welcomeMessage"
-                rows={3}
-                className="w-full rounded-xl border border-[#1C283A] bg-[#0B111A] p-3 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
-                {...form.register("welcomeMessage")}
-              />
-            </div>
-
-            {/* Language */}
-            <div className="space-y-1.5">
-              <Label htmlFor="language" className="text-xs text-white font-semibold">
-                Language
-              </Label>
-              <select
-                id="language"
-                className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                {...form.register("language")}
-              >
-                <option value="English">English</option>
-                <option value="French">Français</option>
-                <option value="Spanish">Español</option>
-                <option value="Arabic">العربية</option>
-              </select>
-            </div>
-
-            {/* Date format & Time format in 2 columns (Image 3) */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="dateFormat" className="text-xs text-white flex items-center gap-1 font-semibold">
-                  Date format <Info className="size-3 text-gray-400" />
-                </Label>
-                <select
-                  id="dateFormat"
-                  className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                  {...form.register("dateFormat")}
-                >
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="timeFormat" className="text-xs text-white flex items-center gap-1 font-semibold">
-                  Time format <Info className="size-3 text-gray-400" />
-                </Label>
-                <select
-                  id="timeFormat"
-                  className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                  {...form.register("timeFormat")}
-                >
-                  <option value="24h">24h</option>
-                  <option value="12h">12h (am/pm)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Country */}
-            <div className="space-y-1.5">
-              <Label htmlFor="country" className="text-xs text-white font-semibold">
-                Country
-              </Label>
-              <select
-                id="country"
-                className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                {...form.register("country")}
-              >
-                <option value="Morocco">Morocco</option>
-                <option value="France">France</option>
-                <option value="United States">United States</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="Canada">Canada</option>
-              </select>
-            </div>
-
-            {/* Time zone with Current Time (Image 3) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">
-                  Time zone
-                </Label>
-                <span className="text-[11px] text-gray-400">
-                  Current Time: {currentTime}
+              <div className="flex items-center gap-2 rounded-xl border border-[#1C283A] bg-[#0B111A] p-3">
+                <span className="font-mono text-xs text-[#4D9BFF] flex-1">
+                  {`${window.location.origin}/book/${tenantSlug}`}
                 </span>
+                <button
+                  onClick={() => {
+                    void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
+                    toast.success("Link copied!");
+                  }}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
+                >
+                  Copy
+                </button>
               </div>
-              <select
-                id="timeZoneId"
-                className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                {...form.register("timeZoneId")}
-              >
-                <option value="Africa/Casablanca">Morocco Time (Casablanca)</option>
-                <option value="Europe/Paris">Central European Time (Paris)</option>
-                <option value="Europe/London">Greenwich Mean Time (London)</option>
-                <option value="America/New_York">Eastern Time (US & Canada)</option>
-                <option value="UTC">UTC Universal Time</option>
-              </select>
-            </div>
 
-            {/* Danger Zone: Delete account button (Image 3) */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => toast.error("Account deletion is restricted to workspace owner.")}
-                className="rounded-xl bg-[#F87171]/20 px-4 py-2 text-xs font-bold text-[#F87171] hover:bg-[#F87171]/30 transition-colors"
+              <a
+                href={`/book/${tenantSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/5"
               >
-                Delete account
-              </button>
+                <span>Open Live Booking Page</span>
+                <ExternalLink className="size-3.5" />
+              </a>
             </div>
-          </form>
+          )}
+
+          {/* Workspace Tab */}
+          {activeSettingsNav === "workspace" && (
+            <div className="mt-6 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
+                  <p className="text-[11px] text-gray-400">Workspace Slug</p>
+                  <p className="font-mono text-xs font-bold text-white mt-0.5">{tenantSlug}</p>
+                </div>
+
+                <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
+                  <p className="text-[11px] text-gray-400">Time Zone</p>
+                  <p className="text-xs font-bold text-white mt-0.5">{settings.data?.timeZoneId || "Africa/Casablanca"}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Footer actions: Cancel and Save changes (Image 3) */}
-        <div className="mt-8 flex items-center justify-end gap-3 border-t border-[#1C283A] pt-4">
-          <button
-            type="button"
-            onClick={() => navigate("/admin")}
-            className="rounded-full border border-white/20 px-5 py-2 text-xs font-bold text-white hover:bg-white/5 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="settingsForm"
-            disabled={save.isPending}
-            className="rounded-full bg-white px-5 py-2 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
-          >
-            {save.isPending ? "Saving changes…" : "Save changes"}
-          </button>
-        </div>
+        {/* Footer actions for tabs with form */}
+        {activeSettingsNav !== "workspace" && activeSettingsNav !== "mylink" && profileTab !== "security" && (
+          <div className="mt-8 flex items-center justify-end gap-3 border-t border-[#1C283A] pt-4">
+            <button
+              type="button"
+              onClick={() => navigate("/admin")}
+              className="rounded-full border border-white/20 px-5 py-2 text-xs font-bold text-white hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="settingsForm"
+              disabled={save.isPending}
+              className="rounded-full bg-white px-5 py-2 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
+            >
+              {save.isPending ? "Saving changes…" : "Save changes"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

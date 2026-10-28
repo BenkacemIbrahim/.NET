@@ -631,6 +631,11 @@ export interface components {
       /** Format: uuid */
       paymentId?: string | null;
       checkoutUrl?: string | null;
+      customerName?: string | null;
+      customerEmail?: string | null;
+      customerPhone?: string | null;
+      serviceName?: string | null;
+      staffName?: string | null;
     };
     BookingDtoPagedResponse: {
       items?: components["schemas"]["BookingDto"][] | null;
