@@ -384,3 +384,166 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+ * LIGHT MODE ADAPTATION FOR ADMIN DASHBOARD
+ * Automatically applies whenever .dark is NOT present on <html>.
+ * In .dark mode, original colors remain 100% untouched.
+ * -------------------------------------------------------------------------- */
+html:not(.dark) {
+  color-scheme: light;
+
+  /* Surfaces */
+  .bg-\[\#0B111A\],
+  .bg-\[\#0B131F\],
+  .bg-\[\#0F1724\] {
+    background-color: #F8FAFC !important;
+  }
+
+  .bg-\[\#090E17\] {
+    background-color: #FFFFFF !important;
+  }
+
+  .bg-\[\#111A28\] {
+    background-color: #FFFFFF !important;
+  }
+
+  /* Borders and Dividers */
+  .border-\[\#1C283A\],
+  .border-\[\#1C283A\]\/40 {
+    border-color: #E2E8F0 !important;
+  }
+
+  .divide-\[\#1C283A\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #E2E8F0 !important;
+  }
+
+  /* Hover & Active backgrounds */
+  .hover\:bg-\[\#162234\]:hover,
+  .hover\:bg-\[\#111A28\]:hover {
+    background-color: #F1F5F9 !important;
+  }
+
+  .bg-\[\#162234\] {
+    background-color: #F1F5F9 !important;
+  }
+
+  .bg-\[\#152B46\] {
+    background-color: #EFF6FF !important;
+  }
+
+  /* Text colors */
+  .text-\[\#8B9CB0\] {
+    color: #64748B !important;
+  }
+
+  .text-\[\#4D9BFF\] {
+    color: #0069FF !important;
+  }
+
+  /* Text-white inside Admin: switch to dark text unless it's on a saturated button/badge */
+  .min-h-dvh {
+    color: #0F172A !important;
+  }
+
+  .min-h-dvh .text-white:not(
+    [class*="bg-[#0069FF]"],
+    [class*="bg-[#0056D6]"],
+    [class*="bg-primary"],
+    [class*="bg-emerald"],
+    [class*="bg-rose"],
+    [class*="bg-red"],
+    [class*="bg-purple-6"],
+    [class*="bg-blue-6"],
+    .btn-keep-white
+  ) {
+    color: #0F172A !important;
+  }
+
+  .min-h-dvh .text-gray-400 {
+    color: #64748B !important;
+  }
+
+  .min-h-dvh .text-gray-500 {
+    color: #94A3B8 !important;
+  }
+
+  /* Buttons & Inputs */
+  .min-h-dvh input:not([type="checkbox"]):not([type="radio"]),
+  .min-h-dvh select {
+    background-color: #FFFFFF !important;
+    border-color: #E2E8F0 !important;
+    color: #0F172A !important;
+    color-scheme: light;
+  }
+
+  .min-h-dvh input::placeholder {
+    color: #94A3B8 !important;
+  }
+
+  /* Single-use, polls, routing toggle bar */
+  .border-\[\#1C283A\].bg-\[\#090E17\] {
+    background-color: #F1F5F9 !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  /* FullCalendar Light Mode */
+  .fc {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  .fc .fc-scrollgrid {
+    background-color: #FFFFFF !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  .fc .fc-view-harness {
+    background-color: #FFFFFF !important;
+  }
+
+  .fc th {
+    background-color: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  .fc th a {
+    color: #64748B !important;
+  }
+
+  .fc td {
+    border-color: #E2E8F0 !important;
+  }
+
+  .fc td.fc-timegrid-slot-label {
+    border-color: #E2E8F0 !important;
+  }
+
+  .fc .fc-timegrid-slot-label-cushion {
+    color: #64748B !important;
+  }
+
+  .fc .fc-timegrid-slot-minor {
+    border-top-color: #F1F5F9 !important;
+  }
+
+  /* Ask Callie Button in Light Mode */
+  .border-purple-500\/40.bg-purple-950\/20 {
+    background-color: #F5F3FF !important;
+    border-color: #DDD6FE !important;
+    color: #6D28D9 !important;
+  }
+
+  .border-purple-500\/40.bg-purple-950\/20 .text-purple-400 {
+    color: #7C3AED !important;
+  }
+
+  /* Native scrollbars in light mode */
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}
+
+
