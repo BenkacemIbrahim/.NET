@@ -22,6 +22,7 @@ import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/classic/theme.css";
 
 import { Card } from "../components/ui/card";
+import { ThemeToggle } from "../components/theme-toggle";
 import { cn } from "../lib/cn";
 import { useBookings, useTenantSettings } from "./admin";
 
@@ -119,16 +120,24 @@ export default function CalendarPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white">Calendar</h1>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+          <button
+            onClick={() => toast.info("Slotly Help Center is available 24/7.")}
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
+            title="Help"
+          >
+            <HelpCircle className="size-4" />
+          </button>
           <button
             onClick={() => toast.info("Calendar settings")}
-            className="grid size-9 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#111A28] transition-colors"
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28] transition-colors"
             title="Calendar settings"
           >
             <Settings className="size-4" />
           </button>
           <button
             onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
-            className="grid size-9 place-items-center rounded-lg text-gray-400 hover:text-white hover:bg-[#111A28] transition-colors"
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28] transition-colors"
             title={viewMode === "list" ? "Switch to Grid view" : "Switch to List view"}
           >
             {viewMode === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}

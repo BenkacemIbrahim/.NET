@@ -867,6 +867,7 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
           <button
             onClick={() => toast.info("Slotly Help Center is available 24/7.")}
             className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
@@ -1775,16 +1776,27 @@ export function BookingsPage() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-xs">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-gray-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by client or service"
-            className="h-9 w-full rounded-xl border border-[#1C283A] bg-[#111A28] pl-9 pr-3 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
-          />
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+          <button
+            onClick={() => toast.info("Slotly Help Center is available 24/7.")}
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
+            title="Help"
+          >
+            <HelpCircle className="size-4" />
+          </button>
+
+          {/* Search */}
+          <div className="relative max-w-xs">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-gray-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by client or service"
+              className="h-9 w-full rounded-xl border border-[#1C283A] bg-[#111A28] pl-9 pr-3 text-xs text-white placeholder:text-gray-500 focus:border-[#0069FF] focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -2272,11 +2284,23 @@ export function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
-        <p className="mt-1 text-xs text-[#8B9CB0]">
-          Configure appointment lengths, pricing, buffers, and public booking settings.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
+          <p className="mt-1 text-xs text-[#8B9CB0]">
+            Configure appointment lengths, pricing, buffers, and public booking settings.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+          <button
+            onClick={() => toast.info("Slotly Help Center is available 24/7.")}
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
+            title="Help"
+          >
+            <HelpCircle className="size-4" />
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -2435,7 +2459,15 @@ export function StaffPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+          <button
+            onClick={() => toast.info("Slotly Help Center is available 24/7.")}
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
+            title="Help"
+          >
+            <HelpCircle className="size-4" />
+          </button>
           <Button
             onClick={() => setInviteModalOpen(true)}
             className="rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6] text-xs font-bold"
@@ -2803,8 +2835,16 @@ export function SchedulePage() {
           </p>
         </div>
 
-        {/* Staff Selector */}
-        <div className="flex items-center gap-2">
+        {/* Actions & Staff Selector */}
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+          <button
+            onClick={() => toast.info("Slotly Help Center is available 24/7.")}
+            className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28]"
+            title="Help"
+          >
+            <HelpCircle className="size-4" />
+          </button>
           <Label className="text-xs text-[#8B9CB0]">Practitioner:</Label>
           <select
             value={selectedStaffId}
@@ -3193,15 +3233,18 @@ export function SettingsPage() {
       {/* Main Settings Panel */}
       <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between">
         <div>
-          {/* Header & Close */}
           <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
             <h2 className="text-xl font-bold text-white capitalize">{activeSettingsNav} Settings</h2>
-            <button
-              onClick={() => navigate("/admin")}
-              className="text-gray-400 hover:text-white"
-            >
-              <X className="size-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle className="size-8 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+              <button
+                onClick={() => navigate("/admin")}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#111A28]"
+                title="Close settings"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
           </div>
 
           {/* Profile Tab */}
