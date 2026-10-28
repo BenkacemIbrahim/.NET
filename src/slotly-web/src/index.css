@@ -35,37 +35,38 @@
 }
 
 .dark {
-  --background: #0B1620;
+  --background: #0B111A;
   --foreground: #F8FAFC;
-  --card: #122331;
+  --card: #111A28;
   --card-foreground: #F8FAFC;
-  --popover: #122331;
+  --popover: #111A28;
   --popover-foreground: #F8FAFC;
-  --primary: #4D9BFF;
-  --primary-hover: #74B1FF;
+  --primary: #0069FF;
+  --primary-hover: #1A7BFF;
   --primary-foreground: #FFFFFF;
-  --secondary: #19303F;
+  --secondary: #162234;
   --secondary-foreground: #E2E8F0;
-  --muted: #19303F;
-  --muted-foreground: #B9C9D6;
-  --accent: #173C5A;
-  --accent-foreground: #74B1FF;
-  --dark-surface: #030712;
+  --muted: #162234;
+  --muted-foreground: #8B9CB0;
+  --accent: #152B46;
+  --accent-foreground: #4D9BFF;
+  --dark-surface: #070B11;
   --dark-surface-foreground: #FFFFFF;
-  --success: #46C98B;
+  --success: #10B981;
   --success-foreground: #FFFFFF;
-  --warning: #F3BA63;
+  --warning: #F59E0B;
   --warning-foreground: #FFFFFF;
-  --destructive: #FF7A7A;
+  --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #2B4658;
-  --input: #3B596B;
-  --ring: #4D9BFF;
-  --navy: #07121B;
+  --border: #1C283A;
+  --input: #27374E;
+  --ring: #0069FF;
+  --navy: #070D15;
 }
 
 @theme inline {
   --font-sans: "Inter Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Newsreader", Georgia, Cambria, "Times New Roman", Times, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
