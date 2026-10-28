@@ -1,12 +1,13 @@
 import {
   ArrowRight,
+  Calendar,
   Check,
   ChevronDown,
   Clock,
   CreditCard,
   ExternalLink,
-  Hourglass,
   Leaf,
+  LogIn,
   Menu,
   MessageCircle,
   Mic,
@@ -19,6 +20,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { SlotlyLogo } from "../components/slotly-logo";
 import { cn } from "../lib/cn";
 
 export function LandingPage() {
@@ -46,7 +48,7 @@ export function LandingPage() {
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
             <span className="flex items-center gap-1.5 font-semibold">
               <Sparkles className="size-3.5 text-[#0069FF]" />
-              Introducing the new Slotly, built to handle all of the work around meetings.
+              Introducing the new Slotly, built for seamless appointment scheduling and booking.
             </span>
             <Link
               to="/book/northstar-health"
@@ -69,11 +71,8 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 px-3 sm:px-6 py-3">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between rounded-2xl border border-[#E8E8E8] bg-white/95 px-5 shadow-sm backdrop-blur-md transition-all">
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="grid size-9 place-items-center rounded-xl bg-[#0069FF] text-white shadow-sm">
-              <Hourglass className="size-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#0B1A2C]">Slotly</span>
+          <Link to="/" className="inline-flex items-center" title="Slotly">
+            <SlotlyLogo variant="full" className="h-8 w-auto" />
           </Link>
 
           {/* Nav Dropdowns */}
@@ -199,56 +198,46 @@ export function LandingPage() {
         )}
       </header>
 
-      {/* 3. Hero Section (Calendly Signature Cream Inset Box with Editorial Serif) */}
+      {/* 3. Hero Section */}
       <section className="px-3 sm:px-6 pt-4 pb-12">
         <div className="mx-auto max-w-7xl rounded-[32px] bg-[#FAF8F5] border border-[#EFECE6] px-6 py-16 sm:py-24 text-center">
           <div className="mx-auto max-w-4xl space-y-6">
             <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-normal leading-[1.08] tracking-tight text-[#0B1A2C]">
-              All the work around <br className="hidden sm:inline" />
-              meetings, <span className="italic font-serif">handled.</span>
+              All your appointment <br className="hidden sm:inline" />
+              scheduling, <span className="italic font-serif">handled.</span>
             </h1>
 
             <p className="mx-auto max-w-2xl text-lg sm:text-xl text-[#4A5568] leading-relaxed">
-              From AI-powered scheduling to automated meeting recaps and follow-ups, get the busywork done with fewer tools and less effort.
+              From online self-service booking to real-time calendar sync and automated reminders, keep your business moving with zero double-booking.
             </p>
 
-            {/* Social / Email Signup Pills */}
+            {/* Action Buttons: Book & Login */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to="/book/northstar-health"
-                className="w-full sm:w-auto inline-flex h-13 items-center justify-center gap-3 rounded-full border border-[#0B1A2C] bg-white px-7 text-sm font-semibold text-[#0B1A2C] shadow-sm transition-all hover:bg-neutral-50 hover:shadow"
+                className="w-full sm:w-auto inline-flex h-13 items-center justify-center gap-2.5 rounded-full bg-[#0069FF] px-8 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#0056D6] hover:shadow-lg hover:-translate-y-0.5"
               >
-                <svg className="size-4.5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                Sign up with Google
+                <Calendar className="size-4.5" />
+                Book an Appointment
               </Link>
 
               <Link
                 to="/login"
-                className="w-full sm:w-auto inline-flex h-13 items-center justify-center gap-3 rounded-full bg-[#0B1A2C] px-7 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0069FF]"
+                className="w-full sm:w-auto inline-flex h-13 items-center justify-center gap-2.5 rounded-full border border-[#0B1A2C] bg-white px-8 text-sm font-semibold text-[#0B1A2C] shadow-sm transition-all hover:bg-neutral-50 hover:border-[#0069FF] hover:text-[#0069FF]"
               >
-                <div className="grid grid-cols-2 gap-0.5 size-4">
-                  <span className="bg-[#F25022] size-1.5 rounded-xs" />
-                  <span className="bg-[#7FBA00] size-1.5 rounded-xs" />
-                  <span className="bg-[#00A4EF] size-1.5 rounded-xs" />
-                  <span className="bg-[#FFB900] size-1.5 rounded-xs" />
-                </div>
-                Sign up with Microsoft
+                <LogIn className="size-4.5" />
+                Log In
               </Link>
             </div>
 
             <p className="text-xs text-[#718096]">
-              <Link to="/login" className="underline hover:text-[#0069FF]">Sign up with email</Link> · No credit card required
+              Instant online booking · Zero double-booking · Real-time calendar sync
             </p>
           </div>
         </div>
       </section>
 
-      {/* 4. Interactive Product Showcase (Pastel Gradient Container with Top Icon Switcher) */}
+      {/* 4. Interactive Product Showcase */}
       <section className="px-3 sm:px-6 py-8">
         <div className="mx-auto max-w-7xl rounded-[32px] bg-gradient-to-br from-[#D9EAFE] via-[#EDE9FE] to-[#D1FAE5] p-6 sm:p-12 shadow-sm">
           {/* Top Floating Tab Switcher Icons */}
@@ -264,7 +253,7 @@ export function LandingPage() {
                 )}
                 title="AI Scheduling Assistant"
               >
-                <Hourglass className="size-5" />
+                <Calendar className="size-5" />
               </button>
               <button
                 onClick={() => setActiveShowcaseTab("payments")}
@@ -762,7 +751,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 7. Connected Tool Ecosystem Ribbon (Frame 16) */}
+      {/* 7. Connected Tool Ecosystem Ribbon */}
       <section className="px-3 sm:px-6 py-20 bg-[#FAF8F5]">
         <div className="mx-auto max-w-7xl text-center">
           <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
@@ -778,34 +767,140 @@ export function LandingPage() {
             View all integrations <ArrowRight className="size-4" />
           </Link>
 
-          {/* Connected Icon Track */}
+          {/* Connected Icon Track with Real Brand SVGs */}
           <div className="mt-12 overflow-hidden py-4">
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-4xl mx-auto">
               {[
-                { name: "Google Calendar", color: "#4285F4", letter: "31" },
-                { name: "Google Meet", color: "#00AC47", letter: "M" },
-                { name: "Zoom", color: "#2D8CFF", letter: "Z" },
-                { name: "Microsoft Teams", color: "#6264A7", letter: "T" },
-                { name: "Outlook", color: "#0078D4", letter: "O" },
-                { name: "Salesforce", color: "#00A1E0", letter: "SF" },
-                { name: "Slack", color: "#4A154B", letter: "#" },
-                { name: "Stripe", color: "#635BFF", letter: "S" },
-                { name: "PayPal", color: "#003087", letter: "P" },
-                { name: "HubSpot", color: "#FF7A59", letter: "H" },
-                { name: "Zapier", color: "#FF4A00", letter: "*" },
-                { name: "OpenAI", color: "#10A37F", letter: "AI" },
+                {
+                  name: "Google Calendar",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="size-7" aria-hidden="true">
+                      <path fill="#1a73e8" d="M38 44H10a6 6 0 0 1-6-6V10a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6z" />
+                      <path fill="#ea4335" d="M38 4H10A6 6 0 0 0 4 10v5h40v-5a6 6 0 0 0-6-6z" />
+                      <rect width="32" height="23" x="8" y="17" fill="#fff" rx="2" />
+                      <text x="24" y="34" fill="#1a73e8" fontSize="17" fontWeight="bold" textAnchor="middle" fontFamily="system-ui, sans-serif">31</text>
+                      <circle cx="14" cy="9.5" r="2.2" fill="#fff" />
+                      <circle cx="34" cy="9.5" r="2.2" fill="#fff" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Google Meet",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <path fill="#00832d" d="M3 7.5A2.5 2.5 0 0 1 5.5 5h7A2.5 2.5 0 0 1 15 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 3 16.5v-9z" />
+                      <path fill="#0066da" d="M15 10l6-4.5v13L15 14v-4z" />
+                      <path fill="#e1382b" d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l-6 6V7.5z" />
+                      <path fill="#fbbc04" d="M3 16.5A2.5 2.5 0 0 0 5.5 19H9l-6-6v3.5z" />
+                      <path fill="#26a69a" d="M9 5h3.5A2.5 2.5 0 0 1 15 7.5V11L9 5z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Zoom",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <rect width="24" height="24" rx="5.5" fill="#2D8CFF" />
+                      <path fill="#fff" d="M4.5 9a1.5 1.5 0 0 1 1.5-1.5h7a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V9zm11 2.2 3.2-2.4a.6.6 0 0 1 .8.5v5.4a.6.6 0 0 1-.8.5L15.5 12.8v-1.6z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Microsoft Teams",
+                  icon: (
+                    <svg viewBox="0 0 32 32" className="size-7" aria-hidden="true">
+                      <ellipse cx="21.5" cy="8.5" rx="3.5" ry="3.5" fill="#505ac9" />
+                      <path d="M26 14h-9a2 2 0 0 0-2 2v6.5a1.5 1.5 0 0 0 1.5 1.5H27a2 2 0 0 0 2-2V17a3 3 0 0 0-3-3z" fill="#505ac9" />
+                      <ellipse cx="12" cy="9" rx="4.5" ry="4.5" fill="#7b83eb" />
+                      <rect x="2" y="11" width="16" height="16" rx="3" fill="#464eb8" />
+                      <path d="M7 16h6v2.2H10.1v6.8H7.9v-6.8H7V16z" fill="#fff" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Outlook",
+                  icon: (
+                    <svg viewBox="0 0 32 32" className="size-7" aria-hidden="true">
+                      <path d="M18 6l11 4.5v11L18 26z" fill="#0072c6" />
+                      <path d="M18 6l11 4.5-11 5-11-5z" fill="#0078d4" opacity="0.8" />
+                      <path d="M7 10.5L18 16v10L7 21.5z" fill="#106ebe" />
+                      <rect x="3" y="10" width="13" height="13" rx="2" fill="#0078d4" />
+                      <circle cx="9.5" cy="16.5" r="3.2" fill="none" stroke="#fff" strokeWidth="1.8" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Salesforce",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <path fill="#00A1E0" d="M10 4.5a5 5 0 0 1 4.7 3.3 4.2 4.2 0 0 1 3.8 2.2 4.5 4.5 0 0 1-.5 9H5.5a4.5 4.5 0 0 1-.8-8.9 5.5 5.5 0 0 1 5.3-5.6z" />
+                      <path fill="#fff" d="M8.8 11.2c.2-.5.5-.8.9-1 .4-.2 1-.3 1.6-.3.6 0 1.1.1 1.5.3.4.2.7.5.8 1l-.8.4c-.1-.3-.3-.6-.6-.7-.3-.1-.6-.2-1-.2-.4 0-.8.1-1.1.3-.3.2-.4.5-.4.8 0 .3.1.5.3.7.2.2.6.3 1.2.5.7.2 1.2.4 1.5.7.3.3.5.7.5 1.2 0 .5-.2 1-.6 1.3-.4.3-1 .5-1.7.5-.7 0-1.3-.2-1.7-.5-.4-.3-.7-.8-.8-1.4l.9-.3c.1.4.3.7.6.9.3.2.7.3 1.1.3.5 0 .8-.1 1.1-.3.3-.2.4-.5.4-.8 0-.3-.1-.5-.4-.7-.2-.2-.6-.3-1.2-.5-.7-.2-1.2-.4-1.5-.7-.3-.3-.5-.7-.5-1.2 0-.5.2-.9.5-1.2z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Slack",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <path fill="#36C5F0" d="M6 15a2.5 2.5 0 1 1-2.5-2.5H6v2.5zm1.2 0a2.5 2.5 0 1 1 5 0v6a2.5 2.5 0 1 1-5 0v-6z" />
+                      <path fill="#2EB67D" d="M9 6a2.5 2.5 0 1 1 2.5-2.5V6H9zm0 1.2a2.5 2.5 0 1 1 0 5H3a2.5 2.5 0 1 1 0-5h6z" />
+                      <path fill="#ECB22E" d="M18 9a2.5 2.5 0 1 1 2.5 2.5H18V9zm-1.2 0a2.5 2.5 0 1 1-5 0V3a2.5 2.5 0 1 1 5 0v6z" />
+                      <path fill="#E01E5A" d="M15 18a2.5 2.5 0 1 1-2.5 2.5V18h2.5zm0-1.2a2.5 2.5 0 1 1 0-5h6a2.5 2.5 0 1 1 0 5h-6z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Stripe",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <rect width="24" height="24" rx="5" fill="#635BFF" />
+                      <path fill="#fff" d="M13.8 9.6c0-.7-.6-1-1.5-1-.9 0-2.1.3-3 .8v-2.3c1-.4 2.1-.6 3.2-.6 2.6 0 4.2 1.3 4.2 3.6 0 3.5-4.8 3-4.8 4.5 0 .8.7 1.1 1.7 1.1 1.1 0 2.4-.4 3.4-1v2.3c-1.1.5-2.3.7-3.5.7-2.7 0-4.4-1.3-4.4-3.6 0-3.8 4.7-3.1 4.7-4.5z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "PayPal",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <path fill="#003087" d="M7.5 21l2.8-17.5h5.5c3.2 0 5.2 1.6 4.7 4.7-.5 3.3-2.7 5.1-5.9 5.1h-2.4l-1.3 7.7H7.5z" />
+                      <path fill="#0079C1" d="M10.8 13.3h2.3c3.2 0 5.4-1.8 5.9-5.1.2-1.3 0-2.4-.7-3.2-.5 2.7-2.6 4.6-5.5 4.6h-2.3l-1.6 9.4h2.2l1-5.7z" />
+                      <path fill="#001C64" d="M10.8 13.3l-.7 4.2h2.2l.6-3.8c-.3 0-.6-.1-.8-.1l-1.3-.3z" opacity="0.3" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "HubSpot",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <circle cx="16.5" cy="6.5" r="2.5" fill="#FF7A59" />
+                      <path fill="#FF7A59" d="M15.2 7.7l-4.4 3.1a3.5 3.5 0 0 0-1.8-.8V6.5a1.5 1.5 0 1 0-2 0V10a3.5 3.5 0 1 0 4.6 4.8l4.4 3.1a2.5 2.5 0 1 0 1.2-1.6l-4.4-3.1a3.5 3.5 0 0 0 0-2.4l4.4-3.1a2.5 2.5 0 0 0-2-0.1z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "Zapier",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <rect width="24" height="24" rx="5" fill="#FF4F00" />
+                      <path d="M12 4v16m-8-8h16m-2.8-5.6L6.8 17.6m0-11.2l10.4 10.4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: "OpenAI",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+                      <path fill="#10A37F" d="M22.28 9.77a5.98 5.98 0 0 0-.52-4.95 6.07 6.07 0 0 0-6.54-2.85A6.05 6.05 0 0 0 10.5 0a6.04 6.04 0 0 0-5.78 4.3 6.02 6.02 0 0 0-4 2.92 6.05 6.05 0 0 0 .74 6.94 6 6 0 0 0 .52 4.95 6.07 6.07 0 0 0 6.54 2.85A6.02 6.02 0 0 0 13.24 24a6.04 6.04 0 0 0 5.78-4.3 6.02 6.02 0 0 0 4-2.92 6.06 6.06 0 0 0-.74-7.01zM13.24 22.4a4.48 4.48 0 0 1-2.88-1.04l.15-.08 4.78-2.76a.8.8 0 0 0 .4-.68v-6.73l2.02 1.17a.07.07 0 0 1 .04.05v5.57a4.5 4.5 0 0 1-4.51 4.5zm-8.8-4.14a4.47 4.47 0 0 1-.54-3.02l.14.09 4.78 2.76a.78.78 0 0 0 .79 0l5.83-3.37v2.33a.08.08 0 0 1-.03.06l-4.83 2.79a4.5 4.5 0 0 1-6.14-1.64zM3.48 8.08a4.47 4.47 0 0 1 2.34-1.98v5.7a.8.8 0 0 0 .39.68l5.83 3.37-2.02 1.17a.08.08 0 0 1-.07 0l-4.83-2.79A4.5 4.5 0 0 1 3.48 8.08zm14.33 3.01L12 7.72l5.83-3.37a.8.8 0 0 0 .39-.68V.65a4.5 4.5 0 0 1 2.34 1.98 4.47 4.47 0 0 1 .54 3.02l-.14-.08-4.78-2.76zm2.71-4.57v2.33a.08.08 0 0 1-.03.06l-4.83 2.79a4.5 4.5 0 0 1-6.14-1.64 4.47 4.47 0 0 1-.54-3.02l.14.09 4.78 2.76a.78.78 0 0 0 .79 0l5.83-3.37zm-9.35 4.22l2.35 1.36-2.35 1.36-2.35-1.36 2.35-1.36z" />
+                    </svg>
+                  ),
+                },
               ].map((tool, i) => (
                 <div key={tool.name} className="flex items-center gap-2">
                   <div
-                    className="flex size-14 items-center justify-center rounded-2xl bg-white shadow-md border border-[#E8E8E8] transition-all hover:-translate-y-1 hover:shadow-lg"
+                    className="flex size-14 items-center justify-center rounded-2xl bg-white shadow-md border border-[#E8E8E8] p-2.5 transition-all hover:-translate-y-1 hover:shadow-lg"
                     title={tool.name}
                   >
-                    <span
-                      className="text-base font-extrabold"
-                      style={{ color: tool.color }}
-                    >
-                      {tool.letter}
-                    </span>
+                    {tool.icon}
                   </div>
                   {i < 11 && <span className="hidden sm:inline-block h-0.5 w-3 bg-[#D4E8FC] rounded-full" />}
                 </div>
@@ -825,7 +920,7 @@ export function LandingPage() {
                   3 to 5 hours saved per week
                 </span>
                 <p className="font-serif text-2xl sm:text-3xl text-[#0B1A2C] leading-snug italic">
-                  "Slotly Notetaker organizes the chaos of dialogue into pure clarity."
+                  "Slotly takes all the pain out of client appointment booking and calendar coordination."
                 </p>
                 <div>
                   <p className="text-sm font-bold text-[#0B1A2C]">Lizzie Lewis</p>
@@ -856,17 +951,17 @@ export function LandingPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">Get Started Today</span>
           <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-[#0B1A2C]">
-            From the first meeting to the follow-up
+            From the first appointment to the follow-up
           </h2>
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-[#4A5568]">
-            All of the work around meetings, handled in one place. Book time, capture every discussion, and keep next steps moving without the manual work.
+            All your appointments and scheduling, handled in one place. Book time, sync team calendars in real time, and eliminate the back-and-forth.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               to="/book/northstar-health"
               className="inline-flex h-12 items-center justify-center rounded-full bg-[#0069FF] px-8 text-sm font-semibold text-white shadow-md hover:bg-[#0056D6] transition-all"
             >
-              Get started for free
+              Book an appointment
             </Link>
             <Link
               to="/login"
@@ -878,19 +973,16 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 10. Calendly Navy Footer (Frame 19) */}
+      {/* 10. Footer */}
       <footer id="pricing" className="bg-[#0B1A2C] text-white pt-16 pb-12 px-5 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5 border-b border-white/10 pb-12">
             <div className="space-y-4 md:col-span-1">
-              <div className="flex items-center gap-2">
-                <div className="grid size-8 place-items-center rounded-lg bg-[#0069FF] text-white">
-                  <Hourglass className="size-4" />
-                </div>
-                <span className="text-xl font-bold tracking-tight">Slotly</span>
-              </div>
+              <Link to="/" className="inline-flex items-center" title="Slotly">
+                <SlotlyLogo variant="full" mode="white" className="h-8 w-auto" />
+              </Link>
               <p className="text-xs text-white/60 leading-relaxed">
-                The modern platform that handles all of the work around meetings.
+                The modern multi-tenant platform for clinics, salons, and teams.
               </p>
             </div>
 
@@ -964,12 +1056,12 @@ export function LandingPage() {
                 <Sparkles className="size-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#0B1A2C]">Ask Callie AI</p>
+                <p className="text-xs font-bold text-[#0B1A2C]">Slotly AI</p>
                 <p className="text-[11px] text-emerald-600 font-semibold">Online · Ready to help</p>
               </div>
             </div>
             <div className="mt-3 text-xs text-gray-600 bg-blue-50 p-3 rounded-xl border border-blue-100">
-              Hi! I'm Callie, your Slotly AI scheduling partner. Looking to book an appointment or explore the workspace?
+              Hi! I'm your Slotly AI scheduling partner. Looking to book an appointment or explore the workspace?
             </div>
             <div className="mt-3 grid gap-2">
               <Link

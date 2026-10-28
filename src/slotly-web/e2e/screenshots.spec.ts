@@ -100,7 +100,7 @@ for (const viewport of [
   test(`capture landing page ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto("/");
-    await page.getByRole("heading", { name: /Make time for the work/i }).waitFor();
+    await page.getByRole("heading", { name: /All your appointment|scheduling/i }).waitFor();
     await page.screenshot({
       path: `../../docs/screenshots/landing-${viewport.name}.png`,
       fullPage: true,
