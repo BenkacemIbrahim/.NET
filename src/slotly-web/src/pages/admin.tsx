@@ -161,6 +161,7 @@ export function LoginPage() {
               <Label htmlFor="tenantSlug">Workspace</Label>
               <Input
                 id="tenantSlug"
+                className="rounded-xl"
                 placeholder="e.g. northstar-health"
                 {...form.register("tenantSlug")}
                 aria-invalid={!!form.formState.errors.tenantSlug}
@@ -172,6 +173,7 @@ export function LoginPage() {
               <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
+                className="rounded-xl"
                 type="email"
                 placeholder="name@clinic.example"
                 {...form.register("email")}
@@ -184,6 +186,7 @@ export function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                className="rounded-xl"
                 type="password"
                 placeholder="••••••••"
                 {...form.register("password")}
@@ -249,7 +252,7 @@ function AdminShell() {
     <div
       className={cn(
         "min-h-dvh bg-card transition-[grid-template-columns] duration-300 lg:grid",
-        collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[260px_1fr]",
+        collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[248px_1fr]",
       )}
     >
       {/* Sidebar */}
@@ -257,7 +260,7 @@ function AdminShell() {
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-card transition-all duration-300 lg:sticky lg:top-0 lg:h-dvh lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
-          collapsed ? "w-[72px] lg:w-[72px]" : "w-[260px] lg:w-[260px]",
+          collapsed ? "w-[72px] lg:w-[72px]" : "w-[248px] lg:w-[248px]",
         )}
       >
         {/* Brand Header */}
@@ -295,7 +298,7 @@ function AdminShell() {
         {/* Categorized Navigation */}
         <nav
           className={cn(
-            "flex-1 space-y-3.5 overflow-y-auto py-2",
+            "flex-1 space-y-5 overflow-y-auto py-3",
             collapsed ? "px-2" : "px-3",
           )}
         >
@@ -316,12 +319,12 @@ function AdminShell() {
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "flex h-9 items-center rounded-xl text-sm font-medium transition-all",
+                        "flex h-10 items-center rounded-lg border-l-2 border-transparent text-sm font-medium transition-colors",
                         collapsed
                           ? "justify-center px-0 size-9 mx-auto"
                           : "gap-2.5 px-3",
                         isActive
-                          ? "bg-accent font-semibold text-accent-foreground"
+                          ? "border-primary bg-accent font-semibold text-accent-foreground"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground",
                       )
                     }
@@ -338,7 +341,7 @@ function AdminShell() {
         {/* User Profile Card (Bottom of Sidebar) */}
         <div className="shrink-0 p-2.5">
           {!collapsed ? (
-            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-2">
+            <div className="flex items-center justify-between border-t border-border px-1 pt-3">
               <div className="flex items-center gap-2 overflow-hidden">
                 <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-xs text-primary">
                   {session?.user.displayName?.slice(0, 1) || "U"}
@@ -381,7 +384,7 @@ function AdminShell() {
       {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-card px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6">
           <div className="flex items-center gap-3">
             {/* Desktop Quick Collapse Button */}
             <Button
@@ -428,7 +431,7 @@ function AdminShell() {
                 type="text"
                 readOnly
                 placeholder="Search appointments..."
-                className="h-9 w-48 rounded-full border border-border bg-card pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/40 focus:bg-card transition-colors md:w-60"
+                className="h-9 w-48 rounded-lg border border-border bg-card pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/40 focus:bg-card transition-colors md:w-60"
               />
               <kbd className="absolute right-2.5 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 ⌘K
@@ -448,7 +451,7 @@ function AdminShell() {
               to="/book/northstar-health"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden h-9 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-xs font-medium text-foreground hover:bg-muted sm:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-4 text-xs font-medium text-foreground hover:border-primary hover:text-primary sm:inline-flex"
             >
               <span>Public booking page</span>
               <ExternalLink className="size-3 text-muted-foreground" />
@@ -458,7 +461,7 @@ function AdminShell() {
         </header>
 
         {/* View Content */}
-        <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="w-full max-w-[1440px] flex-1 bg-background p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
@@ -499,20 +502,19 @@ function status(value?: number) {
 
 function Status({ value }: { value?: number }) {
   const label = status(value);
+  const dot =
+    label === "Confirmed"
+      ? "bg-success"
+      : label === "Pending"
+        ? "bg-warning"
+        : label === "Cancelled"
+          ? "bg-destructive"
+          : "bg-muted-foreground";
   return (
-    <Badge
-      variant={
-        label === "Confirmed"
-          ? "success"
-          : label === "Pending"
-            ? "warning"
-            : label === "Cancelled"
-              ? "destructive"
-              : "neutral"
-      }
-    >
+    <span className="inline-flex items-center gap-2 text-xs font-semibold text-foreground">
+      <span className={cn("size-1.5 rounded-full", dot)} />
       {label}
-    </Badge>
+    </span>
   );
 }
 
@@ -554,11 +556,11 @@ export function DashboardPage() {
           description="Here's what is happening with your clinic and team today."
         />
         <div className="flex items-center gap-2">
-          <div className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-xs font-semibold text-foreground">
+          <div className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-4 text-xs font-semibold text-foreground">
             <CalendarIcon className="size-3.5 text-primary" />
             <span>{todayFormatted}</span>
           </div>
-          <Button asChild size="sm" variant="dark" className="h-9 rounded-full px-4">
+          <Button asChild size="sm" variant="dark" className="h-9 rounded-lg px-4">
             <Link to="/book/northstar-health" target="_blank">
               Book appointment
             </Link>
@@ -572,8 +574,8 @@ export function DashboardPage() {
         <div className="rounded-2xl border border-dark-surface bg-dark-surface p-5 text-dark-surface-foreground">
           <div className="flex items-center justify-between text-xs font-medium text-white/70">
             <span>Today's bookings</span>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-emerald-400 font-semibold">
-              Active
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300">
+              <span className="size-1.5 rounded-full bg-emerald-300" /> Active
             </span>
           </div>
           <p className="mt-3 text-3xl font-bold tabular-nums text-white">
@@ -806,10 +808,10 @@ export function BookingsPage() {
             key={key}
             onClick={() => setFilter(key)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-xs font-semibold transition-colors",
+              "rounded-lg border px-4 py-1.5 text-xs font-semibold transition-colors",
               filter === key
-                ? "bg-dark-surface text-dark-surface-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "border-primary bg-accent text-primary"
+                : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {label}
@@ -1388,7 +1390,7 @@ export function SchedulePage() {
                     </div>
                   )}
                   <Button
-                    className="sm:col-span-3 rounded-full"
+                    className="sm:col-span-3 rounded-lg"
                     disabled={addHours.isPending}
                   >
                     Add working day
@@ -1456,7 +1458,7 @@ export function SchedulePage() {
                       {timeOffForm.formState.errors.endsAt.message}
                     </FieldError>
                   )}
-                  <Button disabled={addTimeOff.isPending} className="rounded-full">
+                  <Button disabled={addTimeOff.isPending} className="rounded-lg">
                     Add time off
                   </Button>
                 </form>
@@ -1494,7 +1496,7 @@ export function SettingsPage() {
           name: settings.data.name || "",
           timeZoneId: settings.data.timeZoneId || "UTC",
           cancellationWindowHours: settings.data.cancellationWindowHours || 0,
-          primaryColor: settings.data.primaryColor || "#2563EB",
+          primaryColor: settings.data.primaryColor || "#006BFF",
           logoUrl: settings.data.logoUrl || "",
         }
       : undefined,
@@ -1553,7 +1555,7 @@ export function SettingsPage() {
                 <FieldError>{form.formState.errors[key]?.message}</FieldError>
               </div>
             ))}
-            <Button disabled={save.isPending} className="mt-2 rounded-full">
+            <Button disabled={save.isPending} className="mt-2 rounded-lg">
               {save.isPending ? "Saving…" : "Save settings"}
             </Button>
           </form>
@@ -1620,7 +1622,7 @@ function QuickForm<T extends FieldValues>({
               />
             </div>
           ))}
-          <Button className="w-full rounded-full" disabled={pending}>
+          <Button className="w-full rounded-lg" disabled={pending}>
             <Plus className="size-4" />
             {pending ? "Saving…" : "Add"}
           </Button>

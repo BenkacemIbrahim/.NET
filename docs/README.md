@@ -14,6 +14,7 @@ development and current service endpoints.
 - [Deployment guide](deployment.md)
 - [Performance benchmarks and load testing](performance.md)
 - [Design system](design-system.md)
+- [Calendly reference analysis](design-reference-analysis.md)
 - [Authentication and authorization](auth.md)
 - [Availability and booking engine](booking-engine.md)
 - [Background jobs and notifications](background-jobs.md)

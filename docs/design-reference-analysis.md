@@ -1,161 +1,126 @@
-# Reference Images Design Analysis
+# Calendly reference analysis for Slotly
 
-This document provides a comprehensive visual and architectural breakdown of the reference dashboard interfaces (YowTrip, Medicore Clinical Dashboard, and MTicket Event Analytics). This analysis establishes the design foundation, tokens, and component guidelines for the UI/UX overhaul of Slotly.
+This document is the visual source of truth for the Slotly web redesign. It is based on Calendly's public site as reviewed on 28 October 2026, Calendly Help Center product imagery, and the supplied desktop calendar references. It records visual patterns only: Slotly keeps its own name, content, routes, data model, and workflows.
 
----
+## 1. Overall character
 
-## 1. Executive Summary & Aesthetic Identity
+Calendly combines a spacious marketing site with a denser product workspace. Both use the same foundations: deep ink-navy text, an electric blue action color, white surfaces, cool-gray borders, a professional sans-serif, and almost no decorative surface effects. Hierarchy comes from type scale, spacing, borders, and large color fields—not shadows or gradients.
 
-The target aesthetic is a **modern, high-precision, border-defined dashboard UI** tailored for scheduling, clinical, and operational workflows. It balances:
-- **Calm, clinical precision**: High whitespace, crisp contrast, pure white surfaces floating over a subtle soft-gray canvas.
-- **Architectural depth through borders and contrast**: Zero decorative dropshadows, zero gradients, zero blur or glassmorphism. Visual hierarchy is achieved exclusively through 1px crisp borders (`#E4E7EC`), surface color switches (pure white vs soft gray vs deep midnight slate), and intentional typographic weight.
-- **Pill and rounded-card geometry**: Outer panels and cards feature generous `16px-20px` (`rounded-2xl`) corners; interactive filters, segmented tab navigations, and primary call-to-actions employ full `9999px` (`rounded-full`) pill geometry.
-- **Operational density & instant scannability**: Tabular numbers for all financial figures, clock times, and metrics. Quiet, dot-based or plain-text status indicators rather than bulky colorful badges.
+Slotly adopts that system with three constraints from the brief:
 
----
+- no gradients, decorative badges, glass effects, or box shadows;
+- no copied Calendly copy, logos, illustrations, or proprietary assets;
+- the existing login presentation remains visually unchanged, apart from inheriting the new global font.
 
-## 2. Layout & Shell Architecture
+## 2. Public landing page, section by section
 
-### 2.1 Workspace Shell
-- **Canvas Background**: `#F4F5F7` / `#F5F6F8` (a soft, neutral light-gray canvas).
-- **Surface Elevation**: Main content areas and dashboards are composed of white floating cards (`#FFFFFF`) with uniform 1px solid borders (`#E4E7EC`).
-- **Sidebar (YowTrip style)**:
-  - Fixed width: `260px`, white background (`#FFFFFF`), right border `1px solid #E4E7EC`.
-  - Brand header: Clean typographic wordmark with a subtle geometric icon glyph.
-  - Quick Search: Integrated pill or rounded input (`h-10`, `rounded-xl`, `border #E4E7EC`) with search icon and keyboard shortcut keycap (`⌘K`).
-  - Navigation Sections: Categorized under quiet uppercase section labels (`MAIN`, `WORKSPACE`, `CONFIGURATION`) in `11px`, `font-semibold`, tracking `0.05em`, color `#98A2B3`.
-  - Navigation Items: `h-10`, `rounded-xl` or `rounded-lg`, `px-3`, text `14px`, weight `500`. 
-    - Inactive: `#475467`, hover background `#F8F9FB`.
-    - Active: Light blue-tinted background `#EFF4FE`, active text `#2563EB`, stroke width `1.75px` on line icons.
-  - User Profile Widget (Bottom of Sidebar): Floating card/pill (`rounded-xl`, `p-2.5`, `border #EAECF0`), displaying user avatar, name (`13px font-semibold`), email (`11px text-muted-foreground`), and disclosure chevron.
+### Navigation
 
-### 2.2 Top Header & Navigation (Medicore / YowTrip style)
-- **Top Bar**: Transparent or pure white, `h-16`, flex row between breadcrumb/page title and context controls.
-- **Segmented Pill Navigation Bar**:
-  - Center or page header navigation using pill containers (`rounded-full bg-[#F2F4F7] p-1 border border-[#EAECF0]`).
-  - Active tab: Solid vibrant blue pill (`bg-[#2563EB] text-white`) or deep midnight slate (`bg-[#0F172A] text-white`), `px-4 py-1.5 rounded-full text-sm font-medium`.
-  - Inactive tabs: Transparent background, text `#475467`, hover `#101828`.
-- **Top Actions**:
-  - Date Range / Period selector: Pill button with calendar icon, date string (`24 Jul - 30 Jul 2026`), border `#E4E7EC`, background `#FFFFFF`.
-  - Action buttons: High-contrast pill button (`#0F172A` with white text) or electric blue primary pill (`#2563EB`).
-  - Circular utility buttons (`size-10 rounded-full border border-[#E4E7EC] bg-white`).
+- Full-width white bar with a centered `1200px` content rail and approximately `72px` height.
+- Brand at the far left; product, solutions, resources, and pricing links form a calm center cluster.
+- Text actions sit at the right, followed by one solid-blue rounded CTA.
+- Desktop navigation is visually light: no enclosing card, no shadow, and only the page divider where required. Mobile reduces to brand, one CTA, and a menu control.
 
----
+### Hero
 
-## 3. Typography & Numerals
+- Two-column desktop grid, close to a 52/48 split, with a large text block and a product-oriented scheduling composition.
+- Headline uses tight tracking, dark navy, and a wide-but-controlled line length. One phrase may use blue for emphasis, but there is no gradient text.
+- Supporting copy is muted blue-gray and limited to two or three lines.
+- Actions use a solid-blue primary button and a quiet text/outline secondary action.
+- The visual side is a functional booking UI preview built from real interface primitives, not abstract AI artwork.
+- Mobile stacks content, keeps the H1 prominent, and lets controls span the available width.
 
-### 3.1 Typeface Selection
-- **Family**: Plus Jakarta Sans / Inter Variable (clean grotesque / neo-grotesque with wide geometric aperture, open counters, and high legibility at micro sizes).
-- **Self-Hosted**: Packaged locally with zero runtime external HTTP requests.
-- **Tabular Figures**: Every numeric data point (prices, slots, dates, percentages, phone numbers) strictly utilizes `tabular-nums` (`font-variant-numeric: tabular-nums`) to prevent layout shifts and maintain vertical alignment.
+### Trust and social proof
 
-### 3.2 Scale & Hierarchy
-| Level | Font Size | Line Height | Weight | Tracking | Color |
-|---|---|---|---|---|---|
-| Display / Page Title | `26px - 28px` (`text-2xl` / `text-3xl`) | `32px` | `700` (Bold) | `-0.025em` | `#101828` |
-| Section Header | `18px - 20px` (`text-lg` / `text-xl`) | `26px` | `600` (Semi-bold) | `-0.015em` | `#101828` |
-| Metric Value | `28px - 32px` (`text-3xl`) | `36px` | `700` (Bold, Tabular) | `-0.02em` | `#101828` (or `#FFFFFF` on dark card) |
-| Card Subtitle / Label | `14px` (`text-sm`) | `20px` | `500` (Medium) | `0` | `#667085` |
-| Micro Label / Category | `11px - 12px` (`text-xs`) | `16px` | `600` (Semi-bold) | `+0.04em` (Uppercase) | `#98A2B3` |
-| Table Header | `12px` (`text-xs`) | `16px` | `600` (Semi-bold) | `+0.02em` | `#475467` |
-| Table Cell / Body | `14px` (`text-sm`) | `20px` | `400` / `500` | `0` | `#101828` |
+- A narrow band follows the hero with a short credibility statement and a monochrome wordmark row.
+- Slotly substitutes text-only customer categories and real product metrics; it does not reproduce third-party logos.
 
----
+### Feature narrative
 
-## 4. Color Palette (Exact Hex Reference)
+- Alternating two-column sections explain the flow: publish services, control availability, and manage bookings.
+- Each section has a small blue eyebrow, a strong navy heading, concise supporting copy, and two or three proof points.
+- Product previews use white panels with a `1px` cool-gray border and moderate `12–16px` radii.
+- Section spacing is generous (`96–128px` desktop, `64–80px` mobile) so the page reads as a sequence rather than a card wall.
 
-### 4.1 Light Mode
-- **Canvas Background**: `#F4F5F7`
-- **Surface / Card Background**: `#FFFFFF`
-- **Secondary Surface (Muted / Track)**: `#F2F4F7`
-- **Borders & Dividers**: `#E4E7EC` (Subtle 1px border)
-- **Active Border / Control Ring**: `#2563EB`
-- **Primary Accent (Electric Royal Blue)**: `#2563EB` (Hover: `#1D4ED8`, Active: `#1E40AF`)
-- **Primary Foreground**: `#FFFFFF`
-- **Secondary Accent (Deep Midnight Slate)**: `#0F172A` (Hover: `#1E293B`)
-- **Text Primary (Foreground)**: `#101828`
-- **Text Secondary (Muted Foreground)**: `#667085`
-- **Text Tertiary / Disabled**: `#98A2B3`
-- **Success (Emerald / Mint)**: `#079455` (Soft background: `#ECFDF3`, Text: `#067647`)
-- **Warning / Accent (Warm Tangerine)**: `#F79009` (High-impact badge/bar: `#FF5A1F`)
-- **Danger / Destructive (Crimson)**: `#D92D20` (Soft background: `#FEF3F2`, Text: `#B42318`)
+### Workflow / benefits band
 
-### 4.2 Dark Mode
-- **Canvas Background**: `#0B0F19`
-- **Surface / Card Background**: `#111827`
-- **Secondary Surface (Muted)**: `#1F2937`
-- **Borders & Dividers**: `#1F2937` (1px subtle border)
-- **Primary Accent**: `#3B82F6` (Hover: `#2563EB`)
-- **Primary Foreground**: `#FFFFFF`
-- **Text Primary**: `#F8FAFC`
-- **Text Secondary**: `#94A3B8`
-- **Text Tertiary**: `#64748B`
-- **Success**: `#10B981`
-- **Warning**: `#F59E0B`
-- **Danger**: `#EF4444`
+- A pale blue or navy full-width section changes rhythm without a gradient.
+- Three simple numbered columns communicate the process. Dividers and alignment create structure; there are no floating icon bubbles.
 
----
+### Pricing
 
-## 5. Spacing, Borders & Shapes
+- Plans appear in an aligned grid with equal-height cards, clear price hierarchy, compact feature lists, and one recommended treatment expressed through border/color—not a decorative badge.
+- Slotly presents product fit rather than invented billing commitments because pricing is not currently part of the application behavior.
 
-- **Base Spacing**: 4px grid (4, 8, 12, 16, 20, 24, 32, 40, 48px).
-- **Corner Radii**:
-  - `rounded-full` (`9999px`): Filter pills, navigation tabs, primary CTA buttons, avatar circles, status dots.
-  - `rounded-2xl` (`16px - 20px`): Main content cards, metric panels, dashboard widgets, modal containers.
-  - `rounded-xl` (`12px`): Input fields, select dropdowns, time slot buttons, table wrappers.
-  - `rounded-lg` (`8px`): Sub-controls, popovers, dropdown menu items.
-- **Borders**:
-  - Exact 1px solid `#E4E7EC` (Light) / `#1F2937` (Dark).
-  - No shadows. No `box-shadow` or `drop-shadow` classes.
-  - Focus state: `outline-none ring-2 ring-primary ring-offset-2 ring-offset-background`.
+### Closing CTA and footer
 
----
+- The closing CTA uses a solid navy field, white type, and a blue button.
+- Footer is a spacious multi-column directory with a brand summary, product links, company/help links, and a restrained legal row.
 
-## 6. Component-Specific Design Analysis
+## 3. Authenticated product references
 
-### 6.1 Metric / Stat Cards
-- Two key visual treatments from references:
-  1. **Standard White Card**: Pure `#FFFFFF` background, 1px `#E4E7EC` border, `rounded-2xl`, `p-5`. Stat title in `#667085`, big bold number in `#101828` (`text-3xl font-bold tabular-nums`), optional linear progress track with subtle rounded fill or trend percentage (`+12%`).
-  2. **High-Impact Highlight Card (Medicore Blue / MTicket Slate)**: High-contrast card (`bg-[#2563EB]` or `bg-[#0F172A] text-white`), highlighting key operational KPIs (e.g., active bookings, revenue, or patient/customer focus).
+Calendly's current product navigation groups scheduling, availability, meetings/calendar, contacts, automations, integrations, analytics, and settings in a persistent left rail. The reference screenshots reinforce the following patterns:
 
-### 6.2 Calendar Widget & Booking Slots
-- **Mini Calendar (Medicore style)**:
-  - Header: Month and year in clean semi-bold text with subtle previous/next arrow icons.
-  - Days of Week: `MON, TUE, WED, THU, FRI, SAT, SUN` in `10px font-semibold text-[#98A2B3]`.
-  - Date Grid: Clean circle geometry. Active/selected date is an exact solid blue circle (`bg-[#2563EB] text-white`). Today/urgent date has a soft rose highlight. Other dates are clean text.
-- **Time Slots Grid**:
-  - Clean pill or `rounded-xl` buttons (`h-10 px-3.5 border border-[#E4E7EC] bg-white text-sm font-medium tabular-nums`).
-  - Active slot: `border-[#2563EB] bg-[#EFF4FE] text-[#2563EB] font-semibold`.
+- `240–260px` white sidebar with a subtle right border;
+- compact navigation rows (`40–44px`), small line icons, and a pale-blue active state;
+- a slim top bar for page context, global creation, search/help, and profile controls;
+- content on a very light cool-gray canvas with a `1200–1440px` maximum working width;
+- white panels separated by borders, not elevation;
+- page headings around `28–32px`, section headings around `18–22px`, and dense `14px` product copy;
+- rectangular controls with `8px` radii; rounded buttons are comfortable rather than exaggerated capsules;
+- event/service cards expose title, duration, availability, link/action controls, and a quiet color marker;
+- bookings use filter controls above a bordered list/table, with status conveyed by text and small dots;
+- availability is a schedule editor: weekday rows, one or more time ranges, copy actions, and date overrides;
+- calendar views use crisp grid lines, a clear current-time/selected-date accent, and compact event blocks.
 
-### 6.3 Buttons & Actions
-- **Primary CTA**: Pill-shaped button (`rounded-full h-11 px-6 bg-[#2563EB] text-white font-medium hover:bg-[#1D4ED8] transition-colors`).
-- **Secondary / Outline**: Pill or `rounded-xl` button (`border border-[#E4E7EC] bg-white text-[#344054] hover:bg-[#F9FAFB]`).
-- **Dark Pill Action (Share/Apply)**: High contrast `bg-[#0F172A] text-white rounded-full h-10 px-5 hover:bg-[#1E293B]`.
-- **Icon Button**: Circular `size-10 rounded-full border border-[#E4E7EC] bg-white flex items-center justify-center hover:bg-[#F9FAFB]`.
+## 4. Public booking flow
 
-### 6.4 Forms & Inputs
-- **Inputs & Selects**: Height `42px`, `rounded-xl`, border `1px solid #E4E7EC`, background `#FFFFFF`, text `#101828`, placeholder `#98A2B3`.
-- **Labels**: Clean `13px font-medium text-[#344054] mb-1.5 block`.
-- **Errors**: Plain text `#D92D20` in `12px font-medium mt-1`, input border `#FDA29B`. No dramatic animation or glowing borders.
+The clearest Calendly reference is a centered scheduling surface that expands across three information zones:
 
-### 6.5 Tables & Lists
-- **Container**: `rounded-2xl border border-[#E4E7EC] overflow-hidden bg-white`.
-- **Header**: `bg-[#F9FAFB] border-b border-[#E4E7EC] text-xs font-semibold uppercase tracking-wider text-[#475467] px-4 py-3`.
-- **Rows**: `border-b border-[#F2F4F7] hover:bg-[#F8F9FA] transition-colors px-4 py-3.5 text-sm`.
-- **Status Indicator**: Quiet indicator (colored 6px solid dot with clean label e.g., Confirmed, Pending, Cancelled) rather than bulky pills.
+1. Event summary: organization/host, service title, duration, location, and time zone.
+2. Month calendar: month navigation, weekday labels, available dates, and a strong blue selected-date circle.
+3. Time list: selected date followed by stacked bordered time buttons; selecting a time reveals the confirm/next action.
 
-### 6.6 Empty, Loading & Error States
-- **Loading**: Clean, muted skeleton pulses (`bg-[#F2F4F7] rounded-xl animate-pulse`). No jagged layout shifts.
-- **Empty States**: Bordered dashed or solid white container (`rounded-2xl border border-[#E4E7EC] p-8 text-center`). Simple line icon in a clean rounded square, clear human title, short 1-line guidance, single primary pill action button.
-- **Errors**: Non-intrusive alert box with 1px border `#FECDCA`, background `#FEF3F2`, text `#B42318`, clear action to retry.
+The details form replaces the calendar/time area while retaining the event summary. Confirmation keeps the same centered frame and presents an unambiguous success state plus the booking details. On mobile, these zones become a linear flow with a simple header and touch targets at least `44px` high.
 
----
+## 5. Supplied image observations
 
-## 7. Migration Plan for Slotly UI
+The supplied calendar dashboards are useful for density and calendar composition, even though Slotly follows Calendly's blue/navy identity:
 
-1. **Tokens & CSS**: Set up Plus Jakarta Sans font, Tailwind theme tokens matching exact hexes, zero-shadow utility overrides.
-2. **App Shell**: Redesign sidebar with categorized navigation, user footer pill, clean wordmark, top bar with segmented pill tabs.
-3. **Admin Dashboard**: Implement Medicore/YowTrip-inspired modular card grid (Key Metrics, Today's Appointments with mini calendar, Recent Bookings).
-4. **Calendar Page**: Full-screen calendar with clean 1px grid lines and pill appointment markers.
-5. **Bookings, Services, Staff, Schedule & Settings**: Apply clean table, modal, and card styling.
-6. **Public Booking**: Clean customer appointment flow with pill steps, interactive calendar, tabular time slots, and high-contrast summary checkout.
+- day/week/month segmented views sit directly above the grid;
+- schedule cards align to a time axis and use thin colored leading borders;
+- staff context belongs in the grid header rather than in oversized cards;
+- month cells use subtle dividers and compact appointment blocks;
+- side panels can hold event details without navigating away;
+- controls remain small and direct, while whitespace is concentrated around page-level groups.
+
+The lavender backgrounds, purple brand, shadows, and ornamental canvas treatment in those images are explicitly excluded.
+
+## 6. Responsive behavior
+
+- `390px`: single-column landing flow; mobile menu; app sidebar becomes a drawer; tables become labeled stacked rows; booking summary precedes date/time selection; actions remain full-width where useful.
+- `768–1023px`: two-column marketing areas may stack; app content retains compact cards; booking date and time can share a row when space allows.
+- `1440px`: use centered rails with intentional whitespace. The app shell consumes the viewport while inner content remains capped for readability.
+
+## 7. Accessibility and motion
+
+- WCAG AA contrast is required for body text and controls.
+- Keyboard focus uses a visible two-pixel blue ring; this is the only glow-like visual allowed.
+- Every icon-only control has an accessible name.
+- Motion is limited to short opacity/position transitions and respects `prefers-reduced-motion`.
+- Semantic headings, landmarks, labels, table headers, and status text are retained even where icons are present.
+
+## 8. Implementation decisions
+
+- Typeface: **Inter Variable**, self-hosted with `@fontsource-variable/inter`. Its neutral proportions are closer to Calendly's product and marketing typography than the existing geometric Plus Jakarta Sans.
+- Icons: **Lucide React**, already present and suitable for the thin, consistent product icon language.
+- Calendar: retain **FullCalendar React** because it already drives working calendar behavior; restyle it to the new tokens.
+- Primitives: retain the existing Radix packages where used for accessible dialogs, selects, tabs, and menus.
+- Animation: remove Motion if no final screen needs it; CSS transitions cover the restrained motion language.
+
+## 9. Sources reviewed
+
+- Calendly public home page and product navigation (`calendly.com`).
+- Calendly Help Center: Scheduling, availability overview, event-type management, real-time booking, mobile overview, and admin dashboard.
+- Calendly product navigation release notes and official navigation/event-type redesign article.
+- Supplied day, week, month, and event-detail calendar images.

@@ -10,8 +10,8 @@ function nextWeekday() {
 test("customer books an available appointment", async ({ page }) => {
   await page.goto("/book/northstar-health");
   await page.getByRole("button", { name: /General Medical Consultation/i }).click();
-  await page.getByLabel("Date").fill(nextWeekday());
-  const slots = page.locator("button.tabular-nums");
+  await page.getByRole("button", { name: `Choose ${nextWeekday()}` }).click();
+  const slots = page.getByRole("button", { name: /Select time/i });
   await expect(slots.first()).toBeVisible();
   await slots.first().click();
   await page.getByLabel("Full name").fill("Playwright Customer");

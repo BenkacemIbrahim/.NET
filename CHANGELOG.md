@@ -4,6 +4,15 @@ All notable changes to Slotly will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Rebuilt the React marketing site, application shell, calendar, management screens, and public booking flow around a new flat Slotly scheduling design system.
+- Replaced Plus Jakarta Sans with self-hosted Inter Variable and refreshed the navy, blue, and cool-gray visual tokens.
+- Expanded Playwright viewport coverage to every application route at 390px and 1440px while preserving the existing authentication screen composition.
+- Added the Calendly visual reference analysis and updated design-system documentation and screenshots.
+
 ## [1.0.0] - 2026-10-26
 
 ### Added

@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CalendarDays,
   Check,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Clock3,
@@ -127,6 +128,18 @@ export function PublicBookingPage() {
     },
   });
 
+  const uniqueAvailability = useMemo(() => {
+    const slots = new Map<string, Slot>();
+    for (const item of availability.data ?? []) {
+      const key = new Date(item.localStartsAt || item.startsAt!).toLocaleTimeString(
+        [],
+        { hour: "2-digit", minute: "2-digit" },
+      );
+      if (!slots.has(key)) slots.set(key, item);
+    }
+    return [...slots.values()];
+  }, [availability.data]);
+
   useEffect(() => {
     if (!service?.id) return;
     const connection = new HubConnectionBuilder()
@@ -195,7 +208,7 @@ export function PublicBookingPage() {
     <div
       className="min-h-dvh bg-background"
       style={
-        { "--primary": branding?.primaryColor || "#2563EB" } as CSSProperties
+        { "--primary": branding?.primaryColor || "#006BFF" } as CSSProperties
       }
     >
       {/* Public Header (No blur, crisp 1px border) */}
@@ -225,8 +238,8 @@ export function PublicBookingPage() {
       </header>
 
       {/* Main Booking Flow */}
-      <main className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_340px] lg:py-12">
-        <section>
+      <main className="mx-auto grid max-w-[1060px] gap-5 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_300px] lg:py-14">
+        <section className="rounded-xl border border-border bg-card p-5 sm:p-8">
           {/* Stepper (Clean circular badges with connecting track) */}
           <div className="mb-8 flex items-center justify-between gap-2 text-xs font-semibold text-muted-foreground">
             {[1, 2, 3].map((value) => (
@@ -272,7 +285,7 @@ export function PublicBookingPage() {
                         <button
                           key={item.id}
                           onClick={() => setService(item)}
-                          className="group flex min-h-24 items-center justify-between rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary hover:bg-muted/30"
+                          className="group flex min-h-24 items-center justify-between rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary hover:bg-accent/30"
                         >
                           <div className="space-y-1">
                             <h2 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
@@ -314,7 +327,7 @@ export function PublicBookingPage() {
                   title="Select an available time"
                   description={`Times shown in ${branding?.timeZoneId || "local workspace time zone"}.`}
                 />
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="staff">Practitioner / Team member</Label>
                     <select
@@ -331,34 +344,35 @@ export function PublicBookingPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      min={minimumDate}
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="cursor-pointer"
-                    />
-                  </div>
                 </div>
+
+                <BookingCalendar
+                  value={date}
+                  minimumDate={minimumDate}
+                  onChange={setDate}
+                />
 
                 <div className="pt-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                     Available slots on {new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                   </p>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <div className="grid max-h-[520px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
                     {availability.isLoading ? (
                       [1, 2, 3, 4, 5, 6].map((x) => (
                         <Skeleton key={x} className="h-11 rounded-xl" />
                       ))
-                    ) : availability.data?.length ? (
-                      availability.data.map((item) => (
+                    ) : uniqueAvailability.length ? (
+                      uniqueAvailability.map((item) => (
                         <Button
                           key={`${item.staffId}-${item.startsAt}`}
                           variant="outline"
                           onClick={() => setSlot(item)}
+                          aria-label={`Select time ${new Date(
+                            item.localStartsAt || item.startsAt!,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`}
                           className="tabular-nums rounded-xl hover:border-primary hover:bg-accent font-semibold"
                         >
                           {new Date(
@@ -370,7 +384,7 @@ export function PublicBookingPage() {
                         </Button>
                       ))
                     ) : (
-                      <div className="col-span-full rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                      <div className="col-span-full rounded-lg border border-border bg-muted/35 p-8 text-center text-sm text-muted-foreground">
                         <Clock className="mx-auto size-6 text-muted-foreground mb-2" />
                         <p className="font-semibold text-foreground">No open slots on this date</p>
                         <p className="text-xs text-muted-foreground mt-1">Please select another date or choose any available practitioner.</p>
@@ -438,7 +452,7 @@ export function PublicBookingPage() {
                     </div>
                   ))}
                   <Button
-                    className="mt-2 w-full rounded-full"
+                    className="mt-2 w-full rounded-lg"
                     size="lg"
                     disabled={createBooking.isPending}
                   >
@@ -478,7 +492,7 @@ export function PublicBookingPage() {
                   Booking Reference: #{confirmation.id?.slice(0, 8)}
                 </div>
                 <Button
-                  className="mt-6 rounded-full"
+                  className="mt-6 rounded-lg"
                   variant="outline"
                   onClick={() => window.location.reload()}
                 >
@@ -490,7 +504,7 @@ export function PublicBookingPage() {
         </section>
 
         {/* Aside: Clean Floating Appointment Summary */}
-        <aside className="lg:pt-14">
+        <aside>
           <Card className="sticky top-6 p-6">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Appointment Summary
@@ -597,6 +611,119 @@ function Summary({
   );
 }
 
+function BookingCalendar({
+  value,
+  minimumDate,
+  onChange,
+}: {
+  value: string;
+  minimumDate: string;
+  onChange: (value: string) => void;
+}) {
+  const selected = new Date(`${value}T12:00:00`);
+  const [visibleMonth, setVisibleMonth] = useState(
+    () => new Date(selected.getFullYear(), selected.getMonth(), 1),
+  );
+  const firstWeekday = (visibleMonth.getDay() + 6) % 7;
+  const daysInMonth = new Date(
+    visibleMonth.getFullYear(),
+    visibleMonth.getMonth() + 1,
+    0,
+  ).getDate();
+  const cells = Array.from({ length: firstWeekday + daysInMonth }, (_, index) =>
+    index < firstWeekday ? null : index - firstWeekday + 1,
+  );
+
+  return (
+    <div className="rounded-lg border border-border p-4 sm:p-5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold text-foreground">
+          {visibleMonth.toLocaleDateString(undefined, {
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+        <div className="flex gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-9"
+            aria-label="Previous month"
+            onClick={() =>
+              setVisibleMonth(
+                new Date(
+                  visibleMonth.getFullYear(),
+                  visibleMonth.getMonth() - 1,
+                  1,
+                ),
+              )
+            }
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-9"
+            aria-label="Next month"
+            onClick={() =>
+              setVisibleMonth(
+                new Date(
+                  visibleMonth.getFullYear(),
+                  visibleMonth.getMonth() + 1,
+                  1,
+                ),
+              )
+            }
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-7 text-center text-[11px] font-bold uppercase text-muted-foreground">
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+          <span key={day} className="py-2">{day}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-y-1 text-center text-sm">
+        {cells.map((day, index) => {
+          if (!day) return <span key={`empty-${index}`} className="size-10" />;
+          const dateValue = isoDate(
+            new Date(
+              visibleMonth.getFullYear(),
+              visibleMonth.getMonth(),
+              day,
+              12,
+            ),
+          );
+          const disabled = dateValue < minimumDate;
+          const isSelected = dateValue === value;
+          return (
+            <button
+              key={dateValue}
+              type="button"
+              aria-label={`Choose ${dateValue}`}
+              aria-pressed={isSelected}
+              disabled={disabled}
+              onClick={() => onChange(dateValue)}
+              className={cn(
+                "mx-auto grid size-10 place-items-center rounded-full font-semibold tabular-nums disabled:cursor-not-allowed disabled:text-muted-foreground/35",
+                isSelected
+                  ? "bg-primary text-white"
+                  : "text-foreground hover:bg-accent hover:text-primary",
+              )}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PublicError({ onBack }: { onBack: () => void }) {
   return (
     <main className="grid min-h-dvh place-items-center p-6 text-center">
@@ -605,7 +732,7 @@ function PublicError({ onBack }: { onBack: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           The requested workspace booking URL does not exist or has expired.
         </p>
-        <Button className="mt-6 rounded-full w-full" onClick={onBack}>
+        <Button className="mt-6 w-full rounded-lg" onClick={onBack}>
           Return to home
         </Button>
       </div>

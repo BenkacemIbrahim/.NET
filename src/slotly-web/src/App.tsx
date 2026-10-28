@@ -22,6 +22,9 @@ const SettingsPage = lazy(() =>
 );
 const StaffPage = lazy(() => admin().then((m) => ({ default: m.StaffPage })));
 const CalendarPage = lazy(() => import("./pages/calendar-page"));
+const LandingPage = lazy(() =>
+  import("./pages/landing").then((m) => ({ default: m.LandingPage })),
+);
 const PublicBookingPage = lazy(() =>
   import("./pages/public-booking").then((m) => ({
     default: m.PublicBookingPage,
@@ -38,10 +41,7 @@ export default function App() {
       }
     >
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to="/book/northstar-health" replace />}
-        />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/book/:tenantSlug" element={<PublicBookingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<AdminGuard />}>

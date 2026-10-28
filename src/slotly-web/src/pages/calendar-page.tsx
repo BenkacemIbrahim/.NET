@@ -17,34 +17,28 @@ import { PageTitle, useBookings } from "./admin";
 interface StatusBadge {
   label: string;
   cardClass: string;
-  pillClass: string;
 }
 
 const statusBadges: Record<number, StatusBadge> = {
   1: {
     label: "Pending",
-    cardClass: "bg-amber-600/90 text-white border-l-4 border-amber-300 shadow-sm",
-    pillClass: "bg-black/20 text-white",
+    cardClass: "border-l-[3px] border-warning bg-warning/10 text-foreground",
   },
   2: {
     label: "Confirmed",
-    cardClass: "bg-blue-600/90 text-white border-l-4 border-blue-300 shadow-sm",
-    pillClass: "bg-black/20 text-white",
+    cardClass: "border-l-[3px] border-primary bg-primary/10 text-foreground",
   },
   3: {
     label: "Cancelled",
-    cardClass: "bg-rose-900/60 text-zinc-300 border-l-4 border-rose-500 opacity-60 line-through",
-    pillClass: "bg-black/30 text-rose-200",
+    cardClass: "border-l-[3px] border-destructive bg-destructive/10 text-muted-foreground line-through",
   },
   4: {
     label: "Completed",
-    cardClass: "bg-emerald-600/90 text-white border-l-4 border-emerald-300 shadow-sm",
-    pillClass: "bg-black/20 text-white",
+    cardClass: "border-l-[3px] border-success bg-success/10 text-foreground",
   },
   5: {
     label: "No show",
-    cardClass: "bg-zinc-700 text-zinc-200 border-l-4 border-zinc-400 opacity-70",
-    pillClass: "bg-black/30 text-zinc-300",
+    cardClass: "border-l-[3px] border-muted-foreground bg-muted text-muted-foreground",
   },
 };
 
@@ -74,7 +68,7 @@ export default function CalendarPage() {
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 rounded-xl border border-border bg-card shadow-sm hover:bg-muted"
+            className="size-9 rounded-lg border border-border bg-card hover:bg-muted"
             onClick={handlePrev}
             title="Previous"
           >
@@ -85,7 +79,7 @@ export default function CalendarPage() {
             type="button"
             variant="outline"
             size="sm"
-            className="h-9 px-4 rounded-xl border border-border bg-card text-xs font-semibold text-foreground shadow-sm hover:bg-muted"
+            className="h-9 rounded-lg border border-border bg-card px-4 text-xs font-semibold text-foreground hover:bg-muted"
             onClick={handleToday}
           >
             Today
@@ -95,7 +89,7 @@ export default function CalendarPage() {
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 rounded-xl border border-border bg-card shadow-sm hover:bg-muted"
+            className="size-9 rounded-lg border border-border bg-card hover:bg-muted"
             onClick={handleNext}
             title="Next"
           >
@@ -112,7 +106,7 @@ export default function CalendarPage() {
         </div>
 
         {/* View Switcher: Day | Week | Month */}
-        <div className="inline-flex rounded-xl border border-border bg-card p-1 shadow-sm">
+        <div className="inline-flex rounded-lg border border-border bg-muted p-1">
           {(
             [
               { id: "timeGridDay", label: "Day" },
@@ -127,7 +121,7 @@ export default function CalendarPage() {
               className={cn(
                 "rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer",
                 activeView === item.id
-                  ? "bg-primary text-white shadow-sm"
+                  ? "border border-border bg-card text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               )}
             >
@@ -138,7 +132,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar View Container */}
-      <Card className="overflow-hidden border border-border bg-card p-2 sm:p-5 shadow-sm">
+      <Card className="overflow-hidden border border-border bg-card p-2 sm:p-5">
         <FullCalendar
           ref={calendarRef}
           plugins={[classicThemePlugin, dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -174,21 +168,13 @@ export default function CalendarPage() {
             return (
               <div
                 className={cn(
-                  "flex h-full w-full flex-col justify-center px-2 py-1 text-xs transition-transform hover:scale-[1.01] overflow-hidden rounded-md cursor-pointer",
+                  "flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md px-2 py-1 text-xs",
                   badge.cardClass,
                 )}
               >
-                <div className="flex items-center justify-between gap-1 overflow-hidden leading-tight">
+                <div className="flex items-center gap-1 overflow-hidden leading-tight">
                   <span className="truncate font-bold tracking-tight">
                     {info.event.title}
-                  </span>
-                  <span
-                    className={cn(
-                      "rounded px-1 py-0.2 text-[9px] font-semibold uppercase tracking-wider shrink-0",
-                      badge.pillClass,
-                    )}
-                  >
-                    {badge.label}
                   </span>
                 </div>
                 <div className="mt-0.5 text-[10px] font-medium opacity-90 tabular-nums">

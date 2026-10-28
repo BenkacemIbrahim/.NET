@@ -23,6 +23,10 @@
 
 <div align="center">
 
+### Public Landing Experience
+
+![Slotly landing page](docs/screenshots/landing-desktop.png)
+
 ### Customer Booking Experience (Desktop Light & Dark)
 
 | Light Theme | Dark Theme |
@@ -77,7 +81,7 @@
 - **Accessible, Responsive Frontend (`slotly-web`)**:
   - React 19, TypeScript strict, Vite, Tailwind CSS v4, and Radix UI / shadcn/ui.
   - 100% type safety generated from OpenAPI Swagger contracts (`openapi-typescript`).
-  - Perfect **100 / 100 Lighthouse Accessibility & Best Practices** scores.
+  - Lighthouse scores of **100 Accessibility** and **96 Best Practices** on the redesigned landing experience.
   - Light and dark theme tokens with WCAG AA compliant contrast ratios.
 
 ---
@@ -284,7 +288,7 @@ Get-Content scripts/load-test.js -Raw | docker run --rm -i --network=slotly_defa
 - **Domain Tests** (`tests/Slotly.Domain.Tests`): 36 unit tests validating entity invariants, lifecycle state machines, daylight saving offsets, and overlap rules.
 - **Application Tests** (`tests/Slotly.Application.Tests`): 25 unit tests covering FluentValidation request rules and availability calculations.
 - **Integration Tests** (`tests/Slotly.Api.IntegrationTests`): 27 integration tests running real PostgreSQL instances via **Testcontainers** verifying tenant boundary leaks, JWT refresh reuse detection, concurrent bookings, and transactional outbox idempotency.
-- **E2E Tests** (`src/slotly-web/e2e`): 7 Playwright browser journeys verifying booking completion, admin dashboard actions, and visual regression baselines.
+- **E2E Tests** (`src/slotly-web/e2e`): 31 Playwright journeys and viewport captures verifying booking completion, admin navigation, authentication, and every product screen at 390px and 1440px.
 - **k6 Load Tests** (`scripts/load-test.js`): Verified **13,412 requests** at 334+ req/sec with sub-25ms cached responses and **0 double bookings**. See [docs/performance.md](docs/performance.md).
 
 ---
