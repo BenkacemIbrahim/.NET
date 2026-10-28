@@ -8,15 +8,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Clock3,
   CreditCard,
-  MapPin,
-  UserRound,
+  Globe,
+  Video,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -28,9 +27,7 @@ import {
 } from "../api/client";
 import { SlotlyLogo } from "../components/slotly-logo";
 import { ThemeToggle } from "../components/theme-toggle";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { FieldError, Label } from "../components/ui/label";
 import { Skeleton } from "../components/ui/skeleton";
@@ -44,6 +41,7 @@ const detailsSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name."),
   email: z.email("Enter a valid email address."),
   phone: z.string().trim().min(7, "Enter a valid phone number.").max(32),
+  notes: z.string().optional(),
 });
 type Details = z.infer<typeof detailsSchema>;
 
@@ -69,6 +67,7 @@ export function PublicBookingPage() {
   );
   const [minimumDate] = useState(() => isoDate(new Date()));
   const [slot, setSlot] = useState<Slot | null>(null);
+  const [selectedSlotForConfirm, setSelectedSlotForConfirm] = useState<Slot | null>(null);
   const [confirmation, setConfirmation] = useState<Booking | null>(null);
   const headers = useMemo(() => tenantHeaders(tenantSlug), [tenantSlug]);
 
@@ -94,6 +93,13 @@ export function PublicBookingPage() {
       return data.items ?? [];
     },
   });
+
+  // Automatically select the first service if none selected and only 1 exists
+  useEffect(() => {
+    if (!service && services.data?.length === 1) {
+      setService(services.data[0]);
+    }
+  }, [services.data, service]);
 
   const staff = useQuery({
     queryKey: ["staff", tenantSlug],
@@ -148,12 +154,10 @@ export function PublicBookingPage() {
       )
       .withAutomaticReconnect()
       .build();
-    connection.on(
-      "SlotChanged",
-      () =>
-        void queryClient.invalidateQueries({
-          queryKey: ["availability", tenantSlug, service.id],
-        }),
+    connection.on("SlotChanged", () =>
+      void queryClient.invalidateQueries({
+        queryKey: ["availability", tenantSlug, service.id],
+      }),
     );
     void connection
       .start()
@@ -166,7 +170,7 @@ export function PublicBookingPage() {
 
   const form = useForm<Details>({
     resolver: zodResolver(detailsSchema),
-    defaultValues: { name: "", email: "", phone: "" },
+    defaultValues: { name: "", email: "", phone: "", notes: "" },
   });
 
   const createBooking = useMutation({
@@ -200,418 +204,437 @@ export function PublicBookingPage() {
   });
 
   const branding = tenant.data;
-  const currentStep = confirmation ? 4 : !service ? 1 : !slot ? 2 : 3;
 
   if (tenant.isError) return <PublicError onBack={() => navigate("/")} />;
 
   return (
     <div
-      className="min-h-dvh bg-background"
+      className="min-h-screen bg-[#F8F9FA] dark:bg-[#0B111A] text-[#0B1A2C] dark:text-white flex flex-col justify-between py-6 px-3 sm:px-6 selection:bg-[#0069FF] selection:text-white"
       style={
-        { "--primary": branding?.primaryColor || "#006BFF" } as CSSProperties
+        { "--primary": branding?.primaryColor || "#0069FF" } as CSSProperties
       }
     >
-      {/* Public Header (No blur, crisp 1px border) */}
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            {branding?.logoUrl ? (
-              <img
-                src={branding.logoUrl}
-                alt={branding?.name || "Logo"}
-                className="size-8 rounded-xl object-contain border border-border"
-              />
-            ) : (
-              <SlotlyLogo variant="icon" className="size-8" />
-            )}
-            <div>
-              <span className="font-bold text-base tracking-tight text-foreground">
-                {branding?.name || "Slotly"}
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-xs text-muted-foreground font-medium">
-                · Online Booking
-              </span>
-            </div>
-          </div>
-          <ThemeToggle />
-        </div>
+      {/* Top Brand Bar */}
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between pb-6">
+        <Link to="/" className="flex items-center gap-2">
+          {branding?.logoUrl ? (
+            <img
+              src={branding.logoUrl}
+              alt={branding?.name || "Logo"}
+              className="h-8 w-auto object-contain rounded-lg"
+            />
+          ) : (
+            <SlotlyLogo variant="icon" className="size-8 text-[#0069FF]" />
+          )}
+          <span className="font-bold text-base tracking-tight text-[#0B1A2C] dark:text-white">
+            {branding?.name || "Slotly"}
+          </span>
+        </Link>
+        <ThemeToggle />
       </header>
 
-      {/* Main Booking Flow */}
-      <main className="mx-auto grid max-w-[1060px] gap-5 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_300px] lg:py-14">
-        <section className="rounded-xl border border-border bg-card p-5 sm:p-8">
-          {/* Stepper (Clean circular badges with connecting track) */}
-          <div className="mb-8 flex items-center justify-between gap-2 text-xs font-semibold text-muted-foreground">
-            {[1, 2, 3].map((value) => (
-              <div key={value} className="flex flex-1 items-center gap-2">
-                <span
-                  className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-full border border-border text-xs font-bold transition-colors",
-                    currentStep >= value
-                      ? "border-primary bg-primary text-white"
-                      : "bg-muted text-muted-foreground",
-                  )}
+      {/* Main Calendly Split Booking Card Container */}
+      <main className="mx-auto w-full max-w-5xl rounded-3xl bg-white dark:bg-[#111A28] border border-gray-200 dark:border-[#1C283A] shadow-2xl overflow-hidden my-auto">
+        <div className="grid md:grid-cols-[320px_1fr] divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-[#1C283A]">
+          {/* Left Summary Pane (Calendly Signature Host Panel) */}
+          <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              {/* Back navigation */}
+              {(slot || (service && (services.data?.length ?? 0) > 1)) && (
+                <button
+                  onClick={() => {
+                    if (slot) {
+                      setSlot(null);
+                      setSelectedSlotForConfirm(null);
+                    } else if (service) {
+                      setService(null);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#0069FF] transition-colors"
                 >
-                  {currentStep > value ? <Check className="size-3.5" /> : value}
-                </span>
-                <span className="text-xs font-medium text-foreground">
-                  {["Service", "Time", "Details"][value - 1]}
-                </span>
-                {value < 3 && <span className="h-px flex-1 bg-border" />}
+                  <ArrowLeft className="size-3.5" />
+                  <span>{slot ? "Change date & time" : "Choose other event"}</span>
+                </button>
+              )}
+
+              {/* Host Avatar / Logo */}
+              <div className="flex items-center gap-3">
+                <div className="grid size-12 place-items-center rounded-full bg-[#0069FF] font-bold text-sm text-white shadow-sm">
+                  {branding?.name ? branding.name.charAt(0) : "S"}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                    {branding?.name || "Slotly Workspace"}
+                  </p>
+                  <p className="text-sm font-extrabold text-[#0B1A2C] dark:text-white">
+                    {staffId !== "any"
+                      ? staff.data?.find((x) => x.id === staffId)?.displayName || "Practitioner"
+                      : "Host Team"}
+                  </p>
+                </div>
               </div>
-            ))}
+
+              {/* Service / Event Type Title */}
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-[#0B1A2C] dark:text-white">
+                  {service?.name || "Select an appointment"}
+                </h1>
+              </div>
+
+              {/* Meta details (Duration, Location, Price, Selected Slot) */}
+              <div className="space-y-2.5 pt-2 text-xs font-semibold text-gray-600 dark:text-[#8B9CB0]">
+                {service && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="size-4 text-[#0069FF]" />
+                    <span>{service.durationMinutes} mins</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Video className="size-4 text-[#0069FF]" />
+                  <span>Web conferencing details provided upon confirmation</span>
+                </div>
+
+                {service && (service.priceAmount ?? 0) > 0 && (
+                  <div className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400">
+                    <CreditCard className="size-4" />
+                    <span>{money(service.priceAmount, service.currency)}</span>
+                  </div>
+                )}
+
+                {slot && (
+                  <div className="flex items-start gap-2 pt-2 border-t border-gray-100 dark:border-[#1C283A] text-[#0069FF]">
+                    <CalendarDays className="size-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">
+                        {new Date(slot.localStartsAt || slot.startsAt!).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })} -{" "}
+                        {new Date(
+                          new Date(slot.localStartsAt || slot.startsAt!).getTime() +
+                            (service?.durationMinutes ?? 30) * 60000,
+                        ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        {new Date(slot.localStartsAt || slot.startsAt!).toLocaleDateString(undefined, {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="pt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Welcome to our scheduling page. Please choose a convenient time that works best for your schedule.
+              </div>
+            </div>
+
+            {/* Timezone Indicator */}
+            <div className="pt-4 border-t border-gray-100 dark:border-[#1C283A] flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Globe className="size-4 text-[#0069FF]" />
+              <span className="font-medium">
+                {branding?.timeZoneId || "Africa/Casablanca"} ({new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
+              </span>
+            </div>
           </div>
 
-          <AnimatePresence mode="wait">
-            {!service ? (
-              <motion.div
-                key="services"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                <Title
-                  eyebrow="Step 1 of 3"
-                  title="Choose a service"
-                  description="Select the appointment you would like to book to view available times."
-                />
-                <div className="grid gap-3">
-                  {services.isLoading
-                    ? [1, 2, 3].map((x) => (
-                        <Skeleton key={x} className="h-24 rounded-2xl" />
-                      ))
-                    : services.data?.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setService(item)}
-                          className="group flex min-h-24 items-center justify-between rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary hover:bg-accent/30"
-                        >
-                          <div className="space-y-1">
-                            <h2 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                              {item.name}
-                            </h2>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 font-medium tabular-nums">
-                                <Clock className="size-3" />
-                                {item.durationMinutes} min
-                              </span>
-                              <span>·</span>
-                              <span className="font-semibold text-foreground tabular-nums">
-                                {money(item.priceAmount, item.currency)}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                            <ChevronRight className="size-4" />
-                          </span>
-                        </button>
-                      ))}
-                </div>
-              </motion.div>
-            ) : !slot ? (
-              <motion.div
-                key="slots"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <button
-                  onClick={() => setService(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          {/* Right Interactive Selection / Booking Pane */}
+          <div className="p-6 sm:p-8">
+            <AnimatePresence mode="wait">
+              {confirmation ? (
+                /* Step 4: Confirmed Success */
+                <motion.div
+                  key="confirmation"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="py-6 text-center space-y-4"
                 >
-                  <ArrowLeft className="size-3.5" /> Back to services
-                </button>
-                <Title
-                  eyebrow={service.name || ""}
-                  title="Select an available time"
-                  description={`Times shown in ${branding?.timeZoneId || "local workspace time zone"}.`}
-                />
-                <div className="grid gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="staff">Practitioner / Team member</Label>
-                    <select
-                      id="staff"
-                      value={staffId}
-                      onChange={(e) => setStaffId(e.target.value)}
-                      className="min-h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm text-foreground"
-                    >
-                      <option value="any">Any available practitioner</option>
-                      {staff.data?.map((person) => (
-                        <option key={person.id} value={person.id}>
-                          {person.displayName}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                    <Check className="size-8 stroke-[3]" />
                   </div>
-                </div>
-
-                <BookingCalendar
-                  value={date}
-                  minimumDate={minimumDate}
-                  onChange={setDate}
-                />
-
-                <div className="pt-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                    Available slots on {new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                  <h2 className="text-2xl font-bold tracking-tight text-[#0B1A2C] dark:text-white">
+                    You are scheduled
+                  </h2>
+                  <p className="mx-auto max-w-md text-xs sm:text-sm text-gray-600 dark:text-[#8B9CB0]">
+                    A calendar invitation and confirmation receipt have been sent to your email address.
                   </p>
-                  <div className="grid max-h-[520px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
-                    {availability.isLoading ? (
-                      [1, 2, 3, 4, 5, 6].map((x) => (
-                        <Skeleton key={x} className="h-11 rounded-xl" />
-                      ))
-                    ) : uniqueAvailability.length ? (
-                      uniqueAvailability.map((item) => (
-                        <Button
-                          key={`${item.staffId}-${item.startsAt}`}
-                          variant="outline"
-                          onClick={() => setSlot(item)}
-                          aria-label={`Select time ${new Date(
-                            item.localStartsAt || item.startsAt!,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}`}
-                          className="tabular-nums rounded-xl hover:border-primary hover:bg-accent font-semibold"
-                        >
-                          {new Date(
-                            item.localStartsAt || item.startsAt!,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </Button>
-                      ))
-                    ) : (
-                      <div className="col-span-full rounded-lg border border-border bg-muted/35 p-8 text-center text-sm text-muted-foreground">
-                        <Clock className="mx-auto size-6 text-muted-foreground mb-2" />
-                        <p className="font-semibold text-foreground">No open slots on this date</p>
-                        <p className="text-xs text-muted-foreground mt-1">Please select another date or choose any available practitioner.</p>
-                      </div>
-                    )}
+
+                  <div className="mx-auto max-w-sm rounded-2xl bg-neutral-50 dark:bg-[#0B111A] border border-gray-200 dark:border-[#1C283A] p-4 text-left space-y-2 text-xs">
+                    <div className="flex justify-between font-bold text-[#0B1A2C] dark:text-white">
+                      <span>{service?.name}</span>
+                      <span>{service?.durationMinutes} min</span>
+                    </div>
+                    <p className="text-gray-500 font-mono text-[11px]">
+                      Booking Reference: #{confirmation.id?.slice(0, 8)}
+                    </p>
                   </div>
-                </div>
-              </motion.div>
-            ) : !confirmation ? (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <button
-                  onClick={() => setSlot(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="size-3.5" /> Choose another time
-                </button>
-                <Title
-                  eyebrow="Step 3 of 3"
-                  title="Your contact details"
-                  description="We will send your booking confirmation and schedule reminders here."
-                />
-                <form
-                  onSubmit={form.handleSubmit((values) =>
-                    createBooking.mutate(values),
-                  )}
+
+                  <div className="pt-4">
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="rounded-full bg-[#0069FF] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#0056D6] transition-colors"
+                    >
+                      Schedule another meeting
+                    </button>
+                  </div>
+                </motion.div>
+              ) : !service ? (
+                /* Step 1: Select a Service / Event Type */
+                <motion.div
+                  key="services"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
                   className="space-y-4"
                 >
-                  {(["name", "email", "phone"] as const).map((field) => (
-                    <div key={field} className="space-y-1.5">
-                      <Label htmlFor={field}>
-                        {field === "name"
-                          ? "Full name"
-                          : field === "email"
-                            ? "Email address"
-                            : "Phone number"}
-                      </Label>
-                      <Input
-                        id={field}
-                        type={field === "email" ? "email" : "text"}
-                        placeholder={
-                          field === "name"
-                            ? "e.g. Sarah Jenkins"
-                            : field === "email"
-                              ? "sarah@example.com"
-                              : "+1 555 019 2834"
-                        }
-                        autoComplete={
-                          field === "name"
-                            ? "name"
-                            : field === "email"
-                              ? "email"
-                              : "tel"
-                        }
-                        aria-invalid={Boolean(form.formState.errors[field])}
-                        {...form.register(field)}
-                      />
-                      <FieldError>
-                        {form.formState.errors[field]?.message}
-                      </FieldError>
-                    </div>
-                  ))}
-                  <Button
-                    className="mt-2 w-full rounded-lg"
-                    size="lg"
-                    disabled={createBooking.isPending}
-                  >
-                    {createBooking.isPending ? (
-                      "Confirming reservation…"
-                    ) : branding?.onlinePaymentsEnabled ? (
-                      <>
-                        <CreditCard className="size-4" />
-                        Continue to payment
-                      </>
+                  <h2 className="text-lg font-bold text-[#0B1A2C] dark:text-white">
+                    Select an appointment type
+                  </h2>
+
+                  <div className="grid gap-3">
+                    {services.isLoading ? (
+                      [1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)
                     ) : (
-                      <>Confirm appointment</>
+                      services.data?.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => setService(s)}
+                          className="group flex items-center justify-between rounded-2xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] p-5 text-left transition-all hover:border-[#0069FF] hover:shadow-md cursor-pointer"
+                        >
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-bold text-[#0B1A2C] dark:text-white group-hover:text-[#0069FF] transition-colors">
+                              {s.name}
+                            </h3>
+                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-[#8B9CB0]">
+                              <span className="flex items-center gap-1">
+                                <Clock className="size-3.5" /> {s.durationMinutes} min
+                              </span>
+                              {(s.priceAmount ?? 0) > 0 && (
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                  {money(s.priceAmount, s.currency)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ChevronRight className="size-4 text-gray-400 group-hover:text-[#0069FF] group-hover:translate-x-0.5 transition-all" />
+                        </button>
+                      ))
                     )}
-                  </Button>
-                </form>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="done"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="rounded-2xl border border-border bg-card p-8 sm:p-12 text-center"
-              >
-                <div className="mx-auto grid size-14 place-items-center rounded-full bg-success/15 text-success">
-                  <Check className="size-7" />
-                </div>
-                <Badge variant="success" className="mt-4">
-                  Confirmed
-                </Badge>
-                <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  You're all set.
-                </h1>
-                <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-                  Your appointment has been registered and a confirmation email has been dispatched.
-                </p>
-                <div className="mt-6 rounded-xl border border-border bg-muted/30 p-4 text-xs font-mono text-muted-foreground">
-                  Booking Reference: #{confirmation.id?.slice(0, 8)}
-                </div>
-                <Button
-                  className="mt-6 rounded-lg"
-                  variant="outline"
-                  onClick={() => window.location.reload()}
+                  </div>
+                </motion.div>
+              ) : !slot ? (
+                /* Step 2: Calendly Calendar & Time Picker */
+                <motion.div
+                  key="calendar"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-6"
                 >
-                  Book another appointment
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h2 className="text-lg font-bold text-[#0B1A2C] dark:text-white">
+                      Select a Date & Time
+                    </h2>
 
-        {/* Aside: Clean Floating Appointment Summary */}
-        <aside>
-          <Card className="sticky top-6 p-6">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Appointment Summary
-            </p>
-            <div className="mt-5 space-y-4 text-sm">
-              {service ? (
-                <Summary
-                  icon={CalendarDays}
-                  label={service.name || ""}
-                  detail={`${service.durationMinutes} minutes duration`}
-                />
+                    {/* Practitioner Selector */}
+                    {staff.data && staff.data.length > 1 && (
+                      <select
+                        value={staffId}
+                        onChange={(e) => setStaffId(e.target.value)}
+                        className="h-9 rounded-xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#0B111A] px-3 text-xs font-semibold text-[#0B1A2C] dark:text-white"
+                      >
+                        <option value="any">Any available team member</option>
+                        {staff.data.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.displayName}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* 2-Column Calendar & Slots Split View */}
+                  <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+                    {/* Left: Monthly Date Picker */}
+                    <CalendlyDatePicker
+                      value={date}
+                      minimumDate={minimumDate}
+                      onChange={(newDate) => {
+                        setDate(newDate);
+                        setSelectedSlotForConfirm(null);
+                      }}
+                    />
+
+                    {/* Right: Time Slots for Selected Date */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        {new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+
+                      <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
+                        {availability.isLoading ? (
+                          [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 rounded-xl" />)
+                        ) : uniqueAvailability.length ? (
+                          uniqueAvailability.map((item) => {
+                            const timeStr = new Date(
+                              item.localStartsAt || item.startsAt!,
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            });
+                            const isSelected = selectedSlotForConfirm === item;
+
+                            return (
+                              <div key={`${item.staffId}-${item.startsAt}`} className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedSlotForConfirm(item)}
+                                  className={cn(
+                                    "flex-1 h-11 rounded-xl border font-bold text-xs transition-all",
+                                    isSelected
+                                      ? "border-[#0069FF] bg-[#0069FF] text-white"
+                                      : "border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] text-[#0069FF] hover:border-[#0069FF] hover:bg-blue-50 dark:hover:bg-[#152B46]"
+                                  )}
+                                >
+                                  {timeStr}
+                                </button>
+
+                                {isSelected && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSlot(item)}
+                                    className="h-11 rounded-xl bg-[#0B1A2C] dark:bg-white px-4 text-xs font-bold text-white dark:text-[#0B1A2C] shadow-md hover:bg-[#0069FF] dark:hover:bg-neutral-100 transition-all animate-in fade-in"
+                                  >
+                                    Next
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="rounded-xl border border-dashed border-gray-200 dark:border-[#1C283A] p-6 text-center text-xs text-gray-500">
+                            No open times available for this date.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  Your chosen service will appear here.
-                </p>
+                /* Step 3: Enter Details Form */
+                <motion.div
+                  key="details"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-5"
+                >
+                  <h2 className="text-lg font-bold text-[#0B1A2C] dark:text-white">
+                    Enter Details
+                  </h2>
+
+                  <form
+                    onSubmit={form.handleSubmit((values) =>
+                      createBooking.mutate(values),
+                    )}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name" className="text-xs font-semibold">Your Name *</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g. Sarah Jenkins"
+                        className="h-11 rounded-xl"
+                        {...form.register("name")}
+                      />
+                      <FieldError>{form.formState.errors.name?.message}</FieldError>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-xs font-semibold">Email address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@domain.com"
+                        className="h-11 rounded-xl"
+                        {...form.register("email")}
+                      />
+                      <FieldError>{form.formState.errors.email?.message}</FieldError>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone" className="text-xs font-semibold">Phone number *</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1 555 019 2834"
+                        className="h-11 rounded-xl"
+                        {...form.register("phone")}
+                      />
+                      <FieldError>{form.formState.errors.phone?.message}</FieldError>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="notes" className="text-xs font-semibold">
+                        Please share anything that will help prepare for our meeting
+                      </Label>
+                      <textarea
+                        id="notes"
+                        rows={3}
+                        placeholder="Goals, topics, questions..."
+                        className="w-full rounded-xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#0B111A] p-3 text-xs text-[#0B1A2C] dark:text-white placeholder:text-gray-400 focus:border-[#0069FF] focus:outline-none"
+                        {...form.register("notes")}
+                      />
+                    </div>
+
+                    <p className="text-[11px] text-gray-500 leading-relaxed pt-1">
+                      By proceeding, you confirm that you agree to the meeting terms and policy.
+                    </p>
+
+                    <Button
+                      className="mt-2 w-full sm:w-auto rounded-full bg-[#0069FF] hover:bg-[#0056D6] text-white font-bold px-8 py-3 text-sm shadow-md"
+                      disabled={createBooking.isPending}
+                    >
+                      {createBooking.isPending
+                        ? "Scheduling Event…"
+                        : branding?.onlinePaymentsEnabled
+                          ? "Proceed to Payment"
+                          : "Schedule Event"}
+                    </Button>
+                  </form>
+                </motion.div>
               )}
-              {slot && (
-                <Summary
-                  icon={Clock3}
-                  label={new Date(
-                    slot.localStartsAt || slot.startsAt!,
-                  ).toLocaleString([], {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  detail={branding?.timeZoneId || "Local workspace time"}
-                />
-              )}
-              {staffId !== "any" && (
-                <Summary
-                  icon={UserRound}
-                  label={
-                    staff.data?.find((x) => x.id === staffId)?.displayName ||
-                    "Assigned Practitioner"
-                  }
-                  detail="Practitioner"
-                />
-              )}
-              <Summary
-                icon={MapPin}
-                label={branding?.name || "Clinic location"}
-                detail="Consultation & Clinic Workspace"
-              />
-            </div>
-            {service && (
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-sm font-semibold">
-                <span className="text-foreground">Total Fee</span>
-                <span className="text-base text-foreground tabular-nums">
-                  {money(service.priceAmount, service.currency)}
-                </span>
-              </div>
-            )}
-          </Card>
-        </aside>
+            </AnimatePresence>
+          </div>
+        </div>
       </main>
+
+      {/* Footer Powered By Slotly */}
+      <footer className="mx-auto pt-6 text-center text-xs text-gray-500">
+        <span>Powered by </span>
+        <Link to="/" className="font-bold text-[#0069FF] hover:underline">
+          Slotly
+        </Link>
+      </footer>
     </div>
   );
 }
 
-function Title({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-        {eyebrow}
-      </p>
-      <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        {title}
-      </h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function Summary({
-  icon: Icon,
-  label,
-  detail,
-}: {
-  icon: typeof Clock3;
-  label: string;
-  detail: string;
-}) {
-  return (
-    <div className="flex gap-3">
-      <div className="mt-0.5 grid size-7 place-items-center rounded-lg border border-border bg-muted/40 text-primary shrink-0">
-        <Icon className="size-3.5" />
-      </div>
-      <div>
-        <p className="font-semibold text-xs text-foreground">{label}</p>
-        <p className="text-[11px] text-muted-foreground">{detail}</p>
-      </div>
-    </div>
-  );
-}
-
-function BookingCalendar({
+/* -------------------------------------------------------------
+ * CALENDLY DATE PICKER COMPONENT
+ * ------------------------------------------------------------- */
+function CalendlyDatePicker({
   value,
   minimumDate,
   onChange,
@@ -635,20 +658,18 @@ function BookingCalendar({
   );
 
   return (
-    <div className="rounded-lg border border-border p-4 sm:p-5">
+    <div className="rounded-2xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#0B111A] p-4 sm:p-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-bold text-foreground">
+        <p className="text-sm font-bold text-[#0B1A2C] dark:text-white">
           {visibleMonth.toLocaleDateString(undefined, {
             month: "long",
             year: "numeric",
           })}
         </p>
         <div className="flex gap-1">
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9"
+            className="grid size-8 place-items-center rounded-full hover:bg-neutral-100 dark:hover:bg-[#162234] text-gray-600 dark:text-gray-300 transition-colors"
             aria-label="Previous month"
             onClick={() =>
               setVisibleMonth(
@@ -661,12 +682,10 @@ function BookingCalendar({
             }
           >
             <ChevronLeft className="size-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9"
+            className="grid size-8 place-items-center rounded-full hover:bg-neutral-100 dark:hover:bg-[#162234] text-gray-600 dark:text-gray-300 transition-colors"
             aria-label="Next month"
             onClick={() =>
               setVisibleMonth(
@@ -679,17 +698,21 @@ function BookingCalendar({
             }
           >
             <ChevronRight className="size-4" />
-          </Button>
+          </button>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-7 text-center text-[11px] font-bold uppercase text-muted-foreground">
+
+      <div className="mt-4 grid grid-cols-7 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <span key={day} className="py-2">{day}</span>
+          <span key={day} className="py-1">
+            {day}
+          </span>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-y-1 text-center text-sm">
+
+      <div className="mt-2 grid grid-cols-7 gap-y-1.5 text-center text-xs">
         {cells.map((day, index) => {
-          if (!day) return <span key={`empty-${index}`} className="size-10" />;
+          if (!day) return <span key={`empty-${index}`} className="size-9" />;
           const dateValue = isoDate(
             new Date(
               visibleMonth.getFullYear(),
@@ -700,19 +723,21 @@ function BookingCalendar({
           );
           const disabled = dateValue < minimumDate;
           const isSelected = dateValue === value;
+
           return (
             <button
               key={dateValue}
               type="button"
               aria-label={`Choose ${dateValue}`}
-              aria-pressed={isSelected}
               disabled={disabled}
               onClick={() => onChange(dateValue)}
               className={cn(
-                "mx-auto grid size-10 place-items-center rounded-full font-semibold tabular-nums disabled:cursor-not-allowed disabled:text-muted-foreground/35",
+                "mx-auto flex size-9 items-center justify-center rounded-full font-bold tabular-nums transition-all",
                 isSelected
-                  ? "bg-primary text-white"
-                  : "text-foreground hover:bg-accent hover:text-primary",
+                  ? "bg-[#0069FF] text-white shadow-md scale-105"
+                  : disabled
+                    ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                    : "text-[#0B1A2C] dark:text-white hover:bg-blue-50 dark:hover:bg-[#152B46] hover:text-[#0069FF]"
               )}
             >
               {day}
@@ -726,13 +751,13 @@ function BookingCalendar({
 
 function PublicError({ onBack }: { onBack: () => void }) {
   return (
-    <main className="grid min-h-dvh place-items-center p-6 text-center">
-      <div className="rounded-2xl border border-border bg-card p-8 max-w-sm">
-        <h1 className="text-xl font-bold text-foreground">Booking page not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <main className="grid min-h-screen place-items-center p-6 text-center bg-[#F8F9FA] dark:bg-[#0B111A]">
+      <div className="rounded-3xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] p-8 max-w-sm shadow-xl space-y-4">
+        <h1 className="text-xl font-bold text-[#0B1A2C] dark:text-white">Booking page not found</h1>
+        <p className="text-xs text-gray-500 leading-relaxed">
           The requested workspace booking URL does not exist or has expired.
         </p>
-        <Button className="mt-6 w-full rounded-lg" onClick={onBack}>
+        <Button className="w-full rounded-full bg-[#0069FF] text-white hover:bg-[#0056D6]" onClick={onBack}>
           Return to home
         </Button>
       </div>
