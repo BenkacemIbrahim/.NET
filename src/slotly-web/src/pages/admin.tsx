@@ -277,6 +277,7 @@ export function LoginPage() {
 function AdminShell() {
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [callieOpen, setCallieOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("slotly_sidebar_collapsed") === "true";
@@ -289,6 +290,12 @@ function AdminShell() {
     const handleOpenSettings = () => setSettingsOpen(true);
     window.addEventListener("slotly:open-settings", handleOpenSettings);
     return () => window.removeEventListener("slotly:open-settings", handleOpenSettings);
+  }, []);
+
+  useEffect(() => {
+    const handleOpenCallie = () => setCallieOpen((prev) => !prev);
+    window.addEventListener("slotly:open-callie", handleOpenCallie);
+    return () => window.removeEventListener("slotly:open-callie", handleOpenCallie);
   }, []);
 
   const toggleCollapse = () => {
@@ -534,7 +541,6 @@ export function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"event-types" | "single-use" | "polls" | "routing">("event-types");
   const [searchQuery, setSearchQuery] = useState("");
   const [getStartedOpen, setGetStartedOpen] = useState(true);
-  const [callieOpen, setCallieOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [creatingService, setCreatingService] = useState(false);
   const [deletingService, setDeletingService] = useState<Service | null>(null);
@@ -621,7 +627,7 @@ export function DashboardPage() {
 
           {/* Ask Callie AI Button */}
           <button
-            onClick={() => setCallieOpen(!callieOpen)}
+            onClick={() => window.dispatchEvent(new CustomEvent("slotly:open-callie"))}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/20 px-3.5 text-xs font-bold text-purple-300 hover:bg-purple-900/30 transition-colors"
           >
             <Sparkles className="size-3.5 text-purple-400" />
