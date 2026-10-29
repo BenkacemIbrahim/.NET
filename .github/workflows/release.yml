@@ -32,7 +32,7 @@ jobs:
 
       - name: Extract metadata for API container
         id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/slotly-api
           tags: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Extract metadata for Web container
         id: meta-web
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/slotly-web
           tags: |
