@@ -17,7 +17,6 @@ import {
   Link as LinkIcon,
   LogOut,
   Menu,
-  MessageCircle,
   Mic,
   Palette,
   PanelLeftClose,
@@ -67,6 +66,7 @@ import { Input } from "../components/ui/input";
 import { FieldError, Label } from "../components/ui/label";
 import { Skeleton } from "../components/ui/skeleton";
 import { SlotlyLogo } from "../components/slotly-logo";
+import { AiChatWidget } from "../components/ai-chat-widget";
 import { cn } from "../lib/cn";
 
 type Booking = ApiSchemas["BookingDto"];
@@ -751,6 +751,9 @@ function AdminShell() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating AI Chat Widget — available on all admin pages */}
+      <AiChatWidget />
     </div>
   );
 }
@@ -938,41 +941,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Callie AI Drawer */}
-      {callieOpen && (
-        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/20 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-purple-400" />
-              <h3 className="font-bold text-sm text-purple-200">Callie AI Scheduling Assistant</h3>
-            </div>
-            <button onClick={() => setCallieOpen(false)} className="text-gray-400 hover:text-white">
-              <X className="size-4" />
-            </button>
-          </div>
-          <p className="text-xs text-purple-300">
-            I analyzed your active schedule: You have {todayCount} appointment(s) scheduled today and {upcomingCount} upcoming.
-            Your buffer times are optimized across {activeServicesCount} active service types.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => {
-                copyPublicLink();
-                toast.success("Public booking link copied to clipboard!");
-              }}
-              className="rounded-lg bg-purple-900/40 border border-purple-500/30 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-800/40"
-            >
-              Share today's availability
-            </button>
-            <Link
-              to="/admin/calendar"
-              className="rounded-lg bg-purple-900/40 border border-purple-500/30 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-800/40"
-            >
-              Open Calendar view
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Callie AI — uses the floating AI widget in the bottom-right corner */}
 
       {/* Sub-Navigation Tabs */}
       <div className="border-b border-[#1C283A]">
@@ -1242,16 +1211,7 @@ export function DashboardPage() {
         />
       )}
 
-      {/* Floating Support Chat Trigger */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          onClick={() => setCallieOpen(!callieOpen)}
-          className="grid size-12 place-items-center rounded-full bg-[#0069FF] text-white shadow-2xl transition-all hover:scale-105"
-          aria-label="Callie Assistant"
-        >
-          <MessageCircle className="size-5" />
-        </button>
-      </div>
+
     </div>
   );
 }

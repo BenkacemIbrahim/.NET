@@ -2,7 +2,6 @@ import {
   ArrowRight,
   Calendar,
   Check,
-  ChevronDown,
   Clock,
   CreditCard,
   ExternalLink,
@@ -25,7 +24,6 @@ import { cn } from "../lib/cn";
 
 export function LandingPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [activeNavDropdown, setActiveNavDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeShowcaseTab, setActiveShowcaseTab] = useState<"ai" | "payments" | "sync" | "notes">("ai");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
@@ -74,76 +72,17 @@ export function LandingPage() {
             <SlotlyLogo variant="full" mode="original" className="h-8 w-auto" />
           </Link>
 
-          {/* Nav Dropdowns */}
+          {/* Nav Links (flat, no dropdowns) */}
           <nav className="hidden items-center gap-7 lg:flex">
-            <div
-              className="relative"
-              onMouseEnter={() => setActiveNavDropdown("product")}
-              onMouseLeave={() => setActiveNavDropdown(null)}
-            >
-              <button className="flex items-center gap-1 text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
-                Product <ChevronDown className="size-3.5" />
-              </button>
-              {activeNavDropdown === "product" && (
-                <div className="absolute -left-6 top-full mt-3 w-80 rounded-2xl border border-[#E8E8E8] bg-white p-4 shadow-xl">
-                  <div className="space-y-1">
-                    <DropdownItem title="Scheduling Pages" desc="Share your link and let people book" to="/book/northstar-health" />
-                    <DropdownItem title="Team Availability" desc="Round-robin and multi-host slots" to="/login" />
-                    <DropdownItem title="Automated Workflows" desc="Reminders, SMS, and thank-yous" to="/login" />
-                    <DropdownItem title="Slotly AI Assistant" desc="Coordinate times via email & chat" to="/login" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div
-              className="relative"
-              onMouseEnter={() => setActiveNavDropdown("solutions")}
-              onMouseLeave={() => setActiveNavDropdown(null)}
-            >
-              <button className="flex items-center gap-1 text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
-                Solutions <ChevronDown className="size-3.5" />
-              </button>
-              {activeNavDropdown === "solutions" && (
-                <div className="absolute -left-6 top-full mt-3 w-80 rounded-2xl border border-[#E8E8E8] bg-white p-4 shadow-xl">
-                  <div className="space-y-1">
-                    <DropdownItem title="Sales & Revenue" desc="Qualify, route, and book faster" to="/login" />
-                    <DropdownItem title="Customer Success" desc="Stay aligned with priority clients" to="/login" />
-                    <DropdownItem title="Healthcare & Clinical" desc="HIPAA-aware scheduling made simple" to="/book/northstar-health" />
-                    <DropdownItem title="Consultants & Teams" desc="Professional packages & payments" to="/login" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div
-              className="relative"
-              onMouseEnter={() => setActiveNavDropdown("resources")}
-              onMouseLeave={() => setActiveNavDropdown(null)}
-            >
-              <button className="flex items-center gap-1 text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
-                Resources <ChevronDown className="size-3.5" />
-              </button>
-              {activeNavDropdown === "resources" && (
-                <div className="absolute -left-12 top-full mt-3 w-96 rounded-2xl border border-[#E8E8E8] bg-white p-5 shadow-xl">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Get Started</p>
-                      <DropdownItem title="Learning hub" desc="Structured guides" to="/login" compact />
-                      <DropdownItem title="Developer docs" desc="Slotly REST API" to="/login" compact />
-                      <DropdownItem title="Product tour" desc="Interactive demo" to="/book/northstar-health" compact />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Discover</p>
-                      <DropdownItem title="Customer stories" desc="Real success stories" to="/login" compact />
-                      <DropdownItem title="What's new" desc="Latest product updates" to="/login" compact />
-                      <DropdownItem title="Help center" desc="24/7 answers" to="/login" compact />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
+            <Link to="/book/northstar-health" className="text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
+              Product
+            </Link>
+            <Link to="/login" className="text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
+              Solutions
+            </Link>
+            <Link to="/login" className="text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
+              Resources
+            </Link>
             <a href="#pricing" className="text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF]">
               Pricing
             </a>
@@ -151,12 +90,6 @@ export function LandingPage() {
 
           {/* Right Actions */}
           <div className="hidden items-center gap-3 sm:flex">
-            <Link
-              to="/book/northstar-health"
-              className="text-sm font-semibold text-[#0B1A2C] hover:text-[#0069FF] px-2"
-            >
-              Talk to sales
-            </Link>
             <Link
               to="/login"
               className="inline-flex h-10 items-center justify-center rounded-full border border-[#0B1A2C]/20 px-5 text-sm font-semibold text-[#0B1A2C] transition-colors hover:border-[#0B1A2C] hover:bg-[#0B1A2C]/5"
@@ -945,7 +878,128 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 9. Bottom CTA Section */}
+      {/* 9. Pricing Section */}
+      <section id="pricing" className="px-3 sm:px-6 py-24 bg-[#FAF8F5]">
+        <div className="mx-auto max-w-7xl">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#E8F3FF] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#0069FF]">
+              <Sparkles className="size-3" /> Simple, transparent pricing
+            </span>
+            <h2 className="mt-4 font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
+              Pick the plan that fits your business
+            </h2>
+            <p className="mt-3 text-base text-[#4A5568] max-w-2xl mx-auto">
+              Start free. Scale as you grow. No hidden fees, no long-term contracts — cancel anytime.
+            </p>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+            {/* Solo Plan */}
+            <div className="relative rounded-3xl border border-[#E8E8E8] bg-white p-8 flex flex-col shadow-sm hover:shadow-lg transition-shadow">
+              <div className="mb-6">
+                <div className="size-10 rounded-2xl bg-[#F0F4FF] flex items-center justify-center mb-4">
+                  <Calendar className="size-5 text-[#0069FF]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#0B1A2C]">Solo</h3>
+                <p className="mt-1 text-sm text-[#4A5568]">For individuals and freelancers</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-5xl font-extrabold text-[#0B1A2C]">Free</span>
+                <span className="ml-2 text-sm text-[#718096]">/forever</span>
+              </div>
+              <ul className="space-y-3 flex-1 mb-8">
+                {["1 booking page","Unlimited appointments","Google & Outlook sync","Automated email reminders","Basic analytics"].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-[#0B1A2C]">
+                    <span className="shrink-0 size-4.5 rounded-full bg-emerald-50 flex items-center justify-center">
+                      <Check className="size-2.5 text-emerald-600" />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/book/northstar-health" className="mt-auto inline-flex h-11 items-center justify-center rounded-full border-2 border-[#0B1A2C] text-sm font-bold text-[#0B1A2C] hover:bg-[#0B1A2C] hover:text-white transition-all">
+                Get started free
+              </Link>
+            </div>
+
+            {/* Team Plan — Most Popular */}
+            <div className="relative rounded-3xl bg-[#0B1A2C] p-8 flex flex-col shadow-2xl scale-[1.02] z-10">
+              <div className="absolute top-5 right-5">
+                <span className="rounded-full bg-[#0069FF] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                  Most popular
+                </span>
+              </div>
+              <div className="mb-6">
+                <div className="size-10 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+                  <Zap className="size-5 text-[#60A5FA]" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Team</h3>
+                <p className="mt-1 text-sm text-white/60">For growing teams & clinics</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-5xl font-extrabold text-white">$29</span>
+                <span className="ml-2 text-sm text-white/60">/month per seat</span>
+              </div>
+              <ul className="space-y-3 flex-1 mb-8">
+                {["Unlimited booking pages","Round-robin & multi-host","Real-time calendar sync","SMS & WhatsApp reminders","Meeting packages & bundles","Stripe & PayPal payments","Advanced analytics","Priority support"].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-white">
+                    <span className="shrink-0 size-4.5 rounded-full bg-[#0069FF]/20 flex items-center justify-center">
+                      <Check className="size-2.5 text-[#60A5FA]" />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/book/northstar-health" className="mt-auto inline-flex h-11 items-center justify-center rounded-full bg-[#0069FF] text-sm font-bold text-white hover:bg-[#0056D6] transition-all shadow-md">
+                Start free 14-day trial
+              </Link>
+              <p className="mt-3 text-center text-[11px] text-white/40">No credit card required</p>
+            </div>
+
+            {/* Operations Plan */}
+            <div className="relative rounded-3xl border border-[#E8E8E8] bg-white p-8 flex flex-col shadow-sm hover:shadow-lg transition-shadow">
+              <div className="mb-6">
+                <div className="size-10 rounded-2xl bg-[#F5F0FF] flex items-center justify-center mb-4">
+                  <CreditCard className="size-5 text-[#7C3AED]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#0B1A2C]">Operations</h3>
+                <p className="mt-1 text-sm text-[#4A5568]">For large clinics & enterprises</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-5xl font-extrabold text-[#0B1A2C]">$79</span>
+                <span className="ml-2 text-sm text-[#718096]">/month per seat</span>
+              </div>
+              <ul className="space-y-3 flex-1 mb-8">
+                {["Everything in Team","Custom domain & branding","HIPAA-aware workflows","Intake forms & e-signatures","Bulk booking & waitlists","SLA-backed 99.9% uptime","Dedicated account manager","SSO & SAML integration"].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-[#0B1A2C]">
+                    <span className="shrink-0 size-4.5 rounded-full bg-purple-50 flex items-center justify-center">
+                      <Check className="size-2.5 text-[#7C3AED]" />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/login" className="mt-auto inline-flex h-11 items-center justify-center rounded-full border-2 border-[#7C3AED] text-sm font-bold text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white transition-all">
+                Contact sales
+              </Link>
+            </div>
+          </div>
+
+          {/* Trust signals */}
+          <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
+            {["No contracts, cancel anytime","Free migration assistance","SOC 2 Type II certified","GDPR & HIPAA compliant"].map((t) => (
+              <div key={t} className="flex items-center gap-2 text-sm text-[#4A5568]">
+                <Check className="size-3.5 text-emerald-500 shrink-0" />
+                <span>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 10. Bottom CTA Section */}
       <section className="px-3 sm:px-6 py-16 text-center">
         <div className="mx-auto max-w-4xl space-y-6">
           <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">Get Started Today</span>
@@ -973,7 +1027,7 @@ export function LandingPage() {
       </section>
 
       {/* 10. Footer */}
-      <footer id="pricing" className="bg-[#0B1A2C] text-white pt-16 pb-12 px-5 lg:px-8">
+      <footer className="bg-[#0B1A2C] text-white pt-16 pb-12 px-5 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5 border-b border-white/10 pb-12">
             <div className="space-y-4 md:col-span-1">
@@ -1044,30 +1098,6 @@ export function LandingPage() {
   );
 }
 
-function DropdownItem({
-  title,
-  desc,
-  to,
-  compact = false,
-}: {
-  title: string;
-  desc: string;
-  to: string;
-  compact?: boolean;
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "block rounded-xl transition-colors hover:bg-neutral-50",
-        compact ? "p-2" : "p-3"
-      )}
-    >
-      <p className="text-xs font-bold text-[#0B1A2C]">{title}</p>
-      <p className="text-[11px] text-muted-foreground">{desc}</p>
-    </Link>
-  );
-}
 
 function WorkflowStageCard({
   number,

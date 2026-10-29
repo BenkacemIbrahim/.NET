@@ -186,11 +186,8 @@ export function AiChatWidget() {
             {/* Header: Royal Indigo Gradient with Bot Avatar & Status */}
             <div className="relative bg-gradient-to-r from-[#2563EB] via-[#4338CA] to-[#4F46E5] px-4 py-2.5 text-white shadow-sm flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="relative">
-                  <div className="size-8 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-inner">
-                    <Bot className="size-4 text-white" />
-                  </div>
-                  <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-[#10B981] border-2 border-[#4338CA]" />
+                <div className="size-8 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-inner">
+                  <Bot className="size-4 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
@@ -429,7 +426,8 @@ export function AiChatWidget() {
           <img
             src="/hello-animation.svg"
             alt="Slotly AI Assistant"
-            className="size-20 sm:size-24 object-contain drop-shadow-2xl select-none pointer-events-none transition-transform duration-300 group-hover:scale-105"
+            className="object-contain drop-shadow-2xl select-none pointer-events-none transition-transform duration-300 group-hover:scale-105"
+            style={{ width: "100px", height: "100px" }}
           />
 
           {/* Tooltip on hover */}
