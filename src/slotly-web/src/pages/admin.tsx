@@ -2034,11 +2034,14 @@ export function ServicesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
-          <p className="mt-1 text-xs text-[#8B9CB0]">
-            Configure appointment lengths, pricing, buffers, and public booking settings.
-          </p>
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
+            <p className="mt-1 text-xs text-[#8B9CB0]">
+              Configure appointment lengths, pricing, buffers, and public booking settings.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2.5">
           <ThemeToggle className="size-9 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
@@ -2223,11 +2226,14 @@ export function StaffPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Contacts & Team</h1>
-          <p className="mt-1 text-xs text-[#8B9CB0]">
-            Manage practitioners clients can book with and view your customer contact directory.
-          </p>
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Contacts & Team</h1>
+            <p className="mt-1 text-xs text-[#8B9CB0]">
+              Manage practitioners clients can book with and view your customer contact directory.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -2620,11 +2626,14 @@ export function SchedulePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Availability & Working Hours</h1>
-          <p className="mt-1 text-xs text-[#8B9CB0]">
-            Set recurring schedules, blackout dates, and automated notification rules per practitioner.
-          </p>
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Availability & Working Hours</h1>
+            <p className="mt-1 text-xs text-[#8B9CB0]">
+              Set recurring schedules, blackout dates, and automated notification rules per practitioner.
+            </p>
+          </div>
         </div>
 
         {/* Actions & Staff Selector */}

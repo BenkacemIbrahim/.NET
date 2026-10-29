@@ -30,7 +30,7 @@ import "@fullcalendar/react/themes/classic/theme.css";
 import { Card } from "../components/ui/card";
 import { ThemeToggle } from "../components/theme-toggle";
 import { cn } from "../lib/cn";
-import { useBookings, useTenantSettings } from "./admin";
+import { SidebarToggleButton, useBookings, useTenantSettings } from "./admin";
 
 interface StatusBadge {
   label: string;
@@ -265,7 +265,10 @@ export default function CalendarPage() {
     <div className="space-y-6 text-white">
       {/* Top Header: Calendar Title + Settings & Layout icons */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-white">Calendar</h1>
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
+          <h1 className="text-2xl font-bold tracking-tight text-white">Calendar</h1>
+        </div>
 
         <div className="flex items-center gap-2">
           <ThemeToggle className="size-9 rounded-lg border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#162234] shadow-sm transition-colors" />
