@@ -4,8 +4,6 @@ import {
   Calendar,
   CalendarDays,
   CalendarCheck,
-  Check,
-  ChevronDown,
   Clock,
   Copy,
   ExternalLink,
@@ -34,7 +32,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   useForm,
   type FieldValues,
@@ -157,271 +155,27 @@ export function AdminGuard() {
 }
 
 /* -----------------------------------------------------------------------
- * Known demo workspaces – stored/extended in localStorage
+ * WorkspaceIdentity – static sidebar header (no switching)
  * --------------------------------------------------------------------- */
-interface KnownWorkspace {
-  slug: string;
-  name: string;
-  email: string;
-  password: string;
-}
-
-const DEMO_WORKSPACES: KnownWorkspace[] = [
-  {
-    slug: "northstar-health",
-    name: "Northstar Health",
-    email: "amira.benali@northstarhealth.ma",
-    password: "Password123!",
-  },
-  {
-    slug: "atlas-wellness",
-    name: "Atlas Wellness",
-    email: "youssef.idrissi@atlaswellness.ma",
-    password: "Password123!",
-  },
-];
-
-const WORKSPACES_STORAGE_KEY = "slotly.workspaces";
-
-function loadWorkspaces(): KnownWorkspace[] {
-  try {
-    const raw = localStorage.getItem(WORKSPACES_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as KnownWorkspace[];
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-    }
-  } catch {
-    // ignore
-  }
-  return DEMO_WORKSPACES;
-}
-
-function saveWorkspace(ws: KnownWorkspace) {
-  const existing = loadWorkspaces();
-  const idx = existing.findIndex((w) => w.slug === ws.slug);
-  if (idx >= 0) {
-    existing[idx] = ws;
-  } else {
-    existing.push(ws);
-  }
-  try {
-    localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(existing));
-  } catch {
-    // ignore
-  }
-}
-
-/* -----------------------------------------------------------------------
- * SwitchTeamDropdown – appears in the sidebar header
- * --------------------------------------------------------------------- */
-function SwitchTeamDropdown({
+function WorkspaceIdentity({
   collapsed,
-  currentSlug,
   currentName,
   currentUser,
 }: {
   collapsed: boolean;
-  currentSlug: string;
   currentName: string;
   currentUser: string;
 }) {
-  const { login } = useAuth();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [switching, setSwitching] = useState<string | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [addSlug, setAddSlug] = useState("");
-  const [addEmail, setAddEmail] = useState("");
-  const [addPassword, setAddPassword] = useState("");
-  const [addName, setAddName] = useState("");
-  const [workspaces, setWorkspaces] = useState<KnownWorkspace[]>(() => loadWorkspaces());
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  async function switchTo(ws: KnownWorkspace) {
-    if (ws.slug === currentSlug) { setOpen(false); return; }
-    setSwitching(ws.slug);
-    try {
-      await login(ws.email, ws.password, ws.slug);
-      qc.clear();
-      setOpen(false);
-      toast.success(`Switched to ${ws.name}`);
-    } catch {
-      toast.error(`Could not switch to ${ws.name}. Check credentials.`);
-    } finally {
-      setSwitching(null);
-    }
-  }
-
-  async function addAndSwitch() {
-    if (!addSlug || !addEmail || !addPassword) {
-      toast.error("Slug, email and password are required.");
-      return;
-    }
-    const ws: KnownWorkspace = {
-      slug: addSlug.trim(),
-      name: addName.trim() || addSlug.trim(),
-      email: addEmail.trim(),
-      password: addPassword,
-    };
-    setSwitching(ws.slug);
-    try {
-      await login(ws.email, ws.password, ws.slug);
-      saveWorkspace(ws);
-      setWorkspaces(loadWorkspaces());
-      qc.clear();
-      setOpen(false);
-      setShowAdd(false);
-      toast.success(`Switched to ${ws.name}`);
-    } catch {
-      toast.error("Could not sign in with those credentials.");
-    } finally {
-      setSwitching(null);
-    }
-  }
-
   const initials = currentUser.charAt(0).toUpperCase();
-
   return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-colors hover:bg-[#162234] w-full",
-          open && "bg-[#162234]"
-        )}
-        title={collapsed ? `${currentUser} — Switch workspace` : undefined}
-      >
-        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
-          {initials}
-        </div>
-        {!collapsed && (
-          <>
-            <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-xs font-semibold text-white">{currentUser}</p>
-              <p className="truncate text-[10px] text-gray-400">{currentName}</p>
-            </div>
-            <ChevronDown
-              className={cn(
-                "size-3.5 shrink-0 text-gray-500 transition-transform duration-200",
-                open && "rotate-180"
-              )}
-            />
-          </>
-        )}
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div
-          className={cn(
-            "absolute z-50 w-64 rounded-2xl border border-[#1C283A] bg-[#0F1724] shadow-2xl",
-            collapsed ? "left-12 top-0" : "left-0 top-[calc(100%+6px)]"
-          )}
-        >
-          {/* Header */}
-          <div className="px-4 pt-4 pb-2">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
-              Workspaces
-            </p>
-          </div>
-
-          {/* Workspace list */}
-          <div className="max-h-56 overflow-y-auto px-2 pb-2">
-            {workspaces.map((ws) => (
-              <button
-                key={ws.slug}
-                onClick={() => switchTo(ws)}
-                disabled={switching === ws.slug}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[#152B46] disabled:opacity-60"
-              >
-                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#0069FF] to-[#00897B] text-xs font-bold text-white">
-                  {ws.name.charAt(0)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-white">{ws.name}</p>
-                  <p className="truncate text-[10px] text-gray-500">{ws.slug}</p>
-                </div>
-                {ws.slug === currentSlug && (
-                  <Check className="size-3.5 shrink-0 text-[#4D9BFF]" />
-                )}
-                {switching === ws.slug && (
-                  <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="mx-3 border-t border-[#1C283A]" />
-
-          {/* Add workspace */}
-          {!showAdd ? (
-            <button
-              onClick={() => setShowAdd(true)}
-              className="flex w-full items-center gap-2.5 px-4 py-3 text-xs font-semibold text-[#4D9BFF] hover:bg-[#152B46] rounded-b-2xl transition-colors"
-            >
-              <Plus className="size-3.5" />
-              Add another workspace
-            </button>
-          ) : (
-            <div className="p-3 space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Add workspace</p>
-              <input
-                placeholder="Workspace slug"
-                value={addSlug}
-                onChange={(e) => setAddSlug(e.target.value)}
-                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
-              />
-              <input
-                placeholder="Display name (optional)"
-                value={addName}
-                onChange={(e) => setAddName(e.target.value)}
-                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
-              />
-              <input
-                placeholder="Email"
-                type="email"
-                value={addEmail}
-                onChange={(e) => setAddEmail(e.target.value)}
-                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
-              />
-              <input
-                placeholder="Password"
-                type="password"
-                value={addPassword}
-                onChange={(e) => setAddPassword(e.target.value)}
-                className="h-8 w-full rounded-lg border border-[#1C283A] bg-[#162234] px-3 text-xs text-white placeholder:text-gray-600 focus:border-[#0069FF] focus:outline-none"
-              />
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={addAndSwitch}
-                  disabled={!!switching}
-                  className="flex-1 rounded-lg bg-[#0069FF] py-1.5 text-xs font-bold text-white hover:bg-[#1A7BFF] transition-colors disabled:opacity-60"
-                >
-                  {switching ? "Switching…" : "Connect"}
-                </button>
-                <button
-                  onClick={() => setShowAdd(false)}
-                  className="rounded-lg border border-[#1C283A] px-3 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+    <div className="flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 w-full">
+      <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
+        {initials}
+      </div>
+      {!collapsed && (
+        <div className="min-w-0 flex-1 text-left">
+          <p className="truncate text-xs font-semibold text-white">{currentUser}</p>
+          <p className="truncate text-[10px] text-gray-400">{currentName}</p>
         </div>
       )}
     </div>
@@ -570,12 +324,11 @@ function AdminShell() {
           collapsed ? "w-[72px] lg:w-[72px]" : "w-[240px] lg:w-[240px]",
         )}
       >
-        {/* Top: Workspace Switcher & Collapse Trigger */}
+        {/* Top: Workspace Identity & Collapse Trigger */}
         <div className="flex h-16 shrink-0 items-center gap-1 px-2 border-b border-[#1C283A]/40">
           <div className="flex-1 min-w-0">
-            <SwitchTeamDropdown
+            <WorkspaceIdentity
               collapsed={collapsed}
-              currentSlug={tenantSlug}
               currentName={tenantName}
               currentUser={userName}
             />
