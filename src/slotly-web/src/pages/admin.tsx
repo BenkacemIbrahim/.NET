@@ -700,7 +700,7 @@ function AdminShell() {
           <button
             onClick={logout}
             className={cn(
-              "flex h-9 items-center rounded-xl text-xs font-semibold text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors",
+              "flex h-9 items-center rounded-xl text-xs font-semibold text-gray-500 hover:!text-red-500 dark:hover:!text-red-400 transition-colors",
               collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full"
             )}
             title="Log out"

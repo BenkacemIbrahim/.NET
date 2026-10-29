@@ -490,12 +490,17 @@ html:not(.dark) {
     color: #0F172A !important;
   }
 
-  .min-h-dvh .text-gray-400 {
+  .min-h-dvh .text-gray-400:not(:hover):not([class*="hover:text-"]) {
     color: #64748B !important;
   }
 
-  .min-h-dvh .text-gray-500 {
+  .min-h-dvh .text-gray-500:not(:hover):not([class*="hover:text-"]) {
     color: #94A3B8 !important;
+  }
+
+  [class*="hover:text-red"]:hover,
+  [class*="hover:text-red"]:hover * {
+    color: #EF4444 !important;
   }
 
   /* Buttons & Inputs */
