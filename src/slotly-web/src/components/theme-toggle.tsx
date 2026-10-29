@@ -35,7 +35,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       variant="outline"
       size="icon"
-      className={cn("size-9 rounded-full", className)}
+      className={cn("size-9 min-h-0 rounded-lg", className)}
       aria-label={isDark ? "Use light theme" : "Use dark theme"}
       onClick={toggle}
     >

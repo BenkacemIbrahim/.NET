@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../../lib/cn";
 
 export const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -25,7 +25,7 @@ export const buttonVariants = cva(
         sm: "min-h-9 px-3.5 text-xs",
         md: "min-h-11 px-5",
         lg: "min-h-12 px-6 text-base",
-        icon: "size-10 p-0",
+        icon: "size-9 min-h-0 p-0",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },
