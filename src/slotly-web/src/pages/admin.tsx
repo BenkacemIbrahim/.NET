@@ -45,6 +45,7 @@ import {
   NavLink,
   Outlet,
   useNavigate,
+  useOutletContext,
 } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -274,6 +275,32 @@ export function LoginPage() {
   );
 }
 
+export interface AdminOutletContext {
+  collapsed: boolean;
+  toggleCollapse: () => void;
+}
+
+export function useAdminSidebar() {
+  return useOutletContext<AdminOutletContext>();
+}
+
+export function SidebarToggleButton() {
+  const context = useAdminSidebar();
+  if (!context) return null;
+  const { collapsed, toggleCollapse } = context;
+
+  return (
+    <button
+      onClick={toggleCollapse}
+      className="hidden lg:grid size-6 shrink-0 place-items-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-white transition-colors"
+      title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+    >
+      {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+    </button>
+  );
+}
+
 function AdminShell() {
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -331,7 +358,7 @@ function AdminShell() {
           collapsed ? "w-[72px] lg:w-[72px]" : "w-[240px] lg:w-[240px]",
         )}
       >
-        {/* Top: Workspace Identity & Collapse Trigger */}
+        {/* Top: Workspace Identity & Mobile Close */}
         <div className="flex h-16 shrink-0 items-center gap-1 px-2 border-b border-[#1C283A]/40">
           <div className="flex-1 min-w-0">
             <WorkspaceIdentity
@@ -340,14 +367,6 @@ function AdminShell() {
               currentUser={userName}
             />
           </div>
-
-          <button
-            onClick={toggleCollapse}
-            className="hidden lg:grid size-7 shrink-0 place-items-center rounded-md text-gray-400 hover:text-white hover:bg-[#162234]"
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <PanelLeftOpen className="size-3.5" /> : <PanelLeftClose className="size-3.5" />}
-          </button>
 
           <Button
             className="lg:hidden"
@@ -489,7 +508,7 @@ function AdminShell() {
 
         {/* View Outlet */}
         <main className="w-full flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
-          <Outlet />
+          <Outlet context={{ collapsed, toggleCollapse } satisfies AdminOutletContext} />
         </main>
       </div>
 
@@ -605,7 +624,8 @@ export function DashboardPage() {
     <div className="space-y-6">
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
           <h1 className="text-2xl font-bold tracking-tight text-white">Scheduling</h1>
           <button
             className="text-gray-400 hover:text-white"
@@ -1494,11 +1514,14 @@ export function BookingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Notetaker & Scheduled Events</h1>
-          <p className="mt-1 text-xs text-[#8B9CB0]">
-            Review all scheduled meetings, client details, consultation notes, and appointment status.
-          </p>
+        <div className="flex items-center gap-2.5">
+          <SidebarToggleButton />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Notetaker & Scheduled Events</h1>
+            <p className="mt-1 text-xs text-[#8B9CB0]">
+              Review all scheduled meetings, client details, consultation notes, and appointment status.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5">
