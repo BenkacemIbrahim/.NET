@@ -700,7 +700,7 @@ function AdminShell() {
           <button
             onClick={logout}
             className={cn(
-              "flex h-9 items-center rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors",
+              "flex h-9 items-center rounded-xl text-xs font-semibold text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors",
               collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full"
             )}
             title="Log out"
@@ -3236,9 +3236,9 @@ export function SettingsModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-5xl rounded-3xl border border-[#1C283A] bg-[#111A28] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] my-auto">
+      <div className="relative w-full max-w-5xl rounded-3xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[660px] max-h-[90vh] my-auto">
         {/* Left Sidebar inside Settings Modal */}
-        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#1C283A] bg-[#090E17] p-5 flex flex-col justify-between shrink-0">
+        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-[#1C283A] bg-gray-50 dark:bg-[#090E17] p-5 flex flex-col justify-between shrink-0 h-full">
           <div className="space-y-6">
             <div className="space-y-1">
               <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
@@ -3259,7 +3259,7 @@ export function SettingsModal({
                     "flex h-9 w-full items-center gap-3 rounded-xl px-3 text-xs font-semibold transition-colors",
                     activeSettingsNav === key
                       ? "bg-[#152B46] text-[#4D9BFF]"
-                      : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
+                      : "text-gray-600 dark:text-[#8B9CB0] hover:bg-gray-100 dark:hover:bg-[#111A28] hover:text-gray-900 dark:hover:text-white"
                   )}
                 >
                   <Icon className="size-3.5 shrink-0" />
@@ -3271,16 +3271,15 @@ export function SettingsModal({
         </aside>
 
         {/* Main Settings Panel */}
-        <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
+        <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto h-full">
           <div>
-            <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
-              <h2 className="text-xl font-bold text-white capitalize">{activeSettingsNav} Settings</h2>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#1C283A] pb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white capitalize">{activeSettingsNav} Settings</h2>
               <div className="flex items-center gap-2">
-                <ThemeToggle className="size-8 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#111A28]"
+                  className="text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-[#111A28] transition-colors"
                   title="Close settings"
                 >
                   <X className="size-5" />
