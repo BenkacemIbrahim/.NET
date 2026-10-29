@@ -9,7 +9,6 @@ import {
   Leaf,
   LogIn,
   Menu,
-  MessageCircle,
   Mic,
   Send,
   Sparkles,
@@ -20,6 +19,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { AiChatWidget } from "../components/ai-chat-widget";
 import { SlotlyLogo } from "../components/slotly-logo";
 import { cn } from "../lib/cn";
 
@@ -30,7 +30,6 @@ export function LandingPage() {
   const [activeShowcaseTab, setActiveShowcaseTab] = useState<"ai" | "payments" | "sync" | "notes">("ai");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
-  const [chatOpen, setChatOpen] = useState(false);
 
   // Auto-advance showcase tab or feature tab subtly
   useEffect(() => {
@@ -1039,47 +1038,8 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {/* 11. Floating Support / Chat Bubble */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          onClick={() => setChatOpen(!chatOpen)}
-          className="grid size-14 place-items-center rounded-full bg-[#0B1A2C] text-white shadow-2xl transition-all hover:scale-105 hover:bg-[#0069FF]"
-          aria-label="Open support chat"
-        >
-          {chatOpen ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-        </button>
-
-        {chatOpen && (
-          <div className="absolute bottom-16 right-0 w-80 rounded-2xl bg-white p-5 shadow-2xl border border-gray-200">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-              <div className="grid size-8 place-items-center rounded-full bg-[#0069FF] text-white">
-                <Sparkles className="size-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-[#0B1A2C]">Slotly AI</p>
-                <p className="text-[11px] text-emerald-600 font-semibold">Online · Ready to help</p>
-              </div>
-            </div>
-            <div className="mt-3 text-xs text-gray-600 bg-blue-50 p-3 rounded-xl border border-blue-100">
-              Hi! I'm your Slotly AI scheduling partner. Looking to book an appointment or explore the workspace?
-            </div>
-            <div className="mt-3 grid gap-2">
-              <Link
-                to="/book/northstar-health"
-                className="rounded-lg bg-gray-50 p-2 text-xs font-semibold text-[#0B1A2C] hover:bg-[#0069FF] hover:text-white transition-colors text-center"
-              >
-                Book with Northstar Health
-              </Link>
-              <Link
-                to="/login"
-                className="rounded-lg bg-gray-50 p-2 text-xs font-semibold text-[#0B1A2C] hover:bg-[#0B1A2C] hover:text-white transition-colors text-center"
-              >
-                Open Admin Workspace
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* 11. Floating AI Assistant Chat Widget (Figma Design with Animated SVG) */}
+      <AiChatWidget />
     </div>
   );
 }
