@@ -34,23 +34,23 @@ interface StatusBadge {
 const statusBadges: Record<number, StatusBadge> = {
   1: {
     label: "Pending",
-    cardClass: "border-l-[3px] border-amber-500 bg-amber-500/10 text-white",
+    cardClass: "border-l-[3px] border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   },
   2: {
     label: "Confirmed",
-    cardClass: "border-l-[3px] border-[#0069FF] bg-[#0069FF]/10 text-white",
+    cardClass: "border-l-[3px] border-[#0069FF] bg-[#0069FF]/10 text-[#0069FF] dark:text-[#4D9BFF]",
   },
   3: {
     label: "Cancelled",
-    cardClass: "border-l-[3px] border-rose-500 bg-rose-500/10 text-gray-400 line-through",
+    cardClass: "border-l-[3px] border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 line-through",
   },
   4: {
     label: "Completed",
-    cardClass: "border-l-[3px] border-emerald-500 bg-emerald-500/10 text-white",
+    cardClass: "border-l-[3px] border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   },
   5: {
     label: "No show",
-    cardClass: "border-l-[3px] border-gray-500 bg-gray-500/10 text-gray-400",
+    cardClass: "border-l-[3px] border-gray-500 bg-gray-500/10 text-gray-700 dark:text-gray-400",
   },
 };
 
@@ -175,14 +175,14 @@ export default function CalendarPage() {
         </div>
 
         {/* Toggle: All meetings | Slotly only (Image 2) */}
-        <div className="inline-flex rounded-xl border border-[#1C283A] bg-[#090E17] p-1">
+        <div className="inline-flex rounded-xl border border-gray-200 dark:border-[#1C283A] bg-gray-100 dark:bg-[#090E17] p-1">
           <button
             onClick={() => setFilterType("all")}
             className={cn(
               "rounded-lg px-4 py-1.5 text-xs font-semibold transition-all",
               filterType === "all"
-                ? "bg-[#111A28] text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-white text-gray-900 shadow-sm dark:bg-[#111A28] dark:text-white"
+                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             )}
           >
             All meetings
@@ -192,8 +192,8 @@ export default function CalendarPage() {
             className={cn(
               "rounded-lg px-4 py-1.5 text-xs font-semibold transition-all",
               filterType === "slotly"
-                ? "bg-[#111A28] text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-white text-gray-900 shadow-sm dark:bg-[#111A28] dark:text-white"
+                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             )}
           >
             Slotly only
@@ -205,7 +205,7 @@ export default function CalendarPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Current Date Button */}
-          <button className="flex h-9 items-center gap-1.5 rounded-xl border border-[#1C283A] bg-[#111A28] px-3 text-xs font-semibold text-white">
+          <button className="flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] px-3 text-xs font-semibold text-gray-900 dark:text-white shadow-sm">
             <span>{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
             <ChevronDown className="size-3 text-gray-400" />
           </button>
@@ -224,8 +224,8 @@ export default function CalendarPage() {
                 className={cn(
                   "h-8 rounded-full px-3.5 text-xs font-bold transition-all",
                   dateRange === key
-                    ? "bg-white text-[#0B1A2C] shadow-sm"
-                    : "border border-[#1C283A] bg-[#111A28] text-[#8B9CB0] hover:text-white hover:bg-[#162234]"
+                    ? "bg-[#0B1A2C] text-white shadow-sm dark:bg-white dark:text-[#0B1A2C]"
+                    : "border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-[#111A28] text-gray-600 dark:text-[#8B9CB0] hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#162234]"
                 )}
               >
                 {label}
@@ -337,25 +337,25 @@ export default function CalendarPage() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-2 hover:bg-[#162234]/40 rounded-xl transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-3 hover:bg-slate-100/80 dark:hover:bg-[#162234]/40 rounded-xl transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="grid size-11 place-items-center rounded-2xl bg-[#0069FF]/20 text-[#4D9BFF] font-bold text-sm shrink-0">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-blue-50 dark:bg-[#0069FF]/20 text-[#0069FF] dark:text-[#4D9BFF] font-bold text-sm shrink-0 border border-blue-100 dark:border-transparent">
                       {initials}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-white">
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                           {item.customerName || `Appointment #${item.id?.slice(0, 8)}`}
                         </h3>
                         {item.customerEmail && (
-                          <span className="text-xs text-[#8B9CB0]">
+                          <span className="text-xs text-gray-500 dark:text-[#8B9CB0]">
                             ({item.customerEmail})
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-[#8B9CB0]">
-                        <span className="text-white font-medium">{item.serviceName || "Consultation"}</span>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B9CB0]">
+                        <span className="text-gray-900 dark:text-white font-medium">{item.serviceName || "Consultation"}</span>
                         {item.staffName && <span> • with {item.staffName}</span>}
                         <span> • </span>
                         {new Date(item.startsAt!).toLocaleString([], {
@@ -375,7 +375,7 @@ export default function CalendarPage() {
                     </span>
                     <Link
                       to="/admin/bookings"
-                      className="rounded-lg border border-[#1C283A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162234]"
+                      className="rounded-lg border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-transparent px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-[#162234] transition-colors shadow-sm"
                     >
                       Manage
                     </Link>

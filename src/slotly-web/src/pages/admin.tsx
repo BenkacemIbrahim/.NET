@@ -67,6 +67,7 @@ import { FieldError, Label } from "../components/ui/label";
 import { Skeleton } from "../components/ui/skeleton";
 import { SlotlyLogo } from "../components/slotly-logo";
 import { AiChatWidget } from "../components/ai-chat-widget";
+import { ConfirmModal } from "../components/confirm-modal";
 import { cn } from "../lib/cn";
 
 type Booking = ApiSchemas["BookingDto"];
@@ -603,11 +604,11 @@ function AdminShell() {
           <Link
             to="/admin/services"
             className={cn(
-              "flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-transparent text-xs font-bold text-white transition-all hover:border-white hover:bg-white/5",
+              "flex h-10 items-center justify-center gap-1.5 rounded-full border border-gray-200 dark:border-white/20 bg-white dark:bg-transparent text-xs font-bold text-gray-900 dark:text-white shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-300 dark:hover:border-white transition-all",
               collapsed ? "w-10 px-0 mx-auto" : "w-full px-4"
             )}
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-3.5 text-primary" />
             {!collapsed && <span>Create</span>}
           </Link>
         </div>
@@ -642,7 +643,7 @@ function AdminShell() {
           {!collapsed ? (
             <div className="rounded-xl border border-[#1C283A] bg-[#111A28] p-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gray-300">Public Link</span>
+                <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Public Link</span>
                 <button
                   onClick={() => {
                     void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
@@ -670,7 +671,7 @@ function AdminShell() {
                 void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
                 toast.success("Link copied!");
               }}
-              className="grid size-9 mx-auto place-items-center rounded-full border border-white/20 text-white hover:bg-white/5"
+              className="grid size-9 mx-auto place-items-center rounded-full border border-gray-200 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5"
               title="Copy booking link"
             >
               <LinkIcon className="size-4" />
@@ -699,7 +700,7 @@ function AdminShell() {
           <button
             onClick={logout}
             className={cn(
-              "flex h-8 items-center rounded-xl text-xs font-semibold text-gray-500 hover:text-red-400 transition-colors",
+              "flex h-9 items-center rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors",
               collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full"
             )}
             title="Log out"
@@ -783,6 +784,7 @@ export function DashboardPage() {
   const [callieOpen, setCallieOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [creatingService, setCreatingService] = useState(false);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
 
   const qc = useQueryClient();
   const tenantSettings = useTenantSettings();
@@ -1029,7 +1031,7 @@ export function DashboardPage() {
                     <div className="flex items-center gap-2 ml-auto sm:ml-0">
                       <button
                         onClick={() => copyPublicLink(service.id)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-transparent px-3 text-xs font-semibold text-white hover:bg-white/5 transition-colors"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-gray-200 dark:border-white/20 bg-transparent px-3 text-xs font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                       >
                         <LinkIcon className="size-3" />
                         <span>Copy link</span>
@@ -1054,11 +1056,7 @@ export function DashboardPage() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (confirm(`Deactivate service "${service.name}"?`)) {
-                            deleteService.mutate(service.id!);
-                          }
-                        }}
+                        onClick={() => setDeletingService(service)}
                         className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
                         title="Deactivate event type"
                       >
@@ -1196,7 +1194,30 @@ export function DashboardPage() {
         />
       )}
 
-
+      {/* Deactivate Service Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(deletingService)}
+        title="Deactivate Event Type"
+        description={
+          <>
+            Are you sure you want to deactivate{" "}
+            <span className="font-bold text-gray-900 dark:text-white">
+              {deletingService?.name}
+            </span>
+            ? Clients will no longer be able to book this event type on your public booking page.
+          </>
+        }
+        confirmText="Deactivate"
+        isPending={deleteService.isPending}
+        onConfirm={() => {
+          if (deletingService?.id) {
+            deleteService.mutate(deletingService.id, {
+              onSuccess: () => setDeletingService(null),
+            });
+          }
+        }}
+        onClose={() => setDeletingService(null)}
+      />
     </div>
   );
 }
@@ -1874,7 +1895,7 @@ function BookingRows({ items }: { items: Booking[] }) {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-[#4D9BFF] hover:bg-[#0069FF]/10"
+                className="text-[#0069FF] dark:text-[#4D9BFF] hover:bg-blue-50 dark:hover:bg-[#0069FF]/10 font-medium transition-colors"
                 onClick={() => setNotetakerBooking(item)}
                 title="View/Add Meeting Notes"
               >
@@ -1887,7 +1908,7 @@ function BookingRows({ items }: { items: Booking[] }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#1C283A] text-white hover:bg-[#162234]"
+                  className="border-gray-200 dark:border-[#1C283A] bg-white dark:bg-transparent text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-[#162234] shadow-sm font-medium transition-colors"
                   onClick={() => setReschedulingBooking(item)}
                 >
                   Reschedule
@@ -1900,7 +1921,7 @@ function BookingRows({ items }: { items: Booking[] }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/30"
+                    className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-500/60 font-medium transition-colors"
                     onClick={() => updateStatus.mutate({ booking: item, action: "complete" })}
                   >
                     Complete
@@ -1908,7 +1929,7 @@ function BookingRows({ items }: { items: Booking[] }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-gray-400 hover:text-white"
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 font-medium transition-colors"
                     onClick={() => updateStatus.mutate({ booking: item, action: "no-show" })}
                   >
                     No show
@@ -1921,7 +1942,7 @@ function BookingRows({ items }: { items: Booking[] }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-red-400 hover:bg-red-950/20 hover:text-red-300"
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors"
                   onClick={() => setCancellingBooking(item)}
                 >
                   Cancel
@@ -2178,6 +2199,7 @@ export function ServicesPage() {
   const tenantSettings = useTenantSettings();
   const tenantSlug = tenantSettings.data?.slug || "northstar-health";
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
 
   const schema = z.object({
     name: z.string().min(2, "Service name required"),
@@ -2291,11 +2313,7 @@ export function ServicesPage() {
                     </button>
 
                     <button
-                      onClick={() => {
-                        if (confirm(`Deactivate "${s.name}"?`)) {
-                          deleteService.mutate(s.id!);
-                        }
-                      }}
+                      onClick={() => setDeletingService(s)}
                       className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
                       title="Deactivate"
                     >
@@ -2339,6 +2357,31 @@ export function ServicesPage() {
           }}
         />
       )}
+
+      {/* Deactivate Service Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(deletingService)}
+        title="Deactivate Event Type"
+        description={
+          <>
+            Are you sure you want to deactivate{" "}
+            <span className="font-bold text-gray-900 dark:text-white">
+              {deletingService?.name}
+            </span>
+            ? Clients will no longer be able to book this event type on your public booking page.
+          </>
+        }
+        confirmText="Deactivate"
+        isPending={deleteService.isPending}
+        onConfirm={() => {
+          if (deletingService?.id) {
+            deleteService.mutate(deletingService.id, {
+              onSuccess: () => setDeletingService(null),
+            });
+          }
+        }}
+        onClose={() => setDeletingService(null)}
+      />
     </div>
   );
 }
@@ -2352,6 +2395,7 @@ export function StaffPage() {
   const bookings = useBookings();
   const [subTab, setSubTab] = useState<"staff" | "clients">("staff");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
 
   // Deactivate staff
   const deleteStaff = useMutation({
@@ -2481,11 +2525,7 @@ export function StaffPage() {
                   </Link>
 
                   <button
-                    onClick={() => {
-                      if (confirm(`Deactivate staff member "${p.displayName}"?`)) {
-                        deleteStaff.mutate(p.id!);
-                      }
-                    }}
+                    onClick={() => setDeletingStaff(p)}
                     className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
                     title="Deactivate staff"
                   >
@@ -2540,6 +2580,31 @@ export function StaffPage() {
           }}
         />
       )}
+
+      {/* Deactivate Staff Confirmation Modal */}
+      <ConfirmModal
+        open={Boolean(deletingStaff)}
+        title="Deactivate Staff Member"
+        description={
+          <>
+            Are you sure you want to deactivate{" "}
+            <span className="font-bold text-gray-900 dark:text-white">
+              {deletingStaff?.displayName}
+            </span>
+            ? They will no longer be available for appointments or client bookings.
+          </>
+        }
+        confirmText="Deactivate"
+        isPending={deleteStaff.isPending}
+        onConfirm={() => {
+          if (deletingStaff?.id) {
+            deleteStaff.mutate(deletingStaff.id, {
+              onSuccess: () => setDeletingStaff(null),
+            });
+          }
+        }}
+        onClose={() => setDeletingStaff(null)}
+      />
     </div>
   );
 }

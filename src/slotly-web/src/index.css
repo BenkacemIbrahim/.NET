@@ -428,7 +428,11 @@ html:not(.dark) {
 
   /* Hover & Active backgrounds */
   .hover\:bg-\[\#162234\]:hover,
-  .hover\:bg-\[\#111A28\]:hover {
+  .hover\:bg-\[\#162234\]\/40:hover,
+  .hover\:bg-\[\#162234\]\/30:hover,
+  .hover\:bg-\[\#162234\]\/20:hover,
+  .hover\:bg-\[\#111A28\]:hover,
+  [class*="hover:bg-[#162234]"]:hover {
     background-color: #F1F5F9 !important;
   }
 
@@ -440,6 +444,19 @@ html:not(.dark) {
     background-color: #EFF6FF !important;
   }
 
+  [class*="hover:bg-emerald-950"]:hover {
+    background-color: #ECFDF5 !important;
+  }
+
+  [class*="hover:bg-red-950"]:hover {
+    background-color: #FEF2F2 !important;
+  }
+
+  [class*="hover:bg-purple-950"]:hover,
+  [class*="hover:bg-purple-900"]:hover {
+    background-color: #F5F3FF !important;
+  }
+
   /* Text colors */
   .text-\[\#8B9CB0\] {
     color: #64748B !important;
@@ -449,18 +466,18 @@ html:not(.dark) {
     color: #0069FF !important;
   }
 
-  /* Text-white inside Admin: switch to dark text unless it's on a saturated button/badge */
+  /* Text-white inside Admin: switch to dark text unless it's on a solid saturated button/badge */
   .min-h-dvh {
     color: #0F172A !important;
   }
 
   .min-h-dvh .text-white:not(
-    [class*="bg-[#0069FF]"],
+    [class*="bg-[#0069FF]"]:not([class*="/10"]):not([class*="/20"]):not([class*="/5"]),
     [class*="bg-[#0056D6]"],
     [class*="bg-primary"],
-    [class*="bg-emerald"],
-    [class*="bg-rose"],
-    [class*="bg-red"],
+    [class*="bg-emerald"]:not([class*="/10"]):not([class*="/20"]),
+    [class*="bg-rose"]:not([class*="/10"]):not([class*="/20"]),
+    [class*="bg-red"]:not([class*="/10"]):not([class*="/20"]),
     [class*="bg-purple-6"],
     [class*="bg-blue-6"],
     .btn-keep-white
