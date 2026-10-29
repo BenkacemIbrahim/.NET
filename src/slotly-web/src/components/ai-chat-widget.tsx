@@ -178,28 +178,28 @@ export function AiChatWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="mb-4 w-[calc(100vw-2.5rem)] sm:w-[410px] h-[580px] max-h-[82vh] rounded-3xl bg-white shadow-2xl border border-gray-200/90 overflow-hidden flex flex-col font-sans"
+            className="mb-2.5 w-[calc(100vw-2.5rem)] sm:w-[350px] h-[460px] max-h-[min(480px,calc(100vh-130px))] rounded-2xl bg-white shadow-2xl border border-gray-200/90 overflow-hidden flex flex-col font-sans"
             style={{
-              boxShadow: "0 20px 45px -10px rgba(79, 70, 229, 0.22), 0 8px 24px -6px rgba(0, 0, 0, 0.12)",
+              boxShadow: "0 16px 36px -8px rgba(79, 70, 229, 0.22), 0 6px 18px -4px rgba(0, 0, 0, 0.1)",
             }}
           >
             {/* Header: Royal Indigo Gradient with Bot Avatar & Status */}
-            <div className="relative bg-gradient-to-r from-[#2563EB] via-[#4338CA] to-[#4F46E5] px-5 py-4 text-white shadow-md flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="relative bg-gradient-to-r from-[#2563EB] via-[#4338CA] to-[#4F46E5] px-4 py-2.5 text-white shadow-sm flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
                 <div className="relative">
-                  <div className="size-10 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-inner">
-                    <Bot className="size-5.5 text-white" />
+                  <div className="size-8 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-inner">
+                    <Bot className="size-4 text-white" />
                   </div>
-                  <span className="absolute bottom-0 right-0 size-3 rounded-full bg-[#10B981] border-2 border-[#4338CA]" />
+                  <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-[#10B981] border-2 border-[#4338CA]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-base font-bold text-white tracking-tight">Slotly AI</h3>
-                    <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px] font-semibold text-white/90">
+                    <h3 className="text-sm font-bold text-white tracking-tight">Slotly AI</h3>
+                    <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[9px] font-semibold text-white/90">
                       Assistant
                     </span>
                   </div>
-                  <p className="flex items-center gap-1.5 text-xs text-emerald-200 font-medium">
+                  <p className="flex items-center gap-1 text-[11px] text-emerald-200 font-medium leading-none">
                     <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Online · Ready to help
                   </p>
@@ -207,62 +207,62 @@ export function AiChatWidget() {
               </div>
 
               {/* Header Actions (Minimize, Reset, Close) */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={handleResetChat}
                   title="Reset conversation"
                   aria-label="Reset conversation"
-                  className="grid size-8 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+                  className="grid size-7 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
                 >
-                  <RotateCcw className="size-3.5" />
+                  <RotateCcw className="size-3" />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   title="Minimize chat"
                   aria-label="Minimize chat"
-                  className="grid size-8 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+                  className="grid size-7 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
                 >
-                  <Minus className="size-4" />
+                  <Minus className="size-3.5" />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   title="Close chat"
                   aria-label="Close chat"
-                  className="grid size-8 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+                  className="grid size-7 place-items-center rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors"
                 >
-                  <X className="size-4" />
+                  <X className="size-3.5" />
                 </button>
               </div>
             </div>
 
             {/* Conversation Message List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F8FAFC]">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#F8FAFC]">
               {messages.map((message) => {
                 const isBot = message.sender === "bot";
                 return (
                   <div
                     key={message.id}
                     className={cn(
-                      "flex gap-2.5 max-w-[88%]",
+                      "flex gap-2 max-w-[88%]",
                       isBot ? "self-start items-end" : "self-end ml-auto flex-row-reverse items-end"
                     )}
                   >
                     {/* Avatar */}
                     {isBot ? (
-                      <div className="size-7 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0 shadow-xs mb-1">
-                        <Bot className="size-4" />
+                      <div className="size-6 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0 shadow-xs mb-0.5">
+                        <Bot className="size-3.5" />
                       </div>
                     ) : (
-                      <div className="size-7 rounded-full bg-[#0B1A2C] text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-xs mb-1">
+                      <div className="size-6 rounded-full bg-[#0B1A2C] text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-xs mb-0.5">
                         You
                       </div>
                     )}
 
                     {/* Bubble Content */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div
                         className={cn(
-                          "relative px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-xs",
+                          "relative px-3.5 py-2 text-xs leading-relaxed shadow-xs",
                           isBot
                             ? "rounded-2xl rounded-bl-xs bg-white text-[#1E293B] border border-gray-200/80"
                             : "rounded-2xl rounded-br-xs bg-gradient-to-r from-[#4F46E5] to-[#4338CA] text-white"
@@ -272,7 +272,7 @@ export function AiChatWidget() {
 
                         {/* Optional action button link */}
                         {message.link && (
-                          <div className="mt-2.5 pt-2 border-t border-gray-100">
+                          <div className="mt-2 pt-1.5 border-t border-gray-100">
                             <Link
                               to={message.link.to}
                               className="inline-flex items-center gap-1.5 font-bold text-xs text-[#0069FF] hover:underline"
@@ -285,7 +285,7 @@ export function AiChatWidget() {
 
                         {/* Bot Reaction Icons (Matching Figma: Copy, ThumbsUp, ThumbsDown) */}
                         {isBot && (
-                          <div className="mt-2 -mb-0.5 flex items-center justify-end gap-1 text-gray-400">
+                          <div className="mt-1.5 -mb-0.5 flex items-center justify-end gap-1 text-gray-400">
                             <button
                               onClick={() => handleCopy(message.id, message.text)}
                               title="Copy text"
@@ -338,11 +338,11 @@ export function AiChatWidget() {
 
               {/* Bot Typing Indicator */}
               {isTyping && (
-                <div className="flex items-center gap-2.5 max-w-[85%]">
-                  <div className="size-7 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
-                    <Bot className="size-4" />
+                <div className="flex items-center gap-2 max-w-[85%]">
+                  <div className="size-6 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
+                    <Bot className="size-3.5" />
                   </div>
-                  <div className="rounded-2xl rounded-bl-xs bg-white border border-gray-200/80 px-4 py-2.5 shadow-xs flex items-center gap-1">
+                  <div className="rounded-2xl rounded-bl-xs bg-white border border-gray-200/80 px-3 py-2 shadow-xs flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-[#4F46E5] animate-bounce" />
                     <span className="size-1.5 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.2s]" />
                     <span className="size-1.5 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.4s]" />
@@ -354,13 +354,13 @@ export function AiChatWidget() {
             </div>
 
             {/* Quick Suggestion Pills (Above Input Bar as in Figma) */}
-            <div className="bg-white border-t border-gray-100 px-3 py-2 shrink-0">
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            <div className="bg-white border-t border-gray-100 px-3 py-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
                     key={prompt.text}
                     onClick={() => handleSendMessage(prompt.text)}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gray-50 border border-gray-200/90 px-3 py-1 text-[11px] font-medium text-gray-700 hover:bg-[#EEF2FF] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-all cursor-pointer shadow-2xs"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gray-50 border border-gray-200/90 px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-[#EEF2FF] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-all cursor-pointer shadow-2xs"
                   >
                     <span>{prompt.emoji}</span>
                     <span>{prompt.text}</span>
@@ -370,20 +370,26 @@ export function AiChatWidget() {
             </div>
 
             {/* Input Bar (Figma Style: Pill with Send Arrow) */}
-            <div className="p-3 bg-white border-t border-gray-100 shrink-0">
+            <div className="p-2.5 bg-white border-t border-gray-100 shrink-0">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="flex items-center gap-2 rounded-2xl bg-gray-50 border border-gray-200/90 px-3.5 py-2 focus-within:bg-white focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-[#4F46E5]/15 transition-all shadow-inner"
+                className="flex items-center gap-2 rounded-full bg-gray-50 border border-gray-200/90 px-3 py-1.5 focus-within:bg-white focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-[#4F46E5]/15 transition-all shadow-inner"
               >
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Type your message here..."
-                  className="flex-1 bg-transparent text-xs sm:text-sm text-[#0B1A2C] placeholder:text-gray-400 outline-none"
+                  className="chat-input flex-1 bg-transparent text-xs text-[#0B1A2C] placeholder:text-gray-400 outline-none border-0 ring-0 focus:outline-none focus:ring-0 focus:border-0"
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    boxShadow: "none",
+                    backgroundColor: "transparent",
+                  }}
                 />
 
                 <button
@@ -391,17 +397,17 @@ export function AiChatWidget() {
                   disabled={!inputValue.trim()}
                   aria-label="Send message"
                   className={cn(
-                    "grid size-8 place-items-center rounded-xl transition-all shadow-xs",
+                    "grid size-7 place-items-center rounded-full transition-all shrink-0 shadow-xs",
                     inputValue.trim()
                       ? "bg-[#4F46E5] text-white hover:bg-[#4338CA] hover:scale-105 active:scale-95"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   )}
                 >
-                  <Send className="size-3.5" />
+                  <Send className="size-3" />
                 </button>
               </form>
-              <div className="mt-1.5 text-center">
-                <span className="text-[10px] text-gray-400">
+              <div className="mt-1 text-center">
+                <span className="text-[9px] text-gray-400">
                   Powered by <span className="font-semibold text-gray-500">Slotly AI</span> · Instant scheduling assistance
                 </span>
               </div>

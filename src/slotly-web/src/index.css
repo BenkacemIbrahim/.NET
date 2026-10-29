@@ -133,19 +133,28 @@
   }
 
   /* Direct border activation on click/focus without floating halo ring */
-  input,
-  select,
-  textarea {
+  input:not(.chat-input),
+  select:not(.chat-input),
+  textarea:not(.chat-input) {
     outline: none !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  input:focus,
-  select:focus,
-  textarea:focus {
+  input:not(.chat-input):focus,
+  select:not(.chat-input):focus,
+  textarea:not(.chat-input):focus {
     outline: none !important;
     border-color: var(--primary) !important;
     box-shadow: 0 0 0 1px var(--primary) !important;
+  }
+
+  .chat-input,
+  .chat-input:focus,
+  .chat-input:active {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
   }
 
   input[aria-invalid="true"]:focus,
