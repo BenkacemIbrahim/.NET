@@ -1856,7 +1856,7 @@ function BookingRows({ items }: { items: Booking[] }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 text-sm sm:flex-nowrap hover:bg-[#162234]/30 px-2 rounded-xl transition-colors"
+            className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 text-sm sm:flex-nowrap hover:bg-slate-50 dark:hover:bg-[#162234]/30 px-2 rounded-xl transition-colors"
           >
             {/* Client avatar & info */}
             <div className="min-w-0 flex-1">
