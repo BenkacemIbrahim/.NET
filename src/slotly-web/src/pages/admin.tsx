@@ -438,17 +438,11 @@ export function LoginPage() {
   const form = useForm<Login>({
     resolver: zodResolver(schema),
     defaultValues: {
-      tenantSlug: "northstar-health",
-      email: "amira.benali@northstarhealth.ma",
-      password: "Password123!",
+      tenantSlug: "",
+      email: "",
+      password: "",
     },
   });
-
-  const selectTenant = (slug: string, email: string) => {
-    form.setValue("tenantSlug", slug);
-    form.setValue("email", email);
-    form.setValue("password", "Password123!");
-  };
 
   if (session) return <Navigate to="/admin" replace />;
 
@@ -479,29 +473,6 @@ export function LoginPage() {
             <p className="text-sm text-muted-foreground">
               Enter your credentials to access your booking calendar and settings.
             </p>
-          </div>
-
-          {/* Quick Demo Workspace Selector */}
-          <div className="mb-6 rounded-xl border border-border bg-muted/30 p-3">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Quick Select Demo Workspace:</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => selectTenant("northstar-health", "amira.benali@northstarhealth.ma")}
-                className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors text-left"
-              >
-                <div className="font-bold">Northstar Health</div>
-                <div className="text-[10px] opacity-80">Dr. Amira Benali</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => selectTenant("atlas-wellness", "youssef.idrissi@atlaswellness.ma")}
-                className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-semibold hover:border-primary/50 transition-colors text-left"
-              >
-                <div className="font-bold">Atlas Wellness</div>
-                <div className="text-[10px] text-muted-foreground">Youssef Idrissi</div>
-              </button>
-            </div>
           </div>
 
           <form
@@ -550,6 +521,7 @@ export function LoginPage() {
 
 function AdminShell() {
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("slotly_sidebar_collapsed") === "true";
@@ -557,6 +529,12 @@ function AdminShell() {
       return false;
     }
   });
+
+  useEffect(() => {
+    const handleOpenSettings = () => setSettingsOpen(true);
+    window.addEventListener("slotly:open-settings", handleOpenSettings);
+    return () => window.removeEventListener("slotly:open-settings", handleOpenSettings);
+  }, []);
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -699,22 +677,24 @@ function AdminShell() {
             </button>
           )}
 
-          <NavLink
-            to="/admin/settings"
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setSettingsOpen(true);
+            }}
             title={collapsed ? "Settings" : undefined}
-            className={({ isActive }) =>
-              cn(
-                "flex h-9 items-center rounded-xl text-xs font-semibold transition-colors",
-                collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3",
-                isActive
-                  ? "bg-[#152B46] text-[#4D9BFF]"
-                  : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
-              )
-            }
+            className={cn(
+              "flex h-9 items-center rounded-xl text-xs font-semibold transition-colors",
+              collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full",
+              settingsOpen
+                ? "bg-[#152B46] text-[#4D9BFF]"
+                : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
+            )}
           >
             <Settings className="size-4 shrink-0" />
             {!collapsed && <span>Settings</span>}
-          </NavLink>
+          </button>
 
           <button
             onClick={logout}
@@ -754,6 +734,11 @@ function AdminShell() {
 
       {/* Floating AI Chat Widget — available on all admin pages */}
       <AiChatWidget />
+
+      {/* Settings Modal */}
+      {settingsOpen && (
+        <SettingsModal onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }
@@ -3052,17 +3037,22 @@ export function SchedulePage() {
 }
 
 /* -------------------------------------------------------------
- * SETTINGS PAGE
+ * SETTINGS MODAL & PAGE
  * ------------------------------------------------------------- */
-export function SettingsPage() {
+export function SettingsModal({
+  onClose,
+  initialNav = "profile",
+}: {
+  onClose: () => void;
+  initialNav?: "profile" | "scheduling" | "branding" | "mylink" | "workspace";
+}) {
   const qc = useQueryClient();
-  const navigate = useNavigate();
   const { session } = useAuth();
   const userName = session?.user.displayName || "Admin User";
 
   const [activeSettingsNav, setActiveSettingsNav] = useState<
     "profile" | "scheduling" | "branding" | "mylink" | "workspace"
-  >("profile");
+  >(initialNav);
   const [profileTab, setProfileTab] = useState<"general" | "security">("general");
 
   const [currentTime, setCurrentTime] = useState("");
@@ -3076,6 +3066,24 @@ export function SettingsPage() {
     updateTime();
     const interval = setInterval(updateTime, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Lock background body scroll while modal is active
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   const settings = useTenantSettings();
@@ -3157,318 +3165,332 @@ export function SettingsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-5xl rounded-3xl border border-[#1C283A] bg-[#111A28] shadow-2xl overflow-hidden flex flex-col md:flex-row">
-      {/* Left Sidebar inside Settings Modal */}
-      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#1C283A] bg-[#090E17] p-5 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Workspace Settings
-            </p>
-            {[
-              ["profile", "Profile", User],
-              ["scheduling", "Scheduling Policy", Calendar],
-              ["branding", "Branding & Appearance", Palette],
-              ["mylink", "Booking Link", LinkIcon],
-              ["workspace", "Workspace Info", Hourglass],
-            ].map(([key, label, Icon]: any) => (
-              <button
-                key={key}
-                onClick={() => setActiveSettingsNav(key)}
-                className={cn(
-                  "flex h-9 w-full items-center gap-3 rounded-xl px-3 text-xs font-semibold transition-colors",
-                  activeSettingsNav === key
-                    ? "bg-[#152B46] text-[#4D9BFF]"
-                    : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
-                )}
-              >
-                <Icon className="size-3.5 shrink-0" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Settings Panel */}
-      <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
-            <h2 className="text-xl font-bold text-white capitalize">{activeSettingsNav} Settings</h2>
-            <div className="flex items-center gap-2">
-              <ThemeToggle className="size-8 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
-              <button
-                onClick={() => navigate("/admin")}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#111A28]"
-                title="Close settings"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Profile Tab */}
-          {activeSettingsNav === "profile" && (
-            <>
-              {/* Subtabs: General & Security */}
-              <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
-                <button
-                  onClick={() => setProfileTab("general")}
-                  className={cn(
-                    "pb-3 relative transition-colors",
-                    profileTab === "general" ? "text-white" : "text-gray-400 hover:text-white"
-                  )}
-                >
-                  General
-                  {profileTab === "general" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setProfileTab("security")}
-                  className={cn(
-                    "pb-3 relative transition-colors",
-                    profileTab === "security" ? "text-white" : "text-gray-400 hover:text-white"
-                  )}
-                >
-                  Login & Security
-                  {profileTab === "security" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-                  )}
-                </button>
-              </div>
-
-              {profileTab === "general" ? (
-                <form
-                  id="settingsForm"
-                  className="mt-6 space-y-4"
-                  onSubmit={form.handleSubmit((v) => save.mutate(v))}
-                >
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs text-white font-semibold">Workspace Name</Label>
-                    <Input id="name" className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl" {...form.register("name")} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">Time zone</Label>
-                      <span className="text-[11px] text-gray-400">Current Time: {currentTime}</span>
-                    </div>
-                    <select
-                      id="timeZoneId"
-                      className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                      {...form.register("timeZoneId")}
-                    >
-                      <option value="Africa/Casablanca">Africa/Casablanca (Morocco)</option>
-                      <option value="Europe/Paris">Europe/Paris (France, Spain, Germany)</option>
-                      <option value="Europe/London">Europe/London (GMT/BST)</option>
-                      <option value="America/New_York">America/New_York (Eastern)</option>
-                      <option value="UTC">UTC (Universal Time)</option>
-                    </select>
-                  </div>
-                </form>
-              ) : (
-                <form
-                  className="mt-6 space-y-4"
-                  onSubmit={passForm.handleSubmit((v) => changePassword.mutate(v))}
-                >
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-white font-semibold">Current Password</Label>
-                    <Input
-                      type="password"
-                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                      {...passForm.register("currentPassword")}
-                    />
-                    <FieldError error={passForm.formState.errors.currentPassword} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-white font-semibold">New Password</Label>
-                    <Input
-                      type="password"
-                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                      {...passForm.register("newPassword")}
-                    />
-                    <FieldError error={passForm.formState.errors.newPassword} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-white font-semibold">Confirm New Password</Label>
-                    <Input
-                      type="password"
-                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                      {...passForm.register("confirmPassword")}
-                    />
-                    <FieldError error={passForm.formState.errors.confirmPassword} />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={changePassword.isPending}
-                    className="rounded-full bg-white text-[#0B1A2C] hover:bg-neutral-100 font-bold text-xs"
-                  >
-                    {changePassword.isPending ? "Updating password…" : "Update Password"}
-                  </Button>
-                </form>
-              )}
-            </>
-          )}
-
-          {/* Scheduling Policy */}
-          {activeSettingsNav === "scheduling" && (
-            <form
-              id="settingsForm"
-              className="mt-6 space-y-4"
-              onSubmit={form.handleSubmit((v) => save.mutate(v))}
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="cancellationWindowHours" className="text-xs text-white font-semibold">
-                  Cancellation Window (Hours in advance)
-                </Label>
-                <Input
-                  id="cancellationWindowHours"
-                  type="number"
-                  className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-xs"
-                  {...form.register("cancellationWindowHours", { valueAsNumber: true })}
-                />
-                <p className="text-[11px] text-[#8B9CB0]">
-                  Clients will not be allowed to cancel within this window prior to appointment time.
-                </p>
-              </div>
-            </form>
-          )}
-
-          {/* Branding Tab */}
-          {activeSettingsNav === "branding" && (
-            <form
-              id="settingsForm"
-              className="mt-6 space-y-4"
-              onSubmit={form.handleSubmit((v) => save.mutate(v))}
-            >
-              <div className="space-y-2">
-                <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
-                    {...form.register("primaryColor")}
-                  />
-                  <Input
-                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
-                    {...form.register("primaryColor")}
-                  />
-                  <div className="flex gap-1.5">
-                    {["#0069FF", "#10B981", "#8B5CF6", "#F59E0B"].map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => form.setValue("primaryColor", c)}
-                        className="size-6 rounded-full border border-white/20 transition-transform hover:scale-110"
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-2">
-                <Label htmlFor="logoUrl" className="text-xs text-white font-semibold">Brand Logo URL</Label>
-                <Input
-                  id="logoUrl"
-                  placeholder="https://example.com/logo.png"
-                  className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                  {...form.register("logoUrl")}
-                />
-              </div>
-
-              {/* Live Preview Card */}
-              <div className="mt-6 rounded-2xl border border-[#1C283A] bg-[#0B111A] p-4">
-                <p className="text-xs font-semibold text-gray-400 mb-2">Live Preview of Public Booking Badge:</p>
-                <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3 bg-[#111A28]">
-                  <div
-                    className="size-4 rounded-full"
-                    style={{ backgroundColor: form.watch("primaryColor") || "#0069FF" }}
-                  />
-                  <span className="font-bold text-xs text-white">{form.watch("name") || "Northstar Health"}</span>
-                </div>
-              </div>
-            </form>
-          )}
-
-          {/* My Link Tab */}
-          {activeSettingsNav === "mylink" && (
-            <div className="mt-6 space-y-4">
-              <p className="text-xs text-[#8B9CB0]">
-                Your public booking page URL:
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-6 backdrop-blur-sm overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-5xl rounded-3xl border border-[#1C283A] bg-[#111A28] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] my-auto">
+        {/* Left Sidebar inside Settings Modal */}
+        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#1C283A] bg-[#090E17] p-5 flex flex-col justify-between shrink-0">
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Workspace Settings
               </p>
-              <div className="flex items-center gap-2 rounded-xl border border-[#1C283A] bg-[#0B111A] p-3">
-                <span className="font-mono text-xs text-[#4D9BFF] flex-1">
-                  {`${window.location.origin}/book/${tenantSlug}`}
-                </span>
+              {[
+                ["profile", "Profile", User],
+                ["scheduling", "Scheduling Policy", Calendar],
+                ["branding", "Branding & Appearance", Palette],
+                ["mylink", "Booking Link", LinkIcon],
+                ["workspace", "Workspace Info", Hourglass],
+              ].map(([key, label, Icon]: any) => (
                 <button
-                  onClick={() => {
-                    void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
-                    toast.success("Link copied!");
-                  }}
-                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveSettingsNav(key)}
+                  className={cn(
+                    "flex h-9 w-full items-center gap-3 rounded-xl px-3 text-xs font-semibold transition-colors",
+                    activeSettingsNav === key
+                      ? "bg-[#152B46] text-[#4D9BFF]"
+                      : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
+                  )}
                 >
-                  Copy
+                  <Icon className="size-3.5 shrink-0" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Settings Panel */}
+        <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
+          <div>
+            <div className="flex items-center justify-between border-b border-[#1C283A] pb-4">
+              <h2 className="text-xl font-bold text-white capitalize">{activeSettingsNav} Settings</h2>
+              <div className="flex items-center gap-2">
+                <ThemeToggle className="size-8 rounded-lg border-[#1C283A] bg-[#111A28] text-gray-400 hover:text-white hover:bg-[#162234]" />
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#111A28]"
+                  title="Close settings"
+                >
+                  <X className="size-5" />
                 </button>
               </div>
-
-              <a
-                href={`/book/${tenantSlug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/5"
-              >
-                <span>Open Live Booking Page</span>
-                <ExternalLink className="size-3.5" />
-              </a>
             </div>
-          )}
 
-          {/* Workspace Tab */}
-          {activeSettingsNav === "workspace" && (
-            <div className="mt-6 space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
-                  <p className="text-[11px] text-gray-400">Workspace Slug</p>
-                  <p className="font-mono text-xs font-bold text-white mt-0.5">{tenantSlug}</p>
+            {/* Profile Tab */}
+            {activeSettingsNav === "profile" && (
+              <>
+                {/* Subtabs: General & Security */}
+                <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
+                  <button
+                    onClick={() => setProfileTab("general")}
+                    className={cn(
+                      "pb-3 relative transition-colors",
+                      profileTab === "general" ? "text-white" : "text-gray-400 hover:text-white"
+                    )}
+                  >
+                    General
+                    {profileTab === "general" && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setProfileTab("security")}
+                    className={cn(
+                      "pb-3 relative transition-colors",
+                      profileTab === "security" ? "text-white" : "text-gray-400 hover:text-white"
+                    )}
+                  >
+                    Login & Security
+                    {profileTab === "security" && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                    )}
+                  </button>
                 </div>
 
-                <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
-                  <p className="text-[11px] text-gray-400">Time Zone</p>
-                  <p className="text-xs font-bold text-white mt-0.5">{settings.data?.timeZoneId || "Africa/Casablanca"}</p>
+                {profileTab === "general" ? (
+                  <form
+                    id="settingsForm"
+                    className="mt-6 space-y-4"
+                    onSubmit={form.handleSubmit((v) => save.mutate(v))}
+                  >
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name" className="text-xs text-white font-semibold">Workspace Name</Label>
+                      <Input id="name" className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl" {...form.register("name")} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">Time zone</Label>
+                        <span className="text-[11px] text-gray-400">Current Time: {currentTime}</span>
+                      </div>
+                      <select
+                        id="timeZoneId"
+                        className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
+                        {...form.register("timeZoneId")}
+                      >
+                        <option value="Africa/Casablanca">Africa/Casablanca (Morocco)</option>
+                        <option value="Europe/Paris">Europe/Paris (France, Spain, Germany)</option>
+                        <option value="Europe/London">Europe/London (GMT/BST)</option>
+                        <option value="America/New_York">America/New_York (Eastern)</option>
+                        <option value="UTC">UTC (Universal Time)</option>
+                      </select>
+                    </div>
+                  </form>
+                ) : (
+                  <form
+                    className="mt-6 space-y-4"
+                    onSubmit={passForm.handleSubmit((v) => changePassword.mutate(v))}
+                  >
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-white font-semibold">Current Password</Label>
+                      <Input
+                        type="password"
+                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                        {...passForm.register("currentPassword")}
+                      />
+                      <FieldError error={passForm.formState.errors.currentPassword} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-white font-semibold">New Password</Label>
+                      <Input
+                        type="password"
+                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                        {...passForm.register("newPassword")}
+                      />
+                      <FieldError error={passForm.formState.errors.newPassword} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-white font-semibold">Confirm New Password</Label>
+                      <Input
+                        type="password"
+                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                        {...passForm.register("confirmPassword")}
+                      />
+                      <FieldError error={passForm.formState.errors.confirmPassword} />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={changePassword.isPending}
+                      className="rounded-full bg-white text-[#0B1A2C] hover:bg-neutral-100 font-bold text-xs"
+                    >
+                      {changePassword.isPending ? "Updating password…" : "Update Password"}
+                    </Button>
+                  </form>
+                )}
+              </>
+            )}
+
+            {/* Scheduling Policy */}
+            {activeSettingsNav === "scheduling" && (
+              <form
+                id="settingsForm"
+                className="mt-6 space-y-4"
+                onSubmit={form.handleSubmit((v) => save.mutate(v))}
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="cancellationWindowHours" className="text-xs text-white font-semibold">
+                    Cancellation Window (Hours in advance)
+                  </Label>
+                  <Input
+                    id="cancellationWindowHours"
+                    type="number"
+                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-xs"
+                    {...form.register("cancellationWindowHours", { valueAsNumber: true })}
+                  />
+                  <p className="text-[11px] text-[#8B9CB0]">
+                    Clients will not be allowed to cancel within this window prior to appointment time.
+                  </p>
+                </div>
+              </form>
+            )}
+
+            {/* Branding Tab */}
+            {activeSettingsNav === "branding" && (
+              <form
+                id="settingsForm"
+                className="mt-6 space-y-4"
+                onSubmit={form.handleSubmit((v) => save.mutate(v))}
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
+                      {...form.register("primaryColor")}
+                    />
+                    <Input
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
+                      {...form.register("primaryColor")}
+                    />
+                    <div className="flex gap-1.5">
+                      {["#0069FF", "#10B981", "#8B5CF6", "#F59E0B"].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => form.setValue("primaryColor", c)}
+                          className="size-6 rounded-full border border-white/20 transition-transform hover:scale-110"
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-2">
+                  <Label htmlFor="logoUrl" className="text-xs text-white font-semibold">Brand Logo URL</Label>
+                  <Input
+                    id="logoUrl"
+                    placeholder="https://example.com/logo.png"
+                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                    {...form.register("logoUrl")}
+                  />
+                </div>
+
+                {/* Live Preview Card */}
+                <div className="mt-6 rounded-2xl border border-[#1C283A] bg-[#0B111A] p-4">
+                  <p className="text-xs font-semibold text-gray-400 mb-2">Live Preview of Public Booking Badge:</p>
+                  <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3 bg-[#111A28]">
+                    <div
+                      className="size-4 rounded-full"
+                      style={{ backgroundColor: form.watch("primaryColor") || "#0069FF" }}
+                    />
+                    <span className="font-bold text-xs text-white">{form.watch("name") || "Northstar Health"}</span>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* My Link Tab */}
+            {activeSettingsNav === "mylink" && (
+              <div className="mt-6 space-y-4">
+                <p className="text-xs text-[#8B9CB0]">
+                  Your public booking page URL:
+                </p>
+                <div className="flex items-center gap-2 rounded-xl border border-[#1C283A] bg-[#0B111A] p-3">
+                  <span className="font-mono text-xs text-[#4D9BFF] flex-1">
+                    {`${window.location.origin}/book/${tenantSlug}`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(`${window.location.origin}/book/${tenantSlug}`);
+                      toast.success("Link copied!");
+                    }}
+                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
+                  >
+                    Copy
+                  </button>
+                </div>
+
+                <a
+                  href={`/book/${tenantSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/5"
+                >
+                  <span>Open Live Booking Page</span>
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </div>
+            )}
+
+            {/* Workspace Tab */}
+            {activeSettingsNav === "workspace" && (
+              <div className="mt-6 space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
+                    <p className="text-[11px] text-gray-400">Workspace Slug</p>
+                    <p className="font-mono text-xs font-bold text-white mt-0.5">{tenantSlug}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-[#1C283A] bg-[#0B111A] p-3.5">
+                    <p className="text-[11px] text-gray-400">Time Zone</p>
+                    <p className="text-xs font-bold text-white mt-0.5">{settings.data?.timeZoneId || "Africa/Casablanca"}</p>
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Footer actions for tabs with form */}
+          {activeSettingsNav !== "workspace" && activeSettingsNav !== "mylink" && profileTab !== "security" && (
+            <div className="mt-8 flex items-center justify-end gap-3 border-t border-[#1C283A] pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-white/20 px-5 py-2 text-xs font-bold text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="settingsForm"
+                disabled={save.isPending}
+                className="rounded-full bg-white px-5 py-2 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
+              >
+                {save.isPending ? "Saving changes…" : "Save changes"}
+              </button>
             </div>
           )}
         </div>
-
-        {/* Footer actions for tabs with form */}
-        {activeSettingsNav !== "workspace" && activeSettingsNav !== "mylink" && profileTab !== "security" && (
-          <div className="mt-8 flex items-center justify-end gap-3 border-t border-[#1C283A] pt-4">
-            <button
-              type="button"
-              onClick={() => navigate("/admin")}
-              className="rounded-full border border-white/20 px-5 py-2 text-xs font-bold text-white hover:bg-white/5 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="settingsForm"
-              disabled={save.isPending}
-              className="rounded-full bg-white px-5 py-2 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
-            >
-              {save.isPending ? "Saving changes…" : "Save changes"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
+}
+
+export function SettingsPage() {
+  const navigate = useNavigate();
+  return <SettingsModal onClose={() => navigate("/admin")} />;
 }
 
 export function PageTitle({

@@ -129,9 +129,9 @@ export default function CalendarPage() {
             <HelpCircle className="size-4" />
           </button>
           <button
-            onClick={() => toast.info("Calendar settings")}
+            onClick={() => window.dispatchEvent(new CustomEvent("slotly:open-settings"))}
             className="grid size-9 place-items-center rounded-lg border border-[#1C283A] text-gray-400 hover:text-white hover:bg-[#111A28] transition-colors"
-            title="Calendar settings"
+            title="Settings"
           >
             <Settings className="size-4" />
           </button>
