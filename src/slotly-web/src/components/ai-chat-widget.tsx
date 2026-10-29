@@ -416,35 +416,15 @@ export function AiChatWidget() {
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-label={isOpen ? "Close Slotly AI Assistant" : "Open Slotly AI Assistant"}
-          className="relative group transition-all duration-300 hover:scale-108 active:scale-95 focus:outline-none cursor-pointer"
+          title={isOpen ? "Close Slotly AI Assistant" : "Open Slotly AI Assistant"}
+          className="relative group transition-transform duration-300 hover:scale-110 active:scale-95 focus:outline-none cursor-pointer bg-transparent border-0 p-0"
         >
-          {/* Animated Robot SVG in Floating Container */}
-          <div
-            className={cn(
-              "relative size-16 sm:size-20 rounded-full transition-all duration-300 flex items-center justify-center p-0.5",
-              isOpen
-                ? "bg-[#0B1A2C] shadow-2xl ring-4 ring-[#4F46E5]/30"
-                : "bg-white shadow-2xl hover:shadow-[0_12px_32px_rgba(79,70,229,0.35)] border border-gray-100"
-            )}
-          >
-            {isOpen ? (
-              <X className="size-8 text-white transition-transform duration-300 group-hover:rotate-90" />
-            ) : (
-              <img
-                src="/hello-animation.svg"
-                alt="AI Assistant"
-                className="size-full object-contain pointer-events-none select-none drop-shadow-md"
-              />
-            )}
-          </div>
-
-          {/* Active status indicator badge */}
-          {!isOpen && (
-            <span className="absolute bottom-0 right-1 flex size-3.5 pointer-events-none">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-3.5 rounded-full border-2 border-white bg-emerald-500" />
-            </span>
-          )}
+          {/* The Animated SVG is the Button */}
+          <img
+            src="/hello-animation.svg"
+            alt="Slotly AI Assistant"
+            className="size-20 sm:size-24 object-contain drop-shadow-2xl select-none pointer-events-none transition-transform duration-300 group-hover:scale-105"
+          />
 
           {/* Tooltip on hover */}
           {!isOpen && (
