@@ -103,8 +103,21 @@ function getBotReply(userText: string): { text: string; link?: { label: string; 
   };
 }
 
-export function AiChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface AiChatWidgetProps {
+  /** Externally controlled open state. When provided the widget is controlled. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Support both controlled (open prop) and uncontrolled modes
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = (val: boolean) => {
+    if (onOpenChange) onOpenChange(val);
+    setInternalOpen(val);
+  };
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -440,7 +453,7 @@ export function AiChatWidget() {
             onClick={() => setIsOpen(!isOpen)}
             onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setIsOpen(!isOpen)}
             className="object-contain drop-shadow-2xl select-none cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 focus:outline-none"
-            style={{ width: "72px", height: "72px", display: "block" }}
+            style={{ width: "100px", height: "100px", display: "block" }}
           />
 
           {/* Tooltip shown on hover when chat is closed */}
