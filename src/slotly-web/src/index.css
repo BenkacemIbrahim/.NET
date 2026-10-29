@@ -580,6 +580,31 @@ html:not(.dark) {
   ::-webkit-scrollbar-thumb:hover {
     background: #94A3B8;
   }
+
+  /* -----------------------------------------------------------------------
+   * FIX: hover:text-white makes icons invisible on light backgrounds.
+   * All hover:text-white rules that were written for dark mode only are
+   * overridden here to use a visible dark tone instead.
+   * Exceptions: elements that sit on a verified dark/solid colored surface
+   * (bg-[#0B1A2C], bg-primary, btn-keep-white, etc.) keep white text.
+   * ----------------------------------------------------------------------- */
+  .min-h-dvh .hover\:text-white:hover:not(
+    [class*="bg-[#0B1A2C]"],
+    [class*="bg-[#0069FF]"],
+    [class*="bg-primary"],
+    [class*="bg-[#0056D6]"],
+    [class*="bg-emerald-"],
+    [class*="bg-red-"],
+    [class*="bg-rose-"],
+    .btn-keep-white
+  ) {
+    color: #0F172A !important;
+  }
+
+  /* Icon-only ghost buttons (size-7/8/9 icon containers) should go to slate-700 on hover */
+  .min-h-dvh .hover\:text-white:hover svg {
+    color: inherit !important;
+  }
 }
 
 
