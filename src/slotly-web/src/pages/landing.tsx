@@ -5,7 +5,6 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
-  Leaf,
   LogIn,
   Menu,
   Mic,
@@ -16,7 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AiChatWidget } from "../components/ai-chat-widget";
 import { SlotlyLogo } from "../components/slotly-logo";
@@ -25,11 +24,10 @@ import { cn } from "../lib/cn";
 export function LandingPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeShowcaseTab, setActiveShowcaseTab] = useState<"ai" | "payments" | "sync" | "notes">("ai");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
 
-  // Auto-advance showcase tab or feature tab subtly
+  // Auto-advance feature tab
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveFeatureIndex((prev) => (prev + 1) % 4);
@@ -169,270 +167,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Interactive Product Showcase */}
-      <section className="px-3 sm:px-6 py-8">
-        <div className="mx-auto max-w-7xl rounded-[32px] bg-gradient-to-br from-[#D9EAFE] via-[#EDE9FE] to-[#D1FAE5] p-6 sm:p-12 shadow-sm">
-          {/* Top Floating Tab Switcher Icons */}
-          <div className="mb-8 flex items-center justify-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 p-1.5 shadow-md backdrop-blur-md">
-              <button
-                onClick={() => setActiveShowcaseTab("ai")}
-                className={cn(
-                  "flex size-11 items-center justify-center rounded-full transition-all",
-                  activeShowcaseTab === "ai"
-                    ? "bg-[#0069FF] text-white shadow-sm scale-105"
-                    : "text-[#0B1A2C]/60 hover:text-[#0B1A2C] hover:bg-black/5"
-                )}
-                title="AI Scheduling Assistant"
-              >
-                <Calendar className="size-5" />
-              </button>
-              <button
-                onClick={() => setActiveShowcaseTab("payments")}
-                className={cn(
-                  "flex size-11 items-center justify-center rounded-full transition-all",
-                  activeShowcaseTab === "payments"
-                    ? "bg-[#0069FF] text-white shadow-sm scale-105"
-                    : "text-[#0B1A2C]/60 hover:text-[#0B1A2C] hover:bg-black/5"
-                )}
-                title="Payments & Invoicing"
-              >
-                <CreditCard className="size-5" />
-              </button>
-              <button
-                onClick={() => setActiveShowcaseTab("sync")}
-                className={cn(
-                  "flex size-11 items-center justify-center rounded-full transition-all",
-                  activeShowcaseTab === "sync"
-                    ? "bg-[#0069FF] text-white shadow-sm scale-105"
-                    : "text-[#0B1A2C]/60 hover:text-[#0B1A2C] hover:bg-black/5"
-                )}
-                title="Smart Availability Sync"
-              >
-                <Leaf className="size-5" />
-              </button>
-              <button
-                onClick={() => setActiveShowcaseTab("notes")}
-                className={cn(
-                  "flex size-11 items-center justify-center rounded-full transition-all",
-                  activeShowcaseTab === "notes"
-                    ? "bg-[#0069FF] text-white shadow-sm scale-105"
-                    : "text-[#0B1A2C]/60 hover:text-[#0B1A2C] hover:bg-black/5"
-                )}
-                title="Notetaker AI"
-              >
-                <Sparkles className="size-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Inner Card Presentation */}
-          <div className="mx-auto max-w-5xl rounded-3xl bg-white p-6 sm:p-10 shadow-xl border border-white/60">
-            <AnimatePresence mode="wait">
-              {activeShowcaseTab === "ai" && (
-                <motion.div
-                  key="tab-ai"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid gap-8 lg:grid-cols-2 lg:items-center"
-                >
-                  <div className="space-y-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F3FF] px-3 py-1 text-xs font-bold text-[#0069FF]">
-                      <Sparkles className="size-3.5" /> Slotly AI · Beta
-                    </span>
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0B1A2C]">
-                      Introducing your 24/7 AI scheduling assistant
-                    </h2>
-                    <p className="text-base text-[#4A5568] leading-relaxed">
-                      Add Slotly AI to any email thread to coordinate scheduling on your behalf without switching tools or sacrificing control.
-                    </p>
-                    <Link
-                      to="/book/northstar-health"
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[#0069FF] hover:underline"
-                    >
-                      Learn more <ArrowRight className="size-4" />
-                    </Link>
-                  </div>
-
-                  {/* Interactive Mockup */}
-                  <div className="relative rounded-2xl bg-[#EBF7EE] p-6 sm:p-8 border border-[#D5EFE0] overflow-hidden">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0]">
-                      <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                        <div className="size-8 rounded-full bg-[#0069FF]/10 text-[#0069FF] grid place-items-center font-bold text-xs">
-                          DM
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-[#0B1A2C]">Dominic Mills</p>
-                          <p className="text-[11px] text-gray-400">To: Slotly AI, Tori Mathers</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        <div className="rounded-xl bg-[#F0F7FF] p-3 border border-[#D9EAFF]">
-                          <p className="text-xs font-semibold text-[#0069FF] flex items-center gap-1">
-                            <Sparkles className="size-3" /> Slotly AI replied
-                          </p>
-                          <p className="mt-1 text-xs text-[#0B1A2C]">
-                            Happy to set up a call for you with Dominic. Here are a few times you're both available:
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">10:00 AM</span>
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">2:30 PM</span>
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">3:00 PM</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeShowcaseTab === "payments" && (
-                <motion.div
-                  key="tab-payments"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid gap-8 lg:grid-cols-2 lg:items-center"
-                >
-                  <div className="space-y-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-3 py-1 text-xs font-bold text-[#137333]">
-                      <CreditCard className="size-3.5" /> Payments · New
-                    </span>
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0B1A2C]">
-                      Flexible, built-in payment tools
-                    </h2>
-                    <p className="text-base text-[#4A5568] leading-relaxed">
-                      Charge upfront for meetings, sell multi-session packages, and send invoices with payment features that make it easy to get paid.
-                    </p>
-                    <Link
-                      to="/login"
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[#0069FF] hover:underline"
-                    >
-                      Learn more <ArrowRight className="size-4" />
-                    </Link>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#EAF5FE] p-6 sm:p-8 border border-[#CCE7FC]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#0B1A2C]">Amount to collect</span>
-                        <span className="text-xs font-semibold text-gray-500">USD</span>
-                      </div>
-                      <div className="flex items-center rounded-xl border border-gray-200 px-3 py-2">
-                        <span className="text-sm font-bold text-gray-400 mr-2">$</span>
-                        <span className="text-lg font-bold text-[#0B1A2C]">150.00</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-100">
-                        <span className="font-semibold text-gray-600">Payment processor</span>
-                        <span className="font-bold text-[#0069FF] flex items-center gap-1">
-                          Stripe <Check className="size-3 text-emerald-600" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeShowcaseTab === "sync" && (
-                <motion.div
-                  key="tab-sync"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid gap-8 lg:grid-cols-2 lg:items-center"
-                >
-                  <div className="space-y-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF0E6] px-3 py-1 text-xs font-bold text-[#C2410C]">
-                      <Leaf className="size-3.5" /> Conflict Protection
-                    </span>
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0B1A2C]">
-                      Multi-calendar real-time sync
-                    </h2>
-                    <p className="text-base text-[#4A5568] leading-relaxed">
-                      Connect your Google, Outlook, and Apple calendars. When a personal appointment pops up, Slotly automatically closes those slots instantly.
-                    </p>
-                    <Link
-                      to="/login"
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[#0069FF] hover:underline"
-                    >
-                      See how sync works <ArrowRight className="size-4" />
-                    </Link>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#FFF8EB] p-6 sm:p-8 border border-[#FEE6C6]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-3">
-                      <div className="flex items-center justify-between text-xs font-bold text-gray-500">
-                        <span>Synced Calendars</span>
-                        <span className="text-emerald-600">3 Connected</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">Google Calendar (Work)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">Outlook (Clinic)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">iCloud (Personal)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeShowcaseTab === "notes" && (
-                <motion.div
-                  key="tab-notes"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid gap-8 lg:grid-cols-2 lg:items-center"
-                >
-                  <div className="space-y-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3E8FF] px-3 py-1 text-xs font-bold text-[#7E22CE]">
-                      <Mic className="size-3.5" /> Meeting Notetaker
-                    </span>
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0B1A2C]">
-                      Never lose track of meeting decisions
-                    </h2>
-                    <p className="text-base text-[#4A5568] leading-relaxed">
-                      AI Notetaker records, transcribes, and summarizes key takeaways, automatically emailing attendees follow-ups within minutes of wrapping up.
-                    </p>
-                    <Link
-                      to="/login"
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[#0069FF] hover:underline"
-                    >
-                      Explore Notetaker <ArrowRight className="size-4" />
-                    </Link>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#F5F3FF] p-6 sm:p-8 border border-[#DDD6FE]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-[#7E22CE]">
-                        <Mic className="size-3.5 animate-pulse text-red-500" />
-                        <span>Transcription in progress · 32:15</span>
-                      </div>
-                      <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
-                        <p className="font-bold text-[#0B1A2C]">Key Takeaway:</p>
-                        <p>Dr. Benkacem approved follow-up check on Friday 2:00 PM. Patient agreed to review lab results beforehand.</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </section>
+      {/* 4. Calendly-style Sticky Scroll Feature Showcase */}
+      <StickyScrollShowcase />
 
       {/* 5. 4-Stage Connected Workflow Cards (Book, Prep, Capture, Follow up - Frame 5 & 6) */}
       <section className="px-3 sm:px-6 py-16 sm:py-24">
@@ -1095,6 +831,313 @@ export function LandingPage() {
       {/* 11. Floating AI Assistant Chat Widget (Figma Design with Animated SVG) */}
       <AiChatWidget />
     </div>
+  );
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Calendly-style Sticky Scroll Feature Showcase
+ * Left: pinned card that crossfades on scroll · Right: scrolling feature steps
+ * Background gradient morphs smoothly to each card's accent palette
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+const SHOWCASE_FEATURES = [
+  {
+    tag: "AI Scheduling",
+    tagColor: "text-[#0069FF] bg-[#E8F3FF]",
+    title: "Your 24/7 AI scheduling assistant",
+    body: "Add Slotly AI to any email thread and it coordinates scheduling on your behalf — no tool switching, no loss of control.",
+    cta: "Learn about Slotly AI",
+    href: "/book/northstar-health",
+    // gradient: from → via → to (Tailwind inline style values)
+    gradFrom: "#EBF5FF",
+    gradMid:  "#F0F7FF",
+    gradTo:   "#E8F3EE",
+    card: (
+      <div className="rounded-2xl bg-white shadow-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+          <div className="size-9 rounded-full bg-[#0069FF]/10 text-[#0069FF] grid place-items-center font-bold text-xs shrink-0">DM</div>
+          <div>
+            <p className="text-xs font-bold text-[#0B1A2C]">Dominic Mills</p>
+            <p className="text-[11px] text-gray-400">To: Slotly AI, Tori Mathers</p>
+          </div>
+        </div>
+        <div className="rounded-xl bg-[#F0F7FF] p-3.5 border border-[#D9EAFF]">
+          <p className="text-xs font-semibold text-[#0069FF] flex items-center gap-1.5">
+            <Sparkles className="size-3" /> Slotly AI replied
+          </p>
+          <p className="mt-1.5 text-xs text-[#0B1A2C] leading-relaxed">
+            Happy to set up a call. Here are slots you're both free:
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {["Mon 10:00 AM", "Tue 2:30 PM", "Wed 3:00 PM"].map((t) => (
+              <span key={t} className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#0069FF] shadow-sm border border-blue-200">{t}</span>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="size-5 rounded-full bg-emerald-100 grid place-items-center">
+            <Check className="size-3 text-emerald-600" />
+          </div>
+          Confirmed · Google Meet link sent
+        </div>
+      </div>
+    ),
+  },
+  {
+    tag: "Payments",
+    tagColor: "text-emerald-700 bg-emerald-50",
+    title: "Flexible, built-in payment tools",
+    body: "Charge upfront for bookings, sell multi-session bundles, and send professional invoices — all without a separate billing tool.",
+    cta: "Explore payment features",
+    href: "/login",
+    gradFrom: "#E6F4EA",
+    gradMid:  "#F0FFF4",
+    gradTo:   "#EBF5FF",
+    card: (
+      <div className="rounded-2xl bg-white shadow-2xl border border-gray-100 p-6 space-y-5">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div>
+            <p className="text-xs font-bold text-[#0B1A2C]">Initial Consultation</p>
+            <p className="text-[11px] text-gray-400">Ibrahim Benkacem · 45 min</p>
+          </div>
+          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Paid</span>
+        </div>
+        <div className="flex items-center rounded-xl border border-gray-200 px-4 py-3 gap-2">
+          <span className="text-sm font-bold text-gray-400">$</span>
+          <span className="text-2xl font-extrabold text-[#0B1A2C]">150.00</span>
+          <span className="ml-auto text-xs text-gray-400">USD</span>
+        </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-500 font-medium">Processor</span>
+          <span className="font-bold text-[#0069FF] flex items-center gap-1">Stripe <Check className="size-3 text-emerald-600" /></span>
+        </div>
+        <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-3">
+          <span className="text-gray-500">Apple Pay · Google Pay · Card</span>
+          <span className="text-emerald-600 font-bold">✓ Ready</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    tag: "Calendar Sync",
+    tagColor: "text-orange-700 bg-orange-50",
+    title: "Multi-calendar real-time sync",
+    body: "Connect Google, Outlook, and iCloud. The moment a personal event appears, Slotly closes that slot instantly — zero double-bookings.",
+    cta: "See how sync works",
+    href: "/login",
+    gradFrom: "#FFF7ED",
+    gradMid:  "#FFF3E0",
+    gradTo:   "#FFFDE7",
+    card: (
+      <div className="rounded-2xl bg-white shadow-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center justify-between text-xs font-bold text-gray-500 pb-2 border-b border-gray-100">
+          <span>Synced Calendars</span>
+          <span className="text-emerald-600">3 Active</span>
+        </div>
+        {[
+          { name: "Google Calendar (Work)", color: "#1a73e8" },
+          { name: "Outlook (Clinic)",       color: "#0078d4" },
+          { name: "iCloud (Personal)",      color: "#555" },
+        ].map((cal) => (
+          <div key={cal.name} className="flex items-center gap-3 rounded-xl bg-gray-50 px-3 py-2.5">
+            <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: cal.color }} />
+            <span className="flex-1 text-xs font-semibold text-gray-800">{cal.name}</span>
+            <Check className="size-3.5 text-emerald-600 shrink-0" />
+          </div>
+        ))}
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-medium text-amber-800 flex items-center gap-2">
+          <Clock className="size-3.5 shrink-0" />
+          Conflict auto-blocked · Mon 2–4 PM
+        </div>
+      </div>
+    ),
+  },
+  {
+    tag: "AI Notetaker",
+    tagColor: "text-purple-700 bg-purple-50",
+    title: "Never lose a meeting decision",
+    body: "Slotly's AI Notetaker records, transcribes, and extracts key actions — then emails every attendee a structured recap within 60 seconds.",
+    cta: "Explore Notetaker",
+    href: "/login",
+    gradFrom: "#F5F3FF",
+    gradMid:  "#FAF5FF",
+    gradTo:   "#EDE9FE",
+    card: (
+      <div className="rounded-2xl bg-white shadow-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold text-purple-700 border-b border-gray-100 pb-3">
+          <Mic className="size-3.5 text-red-500 animate-pulse" />
+          Recording · 32:15
+        </div>
+        <div className="rounded-xl bg-gray-50 p-3.5 space-y-2">
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Key Takeaway</p>
+          <p className="text-xs text-[#0B1A2C] leading-relaxed">
+            Dr. Benkacem approved a follow-up on Friday at 2:00 PM. Patient will review lab results beforehand.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          {["Schedule follow-up: Fri 2:00 PM", "Send lab results reminder", "Email recap to patient"].map((a) => (
+            <div key={a} className="flex items-center gap-2 text-xs text-[#0B1A2C]">
+              <span className="size-4 rounded-full bg-purple-100 grid place-items-center shrink-0">
+                <Check className="size-2.5 text-purple-700" />
+              </span>
+              {a}
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+] as const;
+
+function StickyScrollShowcase() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    SHOWCASE_FEATURES.forEach((_, i) => {
+      const el = stepRefs.current[i];
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveIndex(i);
+          }
+        },
+        { rootMargin: "-30% 0px -30% 0px", threshold: 0.1 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
+  const active = SHOWCASE_FEATURES[activeIndex];
+
+  const scrollToStep = (idx: number) => {
+    setActiveIndex(idx);
+    stepRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  return (
+    <section ref={sectionRef} className="relative overflow-hidden py-12 lg:py-20 transition-all">
+      {/* Morphing smooth gradient backgrounds (layered opacity crossfade) */}
+      {SHOWCASE_FEATURES.map((feat, i) => (
+        <div
+          key={i}
+          className={cn(
+            "absolute inset-0 transition-opacity duration-1000 ease-in-out pointer-events-none",
+            i === activeIndex ? "opacity-100" : "opacity-0"
+          )}
+          style={{
+            background: `radial-gradient(100% 120% at 20% 30%, ${feat.gradFrom} 0%, ${feat.gradMid} 50%, ${feat.gradTo} 100%)`,
+          }}
+        />
+      ))}
+
+      {/* Decorative ambient lighting */}
+      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-blue-400/15 to-indigo-300/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Section header */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pt-12 pb-8 text-center">
+        <span className="text-xs font-bold uppercase tracking-widest text-[#0069FF]">Why teams choose Slotly</span>
+        <h2 className="mt-3 font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C] leading-tight">
+          Everything your scheduling<br className="hidden sm:inline" /> workflow needs
+        </h2>
+        <p className="mt-4 text-base text-[#4A5568] max-w-xl mx-auto">
+          Streamline bookings, eliminate email back-and-forth, collect upfront payments, and summarize every session automatically.
+        </p>
+      </div>
+
+      {/* Two-column sticky layout */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-24 lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-24 lg:items-start">
+
+        {/* LEFT — sticky card panel */}
+        <div className="hidden lg:block sticky top-28 self-start pt-8">
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -24, scale: 0.96 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-md mx-auto"
+              >
+                {active.card}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Dot progress indicator */}
+            <div className="mt-8 flex items-center justify-center gap-2.5">
+              {SHOWCASE_FEATURES.map((feat, i) => (
+                <button
+                  key={i}
+                  onClick={() => scrollToStep(i)}
+                  className={cn(
+                    "rounded-full transition-all duration-300 cursor-pointer",
+                    i === activeIndex
+                      ? "w-8 h-2.5 bg-[#0069FF]"
+                      : "w-2.5 h-2.5 bg-[#0069FF]/20 hover:bg-[#0069FF]/50"
+                  )}
+                  aria-label={`Go to ${feat.tag}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — scrolling text steps */}
+        <div className="space-y-4 pt-4 lg:pt-8">
+          {SHOWCASE_FEATURES.map((feat, i) => {
+            const isCurrent = i === activeIndex;
+            return (
+              <div
+                key={i}
+                ref={(el) => { stepRefs.current[i] = el; }}
+                onClick={() => scrollToStep(i)}
+                className={cn(
+                  "flex flex-col justify-center min-h-[55vh] py-12 lg:py-20 cursor-pointer transition-all duration-500 rounded-3xl lg:px-6",
+                  isCurrent
+                    ? "opacity-100 scale-100"
+                    : "opacity-40 hover:opacity-75 scale-[0.98]"
+                )}
+              >
+                {/* Mobile card (visible only on small screens) */}
+                <div className="lg:hidden mb-8 max-w-md mx-auto w-full">{feat.card}</div>
+
+                <div className="space-y-5 border-l-2 pl-6 transition-colors duration-500"
+                  style={{
+                    borderColor: isCurrent ? "#0069FF" : "transparent",
+                  }}
+                >
+                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold", feat.tagColor)}>
+                    {feat.tag}
+                  </span>
+                  <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0B1A2C] leading-tight">
+                    {feat.title}
+                  </h3>
+                  <p className="text-base text-[#4A5568] leading-relaxed max-w-lg">
+                    {feat.body}
+                  </p>
+                  <Link
+                    to={feat.href}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-2 text-sm font-bold text-[#0069FF] hover:underline pt-2"
+                  >
+                    {feat.cta} <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
