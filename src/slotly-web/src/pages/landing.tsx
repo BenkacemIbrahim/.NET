@@ -72,7 +72,7 @@ export function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between rounded-2xl border border-[#E8E8E8] bg-white/95 px-5 shadow-sm backdrop-blur-md transition-all">
           {/* Brand */}
           <Link to="/" className="inline-flex items-center" title="Slotly">
-            <SlotlyLogo variant="full" className="h-8 w-auto" />
+            <SlotlyLogo variant="full" mode="original" className="h-8 w-auto" />
           </Link>
 
           {/* Nav Dropdowns */}

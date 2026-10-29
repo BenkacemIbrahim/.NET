@@ -47,14 +47,26 @@ export function SlotlyLogo({
   if (mode === "original") {
     return (
       <span className={cn("inline-flex shrink-0 items-center", className)}>
-        <img src="/slotly-logo.png" alt={alt} className="h-full w-auto object-contain" />
+        <img
+          src="/slotly-logo.png"
+          alt={alt}
+          loading="eager"
+          decoding="async"
+          className="h-full w-auto object-contain"
+        />
       </span>
     );
   }
   if (mode === "white") {
     return (
       <span className={cn("inline-flex shrink-0 items-center", className)}>
-        <img src="/slotly-logo-white.png" alt={alt} className="h-full w-auto object-contain" />
+        <img
+          src="/slotly-logo-white.png"
+          alt={alt}
+          loading="eager"
+          decoding="async"
+          className="h-full w-auto object-contain"
+        />
       </span>
     );
   }
@@ -63,11 +75,15 @@ export function SlotlyLogo({
       <img
         src="/slotly-logo.png"
         alt={alt}
+        loading="eager"
+        decoding="async"
         className="h-full w-auto object-contain dark:hidden"
       />
       <img
         src="/slotly-logo-white.png"
         alt={alt}
+        loading="eager"
+        decoding="async"
         className="hidden h-full w-auto object-contain dark:block"
       />
     </span>
