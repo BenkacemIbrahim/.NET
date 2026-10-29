@@ -427,32 +427,32 @@ export function AiChatWidget() {
       </AnimatePresence>
 
       {/* 2. Floating Animated SVG Trigger Button */}
+      {/* Wrapper is non-interactive; only the img itself is the click target */}
       <div className="flex items-center justify-end">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? "Close Slotly AI Assistant" : "Open Slotly AI Assistant"}
-          title={isOpen ? "Close Slotly AI Assistant" : "Open Slotly AI Assistant"}
-          className="relative group transition-transform duration-300 hover:scale-110 active:scale-95 focus:outline-none cursor-pointer bg-transparent border-0 p-0"
-        >
-          {/* The Animated SVG is the Button */}
+        <div className="relative group">
           <img
             src="/hello-animation.svg"
             alt="Slotly AI Assistant"
-            className="object-contain drop-shadow-2xl select-none pointer-events-none transition-transform duration-300 group-hover:scale-105"
-            style={{ width: "100px", height: "100px" }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? "Close Slotly AI Assistant" : "Open Slotly AI Assistant"}
+            onClick={() => setIsOpen(!isOpen)}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setIsOpen(!isOpen)}
+            className="object-contain drop-shadow-2xl select-none cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 focus:outline-none"
+            style={{ width: "72px", height: "72px", display: "block" }}
           />
 
-          {/* Tooltip on hover */}
+          {/* Tooltip shown on hover when chat is closed */}
           {!isOpen && (
-            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center">
-              <div className="whitespace-nowrap rounded-xl bg-white text-gray-800 px-3 py-1.5 text-xs font-semibold shadow-xl border border-gray-200 dark:bg-[#162234] dark:text-white dark:border-[#1C283A] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center pointer-events-none">
+              <div className="whitespace-nowrap rounded-xl bg-white text-gray-800 px-3 py-1.5 text-xs font-semibold shadow-xl border border-gray-200 dark:bg-[#162234] dark:text-white dark:border-[#1C283A] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
                 <span style={{ color: "#374151" }}>💬</span>
                 <span style={{ color: "#374151" }} className="dark:!text-white">Need help? Ask Slotly AI</span>
               </div>
             </div>
           )}
-        </button>
+        </div>
       </div>
     </aside>
   );

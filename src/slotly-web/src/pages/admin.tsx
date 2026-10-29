@@ -619,14 +619,22 @@ export function DashboardPage() {
             <HelpCircle className="size-4" />
           </button>
 
-          {/* Ask Callie AI Button */}
-          <button
-            onClick={() => setCallieOpen(!callieOpen)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/20 px-3.5 text-xs font-bold text-purple-300 hover:bg-purple-900/30 transition-colors"
-          >
-            <Sparkles className="size-3.5 text-purple-400" />
-            <span>Ask Callie</span>
-          </button>
+          {/* Ask Callie AI Button — icon-only, tooltip on hover */}
+          <div className="relative group">
+            <button
+              onClick={() => setCallieOpen(!callieOpen)}
+              aria-label="Ask Callie AI"
+              className="grid size-9 place-items-center rounded-lg border border-purple-500/40 bg-purple-950/20 text-purple-400 hover:bg-purple-900/30 transition-colors"
+            >
+              <Sparkles className="size-4" />
+            </button>
+            {/* Tooltip */}
+            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden sm:block">
+              <div className="whitespace-nowrap rounded-lg bg-gray-900 dark:bg-[#162234] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg">
+                Ask Callie
+              </div>
+            </div>
+          </div>
 
           <Link
             to="/admin/schedule"
