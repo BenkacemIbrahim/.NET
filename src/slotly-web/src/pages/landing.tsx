@@ -16,11 +16,20 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AiChatWidget } from "../components/ai-chat-widget";
 import { SlotlyLogo } from "../components/slotly-logo";
 import { cn } from "../lib/cn";
+
+const showcaseTabs = ["ai", "payments", "sync", "notes"] as const;
+const lifecycleStages = [0, 1, 2, 3] as const;
+const showcaseGradients = [
+  "linear-gradient(135deg, #d9eafe 0%, #ede9fe 52%, #d1fae5 100%)",
+  "linear-gradient(135deg, #d7f5ee 0%, #d9eafe 48%, #c7f3e6 100%)",
+  "linear-gradient(135deg, #fef3c7 0%, #d9eafe 48%, #dcfce7 100%)",
+  "linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 48%, #d1fae5 100%)",
+];
 
 export function LandingPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -28,6 +37,78 @@ export function LandingPage() {
   const [activeShowcaseTab, setActiveShowcaseTab] = useState<"ai" | "payments" | "sync" | "notes">("ai");
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+  const showcaseSectionRef = useRef<HTMLElement>(null);
+  const lifecycleSectionRef = useRef<HTMLElement>(null);
+
+  const scrollToShowcaseStep = (step: number) => {
+    setActiveShowcaseTab(showcaseTabs[step]);
+
+    const section = showcaseSectionRef.current;
+    if (!section) return;
+
+    const scrollableHeight = section.offsetHeight - window.innerHeight;
+    if (scrollableHeight <= 0) return;
+
+    const targetTop = window.scrollY + section.getBoundingClientRect().top + (scrollableHeight * step) / showcaseTabs.length;
+    window.scrollTo({ top: targetTop, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const updateShowcaseStep = () => {
+      const section = showcaseSectionRef.current;
+      if (!section) return;
+
+      const scrollableHeight = section.offsetHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const progress = Math.min(Math.max(-section.getBoundingClientRect().top / scrollableHeight, 0), 0.9999);
+      setActiveShowcaseTab(showcaseTabs[Math.floor(progress * showcaseTabs.length)]);
+    };
+
+    window.addEventListener("scroll", updateShowcaseStep, { passive: true });
+    window.addEventListener("resize", updateShowcaseStep);
+    updateShowcaseStep();
+
+    return () => {
+      window.removeEventListener("scroll", updateShowcaseStep);
+      window.removeEventListener("resize", updateShowcaseStep);
+    };
+  }, []);
+
+  const scrollToLifecycleStep = (step: number) => {
+    setActiveWorkflowStep(step);
+
+    const section = lifecycleSectionRef.current;
+    if (!section) return;
+
+    const scrollableHeight = section.offsetHeight - window.innerHeight;
+    if (scrollableHeight <= 0) return;
+
+    const targetTop = window.scrollY + section.getBoundingClientRect().top + (scrollableHeight * step) / lifecycleStages.length;
+    window.scrollTo({ top: targetTop, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const updateLifecycleStep = () => {
+      const section = lifecycleSectionRef.current;
+      if (!section) return;
+
+      const scrollableHeight = section.offsetHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const progress = Math.min(Math.max(-section.getBoundingClientRect().top / scrollableHeight, 0), 0.9999);
+      setActiveWorkflowStep(lifecycleStages[Math.floor(progress * lifecycleStages.length)]);
+    };
+
+    window.addEventListener("scroll", updateLifecycleStep, { passive: true });
+    window.addEventListener("resize", updateLifecycleStep);
+    updateLifecycleStep();
+
+    return () => {
+      window.removeEventListener("scroll", updateLifecycleStep);
+      window.removeEventListener("resize", updateLifecycleStep);
+    };
+  }, []);
 
   // Auto-advance showcase tab or feature tab subtly
   useEffect(() => {
@@ -38,7 +119,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#0B1A2C] selection:bg-[#0069FF] selection:text-white font-sans">
+    <div className="min-h-screen bg-[#fbfaf7] bg-[radial-gradient(circle_at_12%_82%,rgba(186,230,253,.64),transparent_25%),radial-gradient(circle_at_42%_88%,rgba(254,240,138,.52),transparent_22%),radial-gradient(circle_at_74%_84%,rgba(221,214,254,.6),transparent_26%),radial-gradient(circle_at_96%_78%,rgba(167,243,208,.62),transparent_26%)] bg-fixed text-[#0B1A2C] selection:bg-[#0069FF] selection:text-white font-sans">
       {/* 1. Top Announcement Bar */}
       {!bannerDismissed && (
         <div className="relative bg-[#E8F3FF] border-b border-[#D4E8FC] px-4 py-2.5 text-center text-xs sm:text-sm font-medium text-[#0B3558] transition-all">
@@ -132,7 +213,7 @@ export function LandingPage() {
 
       {/* 3. Hero Section */}
       <section className="px-3 sm:px-6 pt-4 pb-12">
-        <div className="mx-auto max-w-7xl rounded-[32px] bg-[#FAF8F5] border border-[#EFECE6] px-6 py-16 sm:py-24 text-center">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-white/70 px-6 py-16 sm:py-24 text-center">
           <div className="mx-auto max-w-4xl space-y-6">
             <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-normal leading-[1.08] tracking-tight text-[#0B1A2C]">
               All your appointment <br className="hidden sm:inline" />
@@ -170,13 +251,23 @@ export function LandingPage() {
       </section>
 
       {/* 4. Interactive Product Showcase */}
-      <section className="px-3 sm:px-6 py-8">
-        <div className="mx-auto max-w-7xl rounded-[32px] bg-gradient-to-br from-[#D9EAFE] via-[#EDE9FE] to-[#D1FAE5] p-6 sm:p-12 shadow-sm">
+      <section ref={showcaseSectionRef} className="relative px-3 py-8 sm:px-6 lg:min-h-[400vh]">
+        <div className="lg:sticky lg:top-4">
+          <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[32px] p-6 shadow-sm sm:p-12">
+            {showcaseGradients.map((gradient, index) => (
+              <div
+                key={gradient}
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 transition-opacity duration-700 ease-out"
+                style={{ background: gradient, opacity: activeShowcaseTab === showcaseTabs[index] ? 1 : 0 }}
+              />
+            ))}
+            <div className="relative">
           {/* Top Floating Tab Switcher Icons */}
           <div className="mb-8 flex items-center justify-center">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 p-1.5 shadow-md backdrop-blur-md">
               <button
-                onClick={() => setActiveShowcaseTab("ai")}
+                onClick={() => scrollToShowcaseStep(0)}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-full transition-all",
                   activeShowcaseTab === "ai"
@@ -188,7 +279,7 @@ export function LandingPage() {
                 <Calendar className="size-5" />
               </button>
               <button
-                onClick={() => setActiveShowcaseTab("payments")}
+                onClick={() => scrollToShowcaseStep(1)}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-full transition-all",
                   activeShowcaseTab === "payments"
@@ -200,7 +291,7 @@ export function LandingPage() {
                 <CreditCard className="size-5" />
               </button>
               <button
-                onClick={() => setActiveShowcaseTab("sync")}
+                onClick={() => scrollToShowcaseStep(2)}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-full transition-all",
                   activeShowcaseTab === "sync"
@@ -212,7 +303,7 @@ export function LandingPage() {
                 <Leaf className="size-5" />
               </button>
               <button
-                onClick={() => setActiveShowcaseTab("notes")}
+                onClick={() => scrollToShowcaseStep(3)}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-full transition-all",
                   activeShowcaseTab === "notes"
@@ -430,78 +521,76 @@ export function LandingPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
           </div>
+        </div>
         </div>
       </section>
 
-      {/* 5. 4-Stage Connected Workflow Cards (Book, Prep, Capture, Follow up - Frame 5 & 6) */}
-      <section className="px-3 sm:px-6 py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-14 text-center">
+      {/* 5. Scroll-driven End-to-End Meeting Lifecycle */}
+      <section ref={lifecycleSectionRef} className="relative overflow-clip px-3 py-16 sm:px-6 sm:py-24 lg:min-h-[400vh]">
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 flex justify-center overflow-hidden text-[18rem] font-bold leading-none tracking-[-0.12em] text-white sm:text-[30rem]">
+          MEET
+        </div>
+        <div className="relative mx-auto max-w-7xl lg:sticky lg:top-8">
+          <div className="mb-10 max-w-xl sm:mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">End-to-End Meeting Lifecycle</span>
-            <h2 className="mt-3 font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
+            <h2 className="mt-3 font-serif text-4xl font-normal text-[#0B1A2C] sm:text-5xl">
               From booking to follow-up, completely streamlined.
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-4">
+          <div
+            className={cn(
+              "grid gap-3 md:transition-[grid-template-columns] md:duration-700 md:ease-out lg:gap-4",
+              activeWorkflowStep === 0 && "md:grid-cols-[1.55fr_1fr_1fr_1fr]",
+              activeWorkflowStep === 1 && "md:grid-cols-[1fr_1.55fr_1fr_1fr]",
+              activeWorkflowStep === 2 && "md:grid-cols-[1fr_1fr_1.55fr_1fr]",
+              activeWorkflowStep === 3 && "md:grid-cols-[1fr_1fr_1fr_1.55fr]"
+            )}
+          >
             <WorkflowStageCard
               number="01"
               title="Book"
-              desc="A client emails asking to meet. Share a booking link or ask Slotly AI to find times that work for everyone."
-              items={[
-                "Slotly replies with times to meet",
-                "Client picks Tuesday at 2 p.m.",
-                "Client pays deposit upfront",
-              ]}
+              desc="Book the meeting and get paid with zero back-and-forth."
+              items={["Client replies with times to meet", "Client picks Tuesday at 2 p.m.", "Client pays deposit upfront"]}
+              visual="book"
               isActive={activeWorkflowStep === 0}
-              onClick={() => setActiveWorkflowStep(0)}
+              onClick={() => scrollToLifecycleStep(0)}
             />
-
             <WorkflowStageCard
               number="02"
               title="Prep"
-              desc="Never walk into an appointment cold. Slotly compiles client history and forms before you start."
-              items={[
-                "Intake form answers attached",
-                "Past appointments referenced",
-                "Meeting room link auto-generated",
-              ]}
+              desc="Never walk into a meeting cold."
+              items={["Contact details automatically updated", "Your client&apos;s information is in one place", "Callie helps you prepare"]}
+              visual="prep"
               isActive={activeWorkflowStep === 1}
-              onClick={() => setActiveWorkflowStep(1)}
+              onClick={() => scrollToLifecycleStep(1)}
             />
-
             <WorkflowStageCard
               number="03"
               title="Capture"
-              desc="Focus on the patient or client. Slotly handles notes, transcripts, and action timestamps automatically."
-              items={[
-                "AI Notetaker joins the room",
-                "Real-time speaker recognition",
-                "Key decisions captured live",
-              ]}
+              desc="While you run the meeting, Slotly captures the conversation, the recap and action items."
+              items={["Notetaker joins and takes notes", "You get a ready-to-share recap", "Recap is stored in contact profile"]}
+              visual="capture"
               isActive={activeWorkflowStep === 2}
-              onClick={() => setActiveWorkflowStep(2)}
+              onClick={() => scrollToLifecycleStep(2)}
             />
-
             <WorkflowStageCard
               number="04"
               title="Follow up"
-              desc="Work moves forward after the call ends. Recap notes and next steps sent within 60 seconds."
-              items={[
-                "Structured recap emailed out",
-                "Invoice & receipt delivered",
-                "Next milestone booked automatically",
-              ]}
+              desc="Work moves forward after the meeting ends."
+              items={["Notetaker drafts a follow-up email", "Callie finds time for the next call", "Client pays an invoice"]}
+              visual="follow-up"
               isActive={activeWorkflowStep === 3}
-              onClick={() => setActiveWorkflowStep(3)}
+              onClick={() => scrollToLifecycleStep(3)}
             />
           </div>
         </div>
       </section>
 
       {/* 6. Sticky Split Interactive Feature Showcase ("that fit your business" - Frame 7, 8, 10, 12) */}
-      <section className="px-3 sm:px-6 py-16 sm:py-24 bg-white border-y border-[#EFECE6]">
+      <section className="px-3 sm:px-6 py-16 sm:py-24 border-y border-white/60">
         <div className="mx-auto max-w-7xl grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Left: Dynamic UI Graphic based on activeFeatureIndex */}
           <div className="relative rounded-3xl bg-gradient-to-tr from-[#EBF5FE] via-[#F3E8FF] to-[#ECFDF5] p-6 sm:p-10 border border-[#E2E8F0]">
@@ -684,7 +773,7 @@ export function LandingPage() {
       </section>
 
       {/* 7. Connected Tool Ecosystem Ribbon */}
-      <section className="px-3 sm:px-6 py-20 bg-[#FAF8F5]">
+      <section className="px-3 sm:px-6 py-20">
         <div className="mx-auto max-w-7xl text-center">
           <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
             Connect Slotly with your favorite tools
@@ -843,7 +932,7 @@ export function LandingPage() {
       </section>
 
       {/* 8. Testimonial Carousel with Connected Pill Avatars (Frame 14) */}
-      <section className="px-3 sm:px-6 py-20 bg-gradient-to-b from-[#FAF8F5] to-white">
+      <section className="px-3 sm:px-6 py-20">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[32px] bg-gradient-to-r from-blue-100/50 via-purple-100/40 to-emerald-100/50 p-6 sm:p-12 border border-[#E8E8E8]">
             <div className="mx-auto max-w-4xl flex flex-col md:flex-row items-center gap-8 rounded-3xl bg-white p-8 sm:p-12 shadow-xl border border-white">
@@ -879,7 +968,7 @@ export function LandingPage() {
       </section>
 
       {/* 9. Pricing Section */}
-      <section id="pricing" className="px-3 sm:px-6 py-24 bg-[#FAF8F5]">
+      <section id="pricing" className="px-3 sm:px-6 py-24">
         <div className="mx-auto max-w-7xl">
           {/* Section Header */}
           <div className="text-center mb-16">
@@ -1104,6 +1193,7 @@ function WorkflowStageCard({
   title,
   desc,
   items,
+  visual,
   isActive,
   onClick,
 }: {
@@ -1111,31 +1201,111 @@ function WorkflowStageCard({
   title: string;
   desc: string;
   items: string[];
+  visual: "book" | "prep" | "capture" | "follow-up";
   isActive: boolean;
   onClick: () => void;
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
       className={cn(
-        "cursor-pointer rounded-3xl p-6 transition-all border",
+        "relative flex min-h-[26rem] flex-col items-start overflow-hidden rounded-[22px] border p-5 pt-6 text-left transition-[transform,box-shadow,background-color,border-color] duration-500",
         isActive
-          ? "bg-white border-[#0069FF] shadow-lg scale-102"
-          : "bg-white/80 border-[#E8E8E8] hover:bg-white hover:shadow-md"
+          ? "border-white bg-white shadow-[0_20px_50px_rgba(41,68,94,.16)]"
+          : "border-white/80 bg-white/80 hover:bg-white hover:shadow-lg"
       )}
     >
-      <span className="text-xs font-bold text-[#0069FF]">{number}</span>
-      <h3 className="mt-2 text-xl font-bold text-[#0B1A2C]">{title}</h3>
-      <p className="mt-2 text-xs text-[#4A5568] leading-relaxed min-h-12">{desc}</p>
+      <span className="text-[11px] font-bold text-[#0069FF]">{number}</span>
+      <h3 className="mt-1 text-lg font-bold tracking-tight text-[#0B1A2C]">{title}</h3>
+      <p className="mt-2 text-xs leading-relaxed text-[#58708a]">{desc}</p>
 
-      <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
-        {items.map((it, idx) => (
-          <div key={idx} className="flex items-start gap-2 text-xs text-[#0B1A2C]">
-            <Check className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
-            <span>{it}</span>
+      <div className="mt-4 space-y-2">
+        {items.map((item) => (
+          <div key={item} className="flex items-start gap-2 text-[11px] leading-snug text-[#24415f]">
+            <span className="mt-0.5 size-2 shrink-0 rounded-full bg-[#78d7ac] ring-4 ring-[#e8f8f0]" />
+            <span>{item}</span>
           </div>
         ))}
       </div>
-    </div>
+
+      <AnimatePresence initial={false}>
+        {isActive && <WorkflowVisual visual={visual} />}
+      </AnimatePresence>
+    </button>
+  );
+}
+
+function WorkflowVisual({ visual }: { visual: "book" | "prep" | "capture" | "follow-up" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 28, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 18, scale: 0.94 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="absolute inset-x-4 bottom-4"
+    >
+      {visual === "book" && (
+        <div className="rounded-2xl bg-gradient-to-br from-[#c2f0dd] via-[#e0f9ed] to-[#68d8af] p-2.5 shadow-[0_18px_35px_rgba(40,139,103,.24)]">
+          <div className="rounded-xl bg-white p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="grid size-6 place-items-center rounded-full bg-[#d8f7e9] text-[9px] font-bold text-[#16885d]">S</div>
+              <div>
+                <p className="text-[10px] font-bold text-[#17324d]">Slotly AI</p>
+                <p className="text-[9px] text-[#7890a6]">Scheduling assistant</p>
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] leading-snug text-[#294866]">I found times that work for everyone. Which one should I book?</p>
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              {["10:00 AM", "2:30 PM", "3:00 PM"].map((time) => <span key={time} className="rounded-md bg-[#eef8ff] px-1 py-1 text-center text-[8px] font-bold text-[#0069ff]">{time}</span>)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {visual === "prep" && (
+        <div className="rounded-2xl bg-gradient-to-br from-[#fdeaa4] via-[#fff6d8] to-[#b7e8dc] p-2.5 shadow-[0_18px_35px_rgba(166,127,35,.18)]">
+          <div className="rounded-xl bg-white p-3 shadow-sm">
+            <p className="text-[10px] font-bold text-[#17324d]">Get answers instantly ✨</p>
+            <p className="mt-1 text-[8px] text-[#7890a6]">Suggested questions</p>
+            <div className="mt-2 space-y-1.5">
+              <div className="rounded-lg bg-[#f6f9fc] px-2 py-1.5 text-[9px] text-[#405a73]">What has changed since the last call?</div>
+              <div className="rounded-lg bg-[#f6f9fc] px-2 py-1.5 text-[9px] text-[#405a73]">What are their top priorities today?</div>
+            </div>
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-[#e5edf5] px-2 py-1.5 text-[8px] text-[#7890a6]">
+              <span>Help me prepare for my next meeting</span><Send className="size-3 text-[#0069ff]" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {visual === "capture" && (
+        <div className="rounded-2xl bg-gradient-to-br from-[#e1d8ff] via-[#f2eaff] to-[#be9cf4] p-2.5 shadow-[0_18px_35px_rgba(112,72,177,.23)]">
+          <div className="relative h-32 overflow-hidden rounded-xl bg-[#251c45] p-3">
+            <div className="absolute -left-4 -top-5 size-24 rounded-full bg-[#5c4a93] blur-xl" />
+            <div className="absolute -bottom-8 -right-4 size-24 rounded-full bg-[#9d71e6] blur-xl" />
+            <div className="relative flex h-full items-end gap-2">
+              <div className="flex flex-1 flex-col items-center justify-end rounded-lg bg-[linear-gradient(135deg,#edc4ae,#845269)] pb-2 pt-10 shadow-lg"><span className="size-8 rounded-full bg-[#f3d3bf]" /><span className="mt-1 text-[8px] font-bold text-white">Maya</span></div>
+              <div className="flex flex-1 flex-col items-center justify-end rounded-lg bg-[linear-gradient(135deg,#a5d4df,#345878)] pb-2 pt-10 shadow-lg"><span className="size-8 rounded-full bg-[#c5e7e6]" /><span className="mt-1 text-[8px] font-bold text-white">Noah</span></div>
+            </div>
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[8px] font-bold text-[#6d3bc2]"><Mic className="size-2.5" /> Recording</div>
+          </div>
+        </div>
+      )}
+
+      {visual === "follow-up" && (
+        <div className="rounded-2xl bg-gradient-to-br from-[#cbdfff] via-[#e7e3ff] to-[#9cf0d5] p-2.5 shadow-[0_18px_35px_rgba(66,100,170,.22)]">
+          <div className="rounded-xl bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-[#17324d]">Follow-up draft</span>
+              <span className="grid size-5 place-items-center rounded-full bg-[#f2f7ff] text-[9px] font-bold text-[#4285f4]">M</span>
+            </div>
+            <p className="mt-2 text-[9px] font-semibold text-[#405a73]">Thanks again for your time today</p>
+            <p className="mt-1 text-[9px] leading-snug text-[#7890a6]">Callie can help schedule the next conversation and share the recap.</p>
+            <div className="mt-2 flex gap-1"><span className="rounded-md bg-[#eef5ff] px-2 py-1 text-[8px] font-bold text-[#0069ff]">View recap</span><span className="rounded-md bg-[#f0faf5] px-2 py-1 text-[8px] font-bold text-[#16885d]">Book next call</span></div>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }
