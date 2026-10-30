@@ -548,6 +548,65 @@ function Status({ value }: { value?: number }) {
   );
 }
 
+function DashboardMetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  tone,
+  points,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  icon: LucideIcon;
+  tone: "brand" | "emerald" | "purple" | "amber";
+  points: string;
+}) {
+  const isBrand = tone === "brand";
+  const accentClass = {
+    brand: "text-white",
+    emerald: "text-emerald-400",
+    purple: "text-purple-400",
+    amber: "text-amber-400",
+  }[tone];
+  const iconClass = {
+    brand: "bg-white/15 text-white",
+    emerald: "bg-emerald-400/10 text-emerald-400",
+    purple: "bg-purple-400/10 text-purple-400",
+    amber: "bg-amber-400/10 text-amber-400",
+  }[tone];
+
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border p-4 shadow-sm transition-transform duration-200 hover:-translate-y-0.5",
+        isBrand
+          ? "border-[#2C7CFF] bg-[#0069FF] shadow-[0_12px_28px_rgba(0,105,255,.28)]"
+          : "border-[#1C283A] bg-[#111A28] hover:border-[#2A3C52]"
+      )}
+    >
+      {isBrand && <div className="absolute -right-8 -top-8 size-28 rounded-full bg-white/10 blur-2xl" />}
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <p className={cn("text-xs font-medium", isBrand ? "text-white/75" : "text-[#8B9CB0]")}>{label}</p>
+          <p className="mt-2 text-3xl font-bold tracking-tight text-white tabular-nums">{value}</p>
+        </div>
+        <div className={cn("grid size-9 place-items-center rounded-xl", iconClass)}>
+          <Icon className="size-4" />
+        </div>
+      </div>
+      <div className="relative mt-4 flex items-end justify-between gap-3">
+        <span className={cn("text-[11px] font-semibold", isBrand ? "text-white/85" : "text-[#8B9CB0]")}>{detail}</span>
+        <svg viewBox="0 0 96 30" className={cn("h-8 w-24", accentClass)} aria-hidden="true">
+          <path d={`M0 29 L${points} L96 29 Z`} className="fill-current opacity-10" />
+          <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------
  * DASHBOARD / SCHEDULING VIEW
  * ------------------------------------------------------------- */
@@ -671,37 +730,10 @@ export function DashboardPage() {
 
       {/* Stats Metric Row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
-          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
-            <span>Today's Sessions</span>
-            <CalendarCheck className="size-4 text-[#4D9BFF]" />
-          </div>
-          <p className="mt-2 text-2xl font-bold text-white">{todayCount}</p>
-        </div>
-
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
-          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
-            <span>Upcoming Bookings</span>
-            <Clock className="size-4 text-emerald-400" />
-          </div>
-          <p className="mt-2 text-2xl font-bold text-white">{upcomingCount}</p>
-        </div>
-
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
-          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
-            <span>Active Event Types</span>
-            <Scissors className="size-4 text-purple-400" />
-          </div>
-          <p className="mt-2 text-2xl font-bold text-white">{activeServicesCount}</p>
-        </div>
-
-        <div className="rounded-2xl border border-[#1C283A] bg-[#111A28] p-4">
-          <div className="flex items-center justify-between text-xs text-[#8B9CB0]">
-            <span>Team Members</span>
-            <Users className="size-4 text-amber-400" />
-          </div>
-          <p className="mt-2 text-2xl font-bold text-white">{staff.data?.length ?? 0}</p>
-        </div>
+        <DashboardMetricCard label="Today's Sessions" value={todayCount} detail="Today" icon={CalendarCheck} tone="brand" points="8,22 24,17 42,20 59,10 78,14" />
+        <DashboardMetricCard label="Upcoming Bookings" value={upcomingCount} detail="Next 7 days" icon={Clock} tone="emerald" points="8,23 24,19 42,22 59,12 78,8" />
+        <DashboardMetricCard label="Active Event Types" value={activeServicesCount} detail="Published" icon={Scissors} tone="purple" points="8,22 24,14 42,17 59,11 78,13" />
+        <DashboardMetricCard label="Team Members" value={staff.data?.length ?? 0} detail="Active members" icon={Users} tone="amber" points="8,24 24,23 42,16 59,17 78,9" />
       </div>
 
       {/* Callie AI — uses the floating AI widget in the bottom-right corner */}
@@ -1515,9 +1547,6 @@ export function BookingsPage() {
           <SidebarToggleButton />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Notetaker & Scheduled Events</h1>
-            <p className="mt-1 text-xs text-[#8B9CB0]">
-              Review all scheduled meetings, client details, consultation notes, and appointment status.
-            </p>
           </div>
         </div>
 
@@ -2035,9 +2064,6 @@ export function ServicesPage() {
           <SidebarToggleButton />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Event Types & Services</h1>
-            <p className="mt-1 text-xs text-[#8B9CB0]">
-              Configure appointment lengths, pricing, buffers, and public booking settings.
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2.5">
@@ -2227,9 +2253,6 @@ export function StaffPage() {
           <SidebarToggleButton />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Contacts & Team</h1>
-            <p className="mt-1 text-xs text-[#8B9CB0]">
-              Manage practitioners clients can book with and view your customer contact directory.
-            </p>
           </div>
         </div>
 
@@ -2627,9 +2650,6 @@ export function SchedulePage() {
           <SidebarToggleButton />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Availability & Working Hours</h1>
-            <p className="mt-1 text-xs text-[#8B9CB0]">
-              Set recurring schedules, blackout dates, and automated notification rules per practitioner.
-            </p>
           </div>
         </div>
 
