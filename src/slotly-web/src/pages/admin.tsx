@@ -162,17 +162,35 @@ function WorkspaceIdentity({
   collapsed,
   currentName,
   currentUser,
+  logoUrl,
+  brandColor,
 }: {
   collapsed: boolean;
   currentName: string;
   currentUser: string;
+  logoUrl?: string | null;
+  brandColor?: string;
 }) {
-  const initials = currentUser.charAt(0).toUpperCase();
+  const initials = (currentName || currentUser || "S").charAt(0).toUpperCase();
   return (
     <div className="flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 w-full">
-      <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
-        {initials}
-      </div>
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={currentName}
+          className="size-8 shrink-0 rounded-full object-cover border border-white/20"
+          onError={(e) => {
+            (e.target as HTMLElement).style.display = "none";
+          }}
+        />
+      ) : (
+        <div
+          className="grid size-8 shrink-0 place-items-center rounded-full font-bold text-xs text-white shadow-sm transition-colors"
+          style={{ backgroundColor: brandColor || "#0069FF" }}
+        >
+          {initials}
+        </div>
+      )}
       {!collapsed && (
         <div className="min-w-0 flex-1 text-left">
           <p className="truncate text-xs font-semibold text-white">{currentUser}</p>
@@ -339,9 +357,24 @@ function AdminShell() {
   const tenantSettings = useTenantSettings();
   const tenantSlug = tenantSettings.data?.slug || "northstar-health";
   const tenantName = tenantSettings.data?.name || "Northstar Health";
+  const brandColor = tenantSettings.data?.primaryColor || "#0069FF";
+  const logoUrl = tenantSettings.data?.logoUrl;
+
+  useEffect(() => {
+    if (brandColor) {
+      document.documentElement.style.setProperty("--primary", brandColor);
+      document.documentElement.style.setProperty("--brand-primary", brandColor);
+    }
+  }, [brandColor]);
 
   return (
     <div
+      style={
+        {
+          "--primary": brandColor,
+          "--brand-primary": brandColor,
+        } as React.CSSProperties
+      }
       className={cn(
         "min-h-dvh bg-[#0B111A] text-white transition-[grid-template-columns] duration-300 lg:grid",
         collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[240px_1fr]",
@@ -362,6 +395,8 @@ function AdminShell() {
               collapsed={collapsed}
               currentName={tenantName}
               currentUser={userName}
+              logoUrl={logoUrl}
+              brandColor={brandColor}
             />
           </div>
 
@@ -384,7 +419,7 @@ function AdminShell() {
               collapsed ? "w-10 px-0 mx-auto" : "w-full px-4"
             )}
           >
-            <Plus className="size-3.5 text-primary" />
+            <Plus className="size-3.5 text-primary" style={{ color: brandColor }} />
             {!collapsed && <span>Create</span>}
           </Link>
         </div>
@@ -403,12 +438,23 @@ function AdminShell() {
                   "flex h-10 items-center rounded-xl text-xs font-semibold transition-colors",
                   collapsed ? "justify-center size-10 mx-auto" : "gap-3 px-3",
                   isActive
-                    ? "bg-[#152B46] text-[#4D9BFF]"
+                    ? "font-bold text-white shadow-sm"
                     : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
                 )
               }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      backgroundColor: `${brandColor}22`,
+                      color: brandColor,
+                    }
+                  : undefined
+              }
             >
-              <Icon className="size-4 shrink-0" />
+              <Icon
+                className="size-4 shrink-0 transition-colors"
+                style={{ color: undefined }}
+              />
               {!collapsed && <span>{label}</span>}
             </NavLink>
           ))}
@@ -435,7 +481,8 @@ function AdminShell() {
                 href={`/book/${tenantSlug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-1 flex items-center gap-1 text-[11px] text-[#4D9BFF] hover:underline truncate"
+                className="mt-1 flex items-center gap-1 text-[11px] hover:underline truncate"
+                style={{ color: brandColor }}
               >
                 <span>/book/{tenantSlug}</span>
                 <ExternalLink className="size-2.5 shrink-0" />
@@ -465,9 +512,17 @@ function AdminShell() {
               "flex h-9 items-center rounded-xl text-xs font-semibold transition-colors",
               collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full",
               settingsOpen
-                ? "bg-[#152B46] text-[#4D9BFF]"
+                ? "font-bold text-white shadow-sm"
                 : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
             )}
+            style={
+              settingsOpen
+                ? {
+                    backgroundColor: `${brandColor}22`,
+                    color: brandColor,
+                  }
+                : undefined
+            }
           >
             <Settings className="size-4 shrink-0" />
             {!collapsed && <span>Settings</span>}
@@ -1140,6 +1195,20 @@ function SingleUseLinksSection({
                   >
                     <ExternalLink className="size-3" />
                   </a>
+                  <button
+                    onClick={() => {
+                      const updated = links.filter((l) => l.id !== item.id);
+                      setLinks(updated);
+                      try {
+                        localStorage.setItem("slotly_single_use_links", JSON.stringify(updated));
+                      } catch {}
+                      toast.success("Single-use link deleted");
+                    }}
+                    className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
+                    title="Delete link"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1263,6 +1332,20 @@ function MeetingPollsSection({ tenantSlug }: { tenantSlug: string }) {
                     <Copy className="size-3" />
                     <span>Share Poll</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      const updated = polls.filter((p) => p.id !== poll.id);
+                      setPolls(updated);
+                      try {
+                        localStorage.setItem("slotly_meeting_polls", JSON.stringify(updated));
+                      } catch {}
+                      toast.success("Meeting poll deleted");
+                    }}
+                    className="grid size-8 place-items-center rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#162234]"
+                    title="Delete poll"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1279,8 +1362,33 @@ function MeetingPollsSection({ tenantSlug }: { tenantSlug: string }) {
  * ROUTING FORMS SECTION
  * ------------------------------------------------------------- */
 function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
-  const [ruleType, setRuleType] = useState<"round-robin" | "specialty">("round-robin");
-  const [enabled, setEnabled] = useState(true);
+  const [ruleType, setRuleType] = useState<"round-robin" | "specialty">(() => {
+    try {
+      const stored = localStorage.getItem("slotly_routing_config");
+      return stored ? JSON.parse(stored).ruleType : "round-robin";
+    } catch {
+      return "round-robin";
+    }
+  });
+  const [enabled, setEnabled] = useState(() => {
+    try {
+      const stored = localStorage.getItem("slotly_routing_config");
+      return stored ? JSON.parse(stored).enabled : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const saveRouting = (nextEnabled: boolean, nextRuleType: "round-robin" | "specialty") => {
+    setEnabled(nextEnabled);
+    setRuleType(nextRuleType);
+    try {
+      localStorage.setItem(
+        "slotly_routing_config",
+        JSON.stringify({ enabled: nextEnabled, ruleType: nextRuleType })
+      );
+    } catch {}
+  };
 
   return (
     <div className="space-y-6">
@@ -1294,11 +1402,12 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
           </div>
           <button
             onClick={() => {
-              setEnabled(!enabled);
-              toast.success(`Routing ${!enabled ? "enabled" : "disabled"}`);
+              const next = !enabled;
+              saveRouting(next, ruleType);
+              toast.success(`Routing ${next ? "activated" : "disabled"} and saved!`);
             }}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-bold transition-colors",
+              "rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer",
               enabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" : "bg-gray-800 text-gray-400"
             )}
           >
@@ -1308,7 +1417,10 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
 
         <div className="grid gap-4 sm:grid-cols-2 pt-2">
           <div
-            onClick={() => setRuleType("round-robin")}
+            onClick={() => {
+              saveRouting(enabled, "round-robin");
+              toast.success("Routing rule set to Round-Robin and saved!");
+            }}
             className={cn(
               "cursor-pointer rounded-xl border p-4 transition-all",
               ruleType === "round-robin"
@@ -1323,7 +1435,10 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
           </div>
 
           <div
-            onClick={() => setRuleType("specialty")}
+            onClick={() => {
+              saveRouting(enabled, "specialty");
+              toast.success("Routing rule set to Specialty Matching and saved!");
+            }}
             className={cn(
               "cursor-pointer rounded-xl border p-4 transition-all",
               ruleType === "specialty"
@@ -2201,6 +2316,8 @@ export function StaffPage() {
   const qc = useQueryClient();
   const staff = useStaff();
   const bookings = useBookings();
+  const tenantSettings = useTenantSettings();
+  const tenantSlug = tenantSettings.data?.slug || "northstar-health";
   const [subTab, setSubTab] = useState<"staff" | "clients">("staff");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
@@ -2362,9 +2479,33 @@ export function StaffPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-[#8B9CB0]">
-                    <span>{c.totalBookings} appointment(s)</span>
-                    <span className="tabular-nums">Last: {new Date(c.lastBooking).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right text-xs text-[#8B9CB0] mr-2 hidden sm:block">
+                      <p>{c.totalBookings} appointment(s)</p>
+                      <p className="text-[10px] tabular-nums">Last: {new Date(c.lastBooking).toLocaleDateString()}</p>
+                    </div>
+                    {c.email && (
+                      <button
+                        onClick={() => {
+                          void navigator.clipboard.writeText(c.email);
+                          toast.success("Client email copied!");
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-2.5 py-1 text-xs text-white hover:bg-[#162234]"
+                        title="Copy email"
+                      >
+                        <Copy className="size-3" />
+                        <span>Email</span>
+                      </button>
+                    )}
+                    <Link
+                      to={`/book/${tenantSlug}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#1C283A] px-2.5 py-1 text-xs text-white hover:bg-[#162234]"
+                      title="Book an appointment for this client"
+                    >
+                      <Calendar className="size-3" />
+                      <span>Book</span>
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -2500,6 +2641,28 @@ export function SchedulePage() {
   const staff = useStaff();
   const [selectedStaffId, setStaffId] = useState<string>("");
   const [scheduleTab, setScheduleTab] = useState<"hours" | "timeoff" | "automations">("hours");
+
+  const [reminders, setReminders] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem("slotly_automated_reminders");
+      return stored
+        ? JSON.parse(stored)
+        : { reminder24h: true, instantConfirm: true, statusAlerts: true };
+    } catch {
+      return { reminder24h: true, instantConfirm: true, statusAlerts: true };
+    }
+  });
+
+  const toggleReminder = (key: string, name: string) => {
+    setReminders((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem("slotly_automated_reminders", JSON.stringify(updated));
+      } catch {}
+      toast.success(`${name} ${updated[key] ? "enabled" : "paused"} and saved!`);
+      return updated;
+    });
+  };
 
   useEffect(() => {
     if (staff.data?.length && !selectedStaffId) {
@@ -2884,7 +3047,18 @@ export function SchedulePage() {
                 <p className="font-bold text-xs text-white">24h Email Reminder</p>
                 <p className="text-[11px] text-[#8B9CB0]">Send email notification 24 hours prior to appointment start</p>
               </div>
-              <Badge variant="success">Enabled</Badge>
+              <button
+                type="button"
+                onClick={() => toggleReminder("reminder24h", "24h Email Reminder")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer",
+                  reminders.reminder24h
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                )}
+              >
+                {reminders.reminder24h ? "Enabled" : "Paused"}
+              </button>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#1C283A] bg-[#0B111A] p-4">
@@ -2892,7 +3066,18 @@ export function SchedulePage() {
                 <p className="font-bold text-xs text-white">Instant Confirmation Email</p>
                 <p className="text-[11px] text-[#8B9CB0]">Send instant calendar invitation upon booking creation</p>
               </div>
-              <Badge variant="success">Enabled</Badge>
+              <button
+                type="button"
+                onClick={() => toggleReminder("instantConfirm", "Instant Confirmation Email")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer",
+                  reminders.instantConfirm
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                )}
+              >
+                {reminders.instantConfirm ? "Enabled" : "Paused"}
+              </button>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#1C283A] bg-[#0B111A] p-4">
@@ -2900,7 +3085,18 @@ export function SchedulePage() {
                 <p className="font-bold text-xs text-white">Cancellation & Reschedule Alerts</p>
                 <p className="text-[11px] text-[#8B9CB0]">Notify both staff and client instantly if a booking changes</p>
               </div>
-              <Badge variant="success">Enabled</Badge>
+              <button
+                type="button"
+                onClick={() => toggleReminder("statusAlerts", "Status Alerts")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer",
+                  reminders.statusAlerts
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                )}
+              >
+                {reminders.statusAlerts ? "Enabled" : "Paused"}
+              </button>
             </div>
           </div>
         </div>
@@ -2963,11 +3159,18 @@ export function SettingsModal({
   const tenantSlug = settings.data?.slug || "northstar-health";
 
   const schema = z.object({
-    name: z.string().min(2),
-    timeZoneId: z.string().min(2),
+    name: z.string().min(2, "Workspace name must be at least 2 characters."),
+    timeZoneId: z.string().min(1, "Time zone is required."),
     cancellationWindowHours: z.number().min(0).max(2160),
-    primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-    logoUrl: z.union([z.url(), z.literal("")]),
+    primaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid 6-character hex color (e.g. #0069FF)"),
+    logoUrl: z
+      .string()
+      .url("Must be a valid URL")
+      .optional()
+      .or(z.literal(""))
+      .nullable(),
   });
   type Form = z.infer<typeof schema>;
 
@@ -2976,32 +3179,52 @@ export function SettingsModal({
     values: {
       name: settings.data?.name || userName,
       timeZoneId: settings.data?.timeZoneId || "Africa/Casablanca",
-      cancellationWindowHours: settings.data?.cancellationWindowHours || 0,
+      cancellationWindowHours: settings.data?.cancellationWindowHours ?? 24,
       primaryColor: settings.data?.primaryColor || "#0069FF",
       logoUrl: settings.data?.logoUrl || "",
     },
   });
 
+  const watchedPrimaryColor = form.watch("primaryColor") || "#0069FF";
+
   const save = useMutation({
     mutationFn: async (v: Form) => {
+      const hex = (v.primaryColor || "#0069FF").toUpperCase();
       const { data, error } = await api.PUT("/api/v1/settings", {
         body: {
-          name: v.name,
+          name: v.name.trim(),
           timeZoneId: v.timeZoneId,
-          cancellationWindowHours: v.cancellationWindowHours,
-          primaryColor: v.primaryColor,
-          logoUrl: v.logoUrl || null,
+          cancellationWindowHours: Number(v.cancellationWindowHours),
+          primaryColor: hex,
+          logoUrl: v.logoUrl && v.logoUrl.trim() ? v.logoUrl.trim() : null,
         },
       });
       if (!data) throw error;
       return data;
     },
-    onSuccess() {
-      toast.success("Settings saved successfully");
+    onSuccess(data) {
+      toast.success("Settings saved successfully!");
+      if (data.primaryColor) {
+        document.documentElement.style.setProperty("--primary", data.primaryColor);
+        document.documentElement.style.setProperty("--brand-primary", data.primaryColor);
+      }
       void qc.invalidateQueries({ queryKey: ["tenant-settings"] });
     },
-    onError: (e) => toast.error(apiMessage(e)),
+    onError: (e) => toast.error(apiMessage(e, "Could not save settings.")),
   });
+
+  const onSaveSubmit = form.handleSubmit(
+    (v) => save.mutate(v),
+    (errors) => {
+      console.error("Settings validation failed:", errors);
+      const firstErr = Object.values(errors)[0];
+      const msg =
+        typeof firstErr?.message === "string"
+          ? firstErr.message
+          : "Please check your settings inputs.";
+      toast.error(msg);
+    }
+  );
 
   // Change password form
   const passSchema = z.object({
@@ -3095,191 +3318,246 @@ export function SettingsModal({
               </div>
             </div>
 
-            {/* Profile Tab */}
-            {activeSettingsNav === "profile" && (
-              <>
-                {/* Subtabs: General & Security */}
-                <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
-                  <button
-                    onClick={() => setProfileTab("general")}
-                    className={cn(
-                      "pb-3 relative transition-colors",
-                      profileTab === "general" ? "text-white" : "text-gray-400 hover:text-white"
-                    )}
-                  >
-                    General
-                    {profileTab === "general" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setProfileTab("security")}
-                    className={cn(
-                      "pb-3 relative transition-colors",
-                      profileTab === "security" ? "text-white" : "text-gray-400 hover:text-white"
-                    )}
-                  >
-                    Login & Security
-                    {profileTab === "security" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
-                    )}
-                  </button>
-                </div>
-
-                {profileTab === "general" ? (
-                  <form
-                    id="settingsForm"
-                    className="mt-6 space-y-4"
-                    onSubmit={form.handleSubmit((v) => save.mutate(v))}
-                  >
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-xs text-white font-semibold">Workspace Name</Label>
-                      <Input id="name" className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl" {...form.register("name")} />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">Time zone</Label>
-                        <span className="text-[11px] text-gray-400">Current Time: {currentTime}</span>
-                      </div>
-                      <select
-                        id="timeZoneId"
-                        className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
-                        {...form.register("timeZoneId")}
-                      >
-                        <option value="Africa/Casablanca">Africa/Casablanca (Morocco)</option>
-                        <option value="Europe/Paris">Europe/Paris (France, Spain, Germany)</option>
-                        <option value="Europe/London">Europe/London (GMT/BST)</option>
-                        <option value="America/New_York">America/New_York (Eastern)</option>
-                        <option value="UTC">UTC (Universal Time)</option>
-                      </select>
-                    </div>
-                  </form>
-                ) : (
-                  <form
-                    className="mt-6 space-y-4"
-                    onSubmit={passForm.handleSubmit((v) => changePassword.mutate(v))}
-                  >
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-white font-semibold">Current Password</Label>
-                      <Input
-                        type="password"
-                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                        {...passForm.register("currentPassword")}
-                      />
-                      <FieldError error={passForm.formState.errors.currentPassword} />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-white font-semibold">New Password</Label>
-                      <Input
-                        type="password"
-                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                        {...passForm.register("newPassword")}
-                      />
-                      <FieldError error={passForm.formState.errors.newPassword} />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-white font-semibold">Confirm New Password</Label>
-                      <Input
-                        type="password"
-                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                        {...passForm.register("confirmPassword")}
-                      />
-                      <FieldError error={passForm.formState.errors.confirmPassword} />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      disabled={changePassword.isPending}
-                      className="rounded-full bg-white text-[#0B1A2C] hover:bg-neutral-100 font-bold text-xs"
+            <form id="settingsForm" onSubmit={onSaveSubmit}>
+              {/* Profile Tab */}
+              {activeSettingsNav === "profile" && (
+                <>
+                  {/* Subtabs: General & Security */}
+                  <div className="flex gap-6 border-b border-[#1C283A] pt-4 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setProfileTab("general")}
+                      className={cn(
+                        "pb-3 relative transition-colors",
+                        profileTab === "general" ? "text-white" : "text-gray-400 hover:text-white"
+                      )}
                     >
-                      {changePassword.isPending ? "Updating password…" : "Update Password"}
-                    </Button>
-                  </form>
-                )}
-              </>
-            )}
+                      General
+                      {profileTab === "general" && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: watchedPrimaryColor }} />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileTab("security")}
+                      className={cn(
+                        "pb-3 relative transition-colors",
+                        profileTab === "security" ? "text-white" : "text-gray-400 hover:text-white"
+                      )}
+                    >
+                      Login & Security
+                      {profileTab === "security" && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: watchedPrimaryColor }} />
+                      )}
+                    </button>
+                  </div>
 
-            {/* Scheduling Policy */}
-            {activeSettingsNav === "scheduling" && (
+                  {profileTab === "general" ? (
+                    <div className="mt-6 space-y-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="name" className="text-xs text-white font-semibold">Workspace Name</Label>
+                        <Input id="name" className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl" {...form.register("name")} />
+                        <FieldError error={form.formState.errors.name} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="timeZoneId" className="text-xs text-white font-semibold">Time zone</Label>
+                          <span className="text-[11px] text-gray-400">Current Time: {currentTime}</span>
+                        </div>
+                        <select
+                          id="timeZoneId"
+                          className="h-10 w-full rounded-xl border border-[#1C283A] bg-[#0B111A] px-3 text-xs text-white"
+                          {...form.register("timeZoneId")}
+                        >
+                          <option value="Africa/Casablanca">Africa/Casablanca (Morocco)</option>
+                          <option value="Europe/Paris">Europe/Paris (France, Spain, Germany)</option>
+                          <option value="Europe/London">Europe/London (GMT/BST)</option>
+                          <option value="America/New_York">America/New_York (Eastern)</option>
+                          <option value="UTC">UTC (Universal Time)</option>
+                        </select>
+                        <FieldError error={form.formState.errors.timeZoneId} />
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+
+              {/* Scheduling Policy */}
+              {activeSettingsNav === "scheduling" && (
+                <div className="mt-6 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cancellationWindowHours" className="text-xs text-white font-semibold">
+                      Cancellation Window (Hours in advance)
+                    </Label>
+                    <Input
+                      id="cancellationWindowHours"
+                      type="number"
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-xs"
+                      {...form.register("cancellationWindowHours", { valueAsNumber: true })}
+                    />
+                    <FieldError error={form.formState.errors.cancellationWindowHours} />
+                    <p className="text-[11px] text-[#8B9CB0]">
+                      Clients will not be allowed to cancel within this window prior to appointment time.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Branding Tab */}
+              {activeSettingsNav === "branding" && (
+                <div className="mt-6 space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <input
+                        type="color"
+                        value={watchedPrimaryColor}
+                        onChange={(e) => {
+                          const hex = e.target.value.toUpperCase();
+                          form.setValue("primaryColor", hex, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }}
+                        className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
+                      />
+                      <Input
+                        value={watchedPrimaryColor}
+                        onChange={(e) => {
+                          form.setValue("primaryColor", e.target.value, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }}
+                        placeholder="#0069FF"
+                        className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
+                      />
+                      <div className="flex items-center gap-2">
+                        {["#0069FF", "#10B981", "#8B5CF6", "#F59E0B", "#EC4899", "#3B82F6"].map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              form.setValue("primaryColor", c, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                            }}
+                            className={cn(
+                              "size-7 rounded-full border border-white/20 transition-all hover:scale-110 cursor-pointer",
+                              watchedPrimaryColor.toUpperCase() === c.toUpperCase() &&
+                                "ring-2 ring-white ring-offset-2 ring-offset-[#111A28] scale-110"
+                            )}
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <FieldError error={form.formState.errors.primaryColor} />
+                  </div>
+
+                  <div className="space-y-1.5 pt-2">
+                    <Label htmlFor="logoUrl" className="text-xs text-white font-semibold">Brand Logo URL</Label>
+                    <Input
+                      id="logoUrl"
+                      placeholder="https://example.com/logo.png"
+                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                      {...form.register("logoUrl")}
+                    />
+                    <FieldError error={form.formState.errors.logoUrl} />
+                    <p className="text-[11px] text-[#8B9CB0]">
+                      Provide an absolute HTTP/HTTPS URL to an image file (PNG, SVG, JPG).
+                    </p>
+                  </div>
+
+                  {/* Live Preview Card */}
+                  <div className="mt-6 rounded-2xl border border-[#1C283A] bg-[#0B111A] p-5">
+                    <p className="text-xs font-semibold text-gray-400 mb-3">Live Preview with your Brand Color:</p>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-white/10 p-4 bg-[#111A28]">
+                      <div className="flex items-center gap-3">
+                        {form.watch("logoUrl") ? (
+                          <img
+                            src={form.watch("logoUrl")!}
+                            alt="Logo"
+                            className="size-8 rounded-full object-cover border border-white/20"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="size-8 rounded-full grid place-items-center font-bold text-xs text-white shadow-sm transition-colors"
+                            style={{ backgroundColor: watchedPrimaryColor }}
+                          >
+                            {(form.watch("name") || "S").charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-bold text-sm text-white">
+                            {form.watch("name") || "Northstar Health"}
+                          </span>
+                          <p className="text-[11px] text-gray-400">Public Booking Badge</p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-md transition-colors"
+                        style={{ backgroundColor: watchedPrimaryColor }}
+                      >
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </form>
+
+            {/* Separate Security Form */}
+            {activeSettingsNav === "profile" && profileTab === "security" && (
               <form
-                id="settingsForm"
                 className="mt-6 space-y-4"
-                onSubmit={form.handleSubmit((v) => save.mutate(v))}
+                onSubmit={passForm.handleSubmit((v) => changePassword.mutate(v))}
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="cancellationWindowHours" className="text-xs text-white font-semibold">
-                    Cancellation Window (Hours in advance)
-                  </Label>
+                  <Label className="text-xs text-white font-semibold">Current Password</Label>
                   <Input
-                    id="cancellationWindowHours"
-                    type="number"
-                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl max-w-xs"
-                    {...form.register("cancellationWindowHours", { valueAsNumber: true })}
-                  />
-                  <p className="text-[11px] text-[#8B9CB0]">
-                    Clients will not be allowed to cancel within this window prior to appointment time.
-                  </p>
-                </div>
-              </form>
-            )}
-
-            {/* Branding Tab */}
-            {activeSettingsNav === "branding" && (
-              <form
-                id="settingsForm"
-                className="mt-6 space-y-4"
-                onSubmit={form.handleSubmit((v) => save.mutate(v))}
-              >
-                <div className="space-y-2">
-                  <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
-                      {...form.register("primaryColor")}
-                    />
-                    <Input
-                      className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
-                      {...form.register("primaryColor")}
-                    />
-                    <div className="flex gap-1.5">
-                      {["#0069FF", "#10B981", "#8B5CF6", "#F59E0B"].map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => form.setValue("primaryColor", c)}
-                          className="size-6 rounded-full border border-white/20 transition-transform hover:scale-110"
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-2">
-                  <Label htmlFor="logoUrl" className="text-xs text-white font-semibold">Brand Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    placeholder="https://example.com/logo.png"
+                    type="password"
                     className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
-                    {...form.register("logoUrl")}
+                    {...passForm.register("currentPassword")}
                   />
+                  <FieldError error={passForm.formState.errors.currentPassword} />
                 </div>
 
-                {/* Live Preview Card */}
-                <div className="mt-6 rounded-2xl border border-[#1C283A] bg-[#0B111A] p-4">
-                  <p className="text-xs font-semibold text-gray-400 mb-2">Live Preview of Public Booking Badge:</p>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3 bg-[#111A28]">
-                    <div
-                      className="size-4 rounded-full"
-                      style={{ backgroundColor: form.watch("primaryColor") || "#0069FF" }}
-                    />
-                    <span className="font-bold text-xs text-white">{form.watch("name") || "Northstar Health"}</span>
-                  </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-white font-semibold">New Password</Label>
+                  <Input
+                    type="password"
+                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                    {...passForm.register("newPassword")}
+                  />
+                  <FieldError error={passForm.formState.errors.newPassword} />
                 </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-white font-semibold">Confirm New Password</Label>
+                  <Input
+                    type="password"
+                    className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl"
+                    {...passForm.register("confirmPassword")}
+                  />
+                  <FieldError error={passForm.formState.errors.confirmPassword} />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={changePassword.isPending}
+                  className="rounded-full bg-white text-[#0B1A2C] hover:bg-neutral-100 font-bold text-xs"
+                >
+                  {changePassword.isPending ? "Updating password…" : "Update Password"}
+                </Button>
               </form>
             )}
 
