@@ -64,7 +64,12 @@ export function LandingPage() {
     const scrollableHeight = section.offsetHeight - window.innerHeight;
     if (scrollableHeight <= 0) return;
 
-    const targetTop = window.scrollY + section.getBoundingClientRect().top + (scrollableHeight * step) / showcaseTabs.length;
+    const stickyEl = section.firstElementChild as HTMLElement | null;
+    const stickyHeight = stickyEl ? stickyEl.offsetHeight : 620;
+    const startOffset = Math.max(window.innerHeight - stickyHeight, 180);
+
+    const targetProgress = (step + 0.1) / showcaseTabs.length;
+    const targetTop = window.scrollY + section.getBoundingClientRect().top - startOffset + targetProgress * scrollableHeight;
     window.scrollTo({ top: targetTop, behavior: "smooth" });
   };
 
@@ -76,7 +81,13 @@ export function LandingPage() {
       const scrollableHeight = section.offsetHeight - window.innerHeight;
       if (scrollableHeight <= 0) return;
 
-      const progress = Math.min(Math.max(-section.getBoundingClientRect().top / scrollableHeight, 0), 0.9999);
+      const stickyEl = section.firstElementChild as HTMLElement | null;
+      const stickyHeight = stickyEl ? stickyEl.offsetHeight : 620;
+      // Start card scrolling as soon as the section is fully in view, well before reaching the header
+      const startOffset = Math.max(window.innerHeight - stickyHeight, 180);
+
+      const scrollProgress = (startOffset - section.getBoundingClientRect().top) / scrollableHeight;
+      const progress = Math.min(Math.max(scrollProgress, 0), 0.9999);
       setActiveShowcaseTab(showcaseTabs[Math.floor(progress * showcaseTabs.length)]);
     };
 
@@ -281,7 +292,7 @@ export function LandingPage() {
 
       {/* 4. Interactive Product Showcase */}
       <section ref={showcaseSectionRef} className="relative px-3 py-8 sm:px-6 lg:min-h-[400vh]">
-        <div className="lg:sticky lg:top-4">
+        <div className="lg:sticky lg:top-20 sm:lg:top-24">
           <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[32px] p-6 shadow-sm sm:p-12">
             {showcaseGradients.map((gradient, index) => (
               <div
