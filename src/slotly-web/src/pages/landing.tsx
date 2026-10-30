@@ -2,7 +2,9 @@ import {
   ArrowRight,
   Calendar,
   Check,
+  ChevronDown,
   CreditCard,
+  Globe,
   Leaf,
   LogIn,
   Menu,
@@ -122,7 +124,8 @@ export function LandingPage() {
       const scrollableHeight = section.offsetHeight - window.innerHeight;
       if (scrollableHeight <= 0) return;
 
-      const progress = Math.min(Math.max(-section.getBoundingClientRect().top / scrollableHeight, 0), 0.9999);
+      const startOffset = Math.min(window.innerHeight * 0.2, 160);
+      const progress = Math.min(Math.max((startOffset - section.getBoundingClientRect().top) / scrollableHeight, 0), 0.9999);
       setActiveWorkflowStep(lifecycleStages[Math.floor(progress * lifecycleStages.length)]);
     };
 
@@ -525,8 +528,7 @@ export function LandingPage() {
         </div>
         <div className="relative mx-auto max-w-7xl lg:sticky lg:top-8">
           <div className="mb-10 max-w-xl sm:mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">End-to-End Meeting Lifecycle</span>
-            <h2 className="mt-3 font-serif text-4xl font-normal text-[#0B1A2C] sm:text-5xl">
+            <h2 className="font-serif text-4xl font-normal text-[#0B1A2C] sm:text-5xl">
               From booking to follow-up, completely streamlined.
             </h2>
           </div>
@@ -582,7 +584,7 @@ export function LandingPage() {
 
       {/* 6. Sticky Split Interactive Feature Showcase ("that fit your business" - Frame 7, 8, 10, 12) */}
       <section ref={billingSectionRef} className="min-h-[400vh] border-y border-white/60 px-3 py-16 sm:px-6 sm:py-24">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:sticky lg:top-8 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:sticky lg:top-32 lg:grid-cols-2 lg:items-center">
           {/* Left: Dynamic UI Graphic based on activeFeatureIndex */}
           <div className="relative rounded-3xl bg-gradient-to-tr from-[#EBF5FE] via-[#F3E8FF] to-[#ECFDF5] p-6 sm:p-10 border border-[#E2E8F0]">
             <AnimatePresence mode="wait">
@@ -659,8 +661,7 @@ export function LandingPage() {
           {/* Right: Scroll-driven billing message */}
           <div className="space-y-6">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">Monetization & Billing</span>
-              <h2 className="mt-2 font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
+              <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
                 Payments that fit your business.
               </h2>
             </div>
@@ -887,10 +888,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           {/* Section Header */}
           <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#E8F3FF] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#0069FF]">
-              <Sparkles className="size-3" /> Simple, transparent pricing
-            </span>
-            <h2 className="mt-4 font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
+            <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#0B1A2C]">
               Pick the plan that fits your business
             </h2>
             <p className="mt-3 text-base text-[#4A5568] max-w-2xl mx-auto">
@@ -1006,7 +1004,6 @@ export function LandingPage() {
       {/* 10. Bottom CTA Section */}
       <section className="px-3 sm:px-6 py-16 text-center">
         <div className="mx-auto max-w-4xl space-y-6">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">Get Started Today</span>
           <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-[#0B1A2C]">
             From the first appointment to the follow-up
           </h2>
@@ -1031,67 +1028,276 @@ export function LandingPage() {
       </section>
 
       {/* 10. Footer */}
-      <footer className="bg-[#0B1A2C] text-white pt-16 pb-12 px-5 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5 border-b border-white/10 pb-12">
-            <div className="space-y-4 md:col-span-1">
+      <footer className="bg-[#f8fafc] pb-12 pt-6 px-3 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[32px] sm:rounded-[42px] bg-[#051329] px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20 text-white shadow-2xl border border-white/10">
+          {/* Subtle ambient gradients inside the island card */}
+          <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-600/15 blur-[90px]" />
+          <div className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-indigo-500/15 blur-[100px]" />
+
+          <div className="relative z-10 grid gap-10 md:grid-cols-[1.5fr_1fr] md:items-start">
+            <div>
               <Link to="/" className="inline-flex items-center" title="Slotly">
-                <SlotlyLogo variant="full" mode="white" className="h-8 w-auto" />
+                <SlotlyLogo variant="full" mode="white" className="h-9 w-auto" />
               </Link>
-              <p className="text-xs text-white/60 leading-relaxed">
-                The modern multi-tenant platform for clinics, salons, and teams.
+              <h2 className="mt-6 text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
+                Scheduling that keeps your work moving.
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/60 sm:text-base">
+                Book meetings, manage your workspace, and keep every appointment in one place.
               </p>
             </div>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Features</p>
-              <ul className="space-y-2 text-xs text-white/70">
-                <li><Link to="/book/northstar-health" className="hover:text-white">Security</Link></li>
-                <li><Link to="/login" className="hover:text-white">Customizable availability</Link></li>
-                <li><Link to="/admin" className="hover:text-white">Event types</Link></li>
-                <li><Link to="/admin" className="hover:text-white">Meeting polls</Link></li>
-                <li><Link to="/admin" className="hover:text-white">Reminders & follow up</Link></li>
-              </ul>
+            <nav className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
+              <div>
+                <h3 className="font-semibold text-white">Product</h3>
+                <ul className="mt-4 space-y-2.5 text-white/65">
+                  <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Book a meeting</Link></li>
+                  <li><a href="#pricing" className="transition-colors hover:text-white">Pricing</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Workspace</h3>
+                <ul className="mt-4 space-y-2.5 text-white/65">
+                  <li><Link to="/login" className="transition-colors hover:text-white">Sign in</Link></li>
+                  <li><Link to="/admin" className="transition-colors hover:text-white">Dashboard</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Support</h3>
+                <ul className="mt-4 space-y-2.5 text-white/65">
+                  <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Contact us</Link></li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+
+          <div className="hidden">
+          <div className="relative z-10 grid gap-12 lg:grid-cols-12 lg:gap-8">
+            {/* Left Column: Big Brand Statement & Logo */}
+            <div className="flex flex-col justify-between space-y-8 lg:col-span-5">
+              <div>
+                <h2 className="text-3xl sm:text-5xl lg:text-[3.4rem] font-bold tracking-tight text-white leading-[1.08]">
+                  Make space for<br />what matters.
+                </h2>
+                <p className="mt-4 max-w-sm text-sm sm:text-base text-white/60 leading-relaxed font-normal">
+                  The automated multi-tenant scheduling platform that connects your clients, notes, and payments in one seamless flow.
+                </p>
+              </div>
+
+              <div className="pt-4 lg:pt-0">
+                <Link to="/" className="inline-flex items-center group transition-transform duration-200 hover:scale-[1.02]" title="Slotly">
+                  <SlotlyLogo variant="full" mode="white" className="h-9 w-auto" />
+                </Link>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Solutions</p>
-              <ul className="space-y-2 text-xs text-white/70">
-                <li><Link to="/book/northstar-health" className="hover:text-white">For individuals</Link></li>
-                <li><Link to="/login" className="hover:text-white">For teams</Link></li>
-                <li><Link to="/login" className="hover:text-white">For large enterprises</Link></li>
-                <li><Link to="/book/northstar-health" className="hover:text-white">Clinical & healthcare</Link></li>
-              </ul>
-            </div>
+            {/* Right Column: 3 Categorized Link Columns */}
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+              {/* Col 1: Products & Features */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Products</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Scheduling</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">AI assistant</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Notetaker</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Contacts & Dossier</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Payments</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Features</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Security</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Customizable availability</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Event types</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Meeting polls</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Reminders & follow up</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Meeting routing</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Analytics</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Admin management</Link></li>
+                  </ul>
+                </div>
+              </div>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Support</p>
-              <ul className="space-y-2 text-xs text-white/70">
-                <li><Link to="/login" className="hover:text-white">Help center</Link></li>
-                <li><Link to="/login" className="hover:text-white">Learning hub</Link></li>
-                <li><Link to="/book/northstar-health" className="hover:text-white">Contact support</Link></li>
-                <li><Link to="/book/northstar-health" className="hover:text-white">Contact sales</Link></li>
-              </ul>
-            </div>
+              {/* Col 2: Integrations & Solutions */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Integrations</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/login" className="transition-colors hover:text-white">Google ecosystem</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Microsoft ecosystem</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Video conferencing</Link></li>
+                    <li><Link to="/admin" className="transition-colors hover:text-white">Payment processors</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Sales & CRM</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Recruiting & ATS</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">All integrations</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Solutions</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">For individuals</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">For teams</Link></li>
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">For healthcare & clinics</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">For large companies</Link></li>
+                  </ul>
+                </div>
+              </div>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Company</p>
-              <ul className="space-y-2 text-xs text-white/70">
-                <li><Link to="/login" className="hover:text-white">About us</Link></li>
-                <li><span className="inline-flex items-center gap-1 hover:text-white">Careers <span className="rounded-full bg-[#0069FF] px-1.5 py-0.2 text-[9px] text-white">We're hiring!</span></span></li>
-                <li><Link to="/login" className="hover:text-white">Become a partner</Link></li>
-                <li><Link to="/login" className="hover:text-white">Blog</Link></li>
-              </ul>
+              {/* Col 3: Resources, Support & Company */}
+              <div className="col-span-2 sm:col-span-1 space-y-8">
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Resources</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/register" className="transition-colors hover:text-white">Create your account</Link></li>
+                    <li><Link to="/pricing" className="transition-colors hover:text-white">Pricing and plans</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Product tour</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">What's new</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Getting started guide</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Slotly community</Link></li>
+                    <li><Link to="/docs" className="transition-colors hover:text-white">Developer API</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Support</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/login" className="transition-colors hover:text-white">Help center</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Learning hub</Link></li>
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Contact support</Link></li>
+                    <li><Link to="/book/northstar-health" className="transition-colors hover:text-white">Contact sales</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-white">Company</h3>
+                  <ul className="mt-4 space-y-2.5 text-xs sm:text-[13px] text-white/65">
+                    <li><Link to="/login" className="transition-colors hover:text-white">About us</Link></li>
+                    <li>
+                      <Link to="/login" className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
+                        <span>Careers</span>
+                        <span className="rounded-full bg-[#0069FF] px-2 py-0.5 text-[9px] font-semibold text-white tracking-wide">
+                          We're hiring!
+                        </span>
+                      </Link>
+                    </li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Become a partner</Link></li>
+                    <li><Link to="/login" className="transition-colors hover:text-white">Blog</Link></li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50">
-            <p>© 2026 Slotly, Inc. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <Link to="/login" className="hover:text-white">Privacy Policy</Link>
-              <Link to="/login" className="hover:text-white">Terms of Service</Link>
-              <Link to="/login" className="hover:text-white">Security Notice</Link>
+          </div>
+
+          {/* Middle Row: Social Badges centered */}
+          <div className="hidden">
+            <span className="text-xs font-semibold text-white/70">Join us on social</span>
+            <div className="flex items-center gap-2.5">
+              {/* X */}
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noreferrer"
+                title="X (formerly Twitter)"
+                className="size-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/10 flex items-center justify-center transition-all duration-150 text-white/80 hover:text-white hover:scale-105 active:scale-95"
+              >
+                <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+              {/* Instagram */}
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                title="Instagram"
+                className="size-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/10 flex items-center justify-center transition-all duration-150 text-white/80 hover:text-white hover:scale-105 active:scale-95"
+              >
+                <svg className="size-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                </svg>
+              </a>
+              {/* Facebook */}
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noreferrer"
+                title="Facebook"
+                className="size-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/10 flex items-center justify-center transition-all duration-150 text-white/80 hover:text-white hover:scale-105 active:scale-95"
+              >
+                <svg className="size-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+              {/* LinkedIn */}
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                title="LinkedIn"
+                className="size-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/10 flex items-center justify-center transition-all duration-150 text-white/80 hover:text-white hover:scale-105 active:scale-95"
+              >
+                <svg className="size-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451c.979 0 1.778-.773 1.778-1.729V1.73C24 .774 23.205 0 22.225 0z" />
+                </svg>
+              </a>
+              {/* YouTube */}
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noreferrer"
+                title="YouTube"
+                className="size-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/10 flex items-center justify-center transition-all duration-150 text-white/80 hover:text-white hover:scale-105 active:scale-95"
+              >
+                <svg className="size-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+              </a>
             </div>
+          </div>
+
+          <div className="relative z-10 mt-10 border-t border-white/10 pt-6 text-xs text-white/45">
+            © Slotly 2026. All rights reserved.
+          </div>
+
+          <div className="hidden">
+          {/* Bottom Bar: Language selector, Legal links, Privacy choices, Copyright */}
+          <div className="relative z-10 mt-10 sm:mt-12 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-white/60">
+            {/* Left: Language selector */}
+            <div className="flex items-center">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3.5 py-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer"
+              >
+                <Globe className="size-3.5" />
+                <span>English</span>
+                <ChevronDown className="size-3 text-white/40" />
+              </button>
+            </div>
+
+            {/* Center: Legal & Privacy links */}
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+              <Link to="/login" className="transition-colors hover:text-white">Privacy Policy</Link>
+              <Link to="/login" className="transition-colors hover:text-white">Legal</Link>
+              <Link to="/login" className="transition-colors hover:text-white">Status</Link>
+              <Link to="/login" className="transition-colors hover:text-white">Cookie Settings</Link>
+              <Link to="/login" className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
+                <svg className="h-3 w-6" viewBox="0 0 30 14" fill="none">
+                  <path d="M7 1h16a6 6 0 010 12H7A6 6 0 017 1z" fill="#0069FF" />
+                  <path d="M7 3h16a4 4 0 010 8H7A4 4 0 017 3z" fill="#051329" />
+                  <path d="M5.5 7l2 2 4.5-4.5" stroke="#0069FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M19 7a3 3 0 11-6 0 3 3 0 016 0z" fill="#0069FF" />
+                </svg>
+                <span>Your Privacy Choices</span>
+              </Link>
+            </div>
+
+            {/* Right: Copyright */}
+            <div className="text-white/45 text-center md:text-right">
+              <p>© Copyright Slotly 2026</p>
+            </div>
+          </div>
           </div>
         </div>
       </footer>

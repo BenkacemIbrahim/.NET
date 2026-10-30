@@ -226,9 +226,6 @@ export function LoginPage() {
 
           <div className="mb-6 space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">Sign in to your workspace</h1>
-            <p className="text-sm text-muted-foreground">
-              Enter your credentials to access your booking calendar and settings.
-            </p>
           </div>
 
           <form
