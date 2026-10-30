@@ -2,16 +2,12 @@ import {
   ArrowRight,
   Calendar,
   Check,
-  Clock,
   CreditCard,
-  ExternalLink,
   Leaf,
   LogIn,
   Menu,
   Mic,
-  Send,
   Sparkles,
-  Video,
   X,
   Zap,
 } from "lucide-react";
@@ -24,6 +20,24 @@ import { cn } from "../lib/cn";
 
 const showcaseTabs = ["ai", "payments", "sync", "notes"] as const;
 const lifecycleStages = [0, 1, 2, 3] as const;
+const billingFeatures = [
+  {
+    title: "Upfront meeting payments",
+    desc: "Collect payment when clients book with you, so you can get paid sooner and eliminate no-shows.",
+  },
+  {
+    title: "Meeting packages",
+    desc: "Sell multi-appointment bundles upfront and let clients schedule as they need with automated credit counters.",
+  },
+  {
+    title: "Invoices",
+    desc: "Send professional branded invoices for post-appointment billing, installments, or project-based work.",
+  },
+  {
+    title: "Payment links",
+    desc: "Share direct links via chat, SMS, or email for quick frictionless checkouts without friction.",
+  },
+];
 const showcaseGradients = [
   "linear-gradient(135deg, #d9eafe 0%, #ede9fe 52%, #d1fae5 100%)",
   "linear-gradient(135deg, #d7f5ee 0%, #d9eafe 48%, #c7f3e6 100%)",
@@ -39,6 +53,7 @@ export function LandingPage() {
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
   const showcaseSectionRef = useRef<HTMLElement>(null);
   const lifecycleSectionRef = useRef<HTMLElement>(null);
+  const billingSectionRef = useRef<HTMLElement>(null);
 
   const scrollToShowcaseStep = (step: number) => {
     setActiveShowcaseTab(showcaseTabs[step]);
@@ -110,12 +125,26 @@ export function LandingPage() {
     };
   }, []);
 
-  // Auto-advance showcase tab or feature tab subtly
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveFeatureIndex((prev) => (prev + 1) % 4);
-    }, 6000);
-    return () => clearInterval(timer);
+    const updateBillingFeature = () => {
+      const section = billingSectionRef.current;
+      if (!section) return;
+
+      const scrollableHeight = section.offsetHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const progress = Math.min(Math.max(-section.getBoundingClientRect().top / scrollableHeight, 0), 0.9999);
+      setActiveFeatureIndex(Math.floor(progress * billingFeatures.length));
+    };
+
+    window.addEventListener("scroll", updateBillingFeature, { passive: true });
+    window.addEventListener("resize", updateBillingFeature);
+    updateBillingFeature();
+
+    return () => {
+      window.removeEventListener("scroll", updateBillingFeature);
+      window.removeEventListener("resize", updateBillingFeature);
+    };
   }, []);
 
   return (
@@ -347,34 +376,13 @@ export function LandingPage() {
                     </Link>
                   </div>
 
-                  {/* Interactive Mockup */}
-                  <div className="relative rounded-2xl bg-[#EBF7EE] p-6 sm:p-8 border border-[#D5EFE0] overflow-hidden">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0]">
-                      <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                        <div className="size-8 rounded-full bg-[#0069FF]/10 text-[#0069FF] grid place-items-center font-bold text-xs">
-                          DM
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-[#0B1A2C]">Dominic Mills</p>
-                          <p className="text-[11px] text-gray-400">To: Slotly AI, Tori Mathers</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        <div className="rounded-xl bg-[#F0F7FF] p-3 border border-[#D9EAFF]">
-                          <p className="text-xs font-semibold text-[#0069FF] flex items-center gap-1">
-                            <Sparkles className="size-3" /> Slotly AI replied
-                          </p>
-                          <p className="mt-1 text-xs text-[#0B1A2C]">
-                            Happy to set up a call for you with Dominic. Here are a few times you're both available:
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">10:00 AM</span>
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">2:30 PM</span>
-                            <span className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#0069FF] shadow-xs border border-blue-200">3:00 PM</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Generated Showcase Illustration */}
+                  <div className="relative overflow-hidden rounded-2xl border border-[#D5EFE0] bg-gradient-to-tr from-[#EBF7EE] via-white to-[#E8F3FF] p-2 shadow-inner">
+                    <img
+                      src="/landing/showcase-ai.jpg"
+                      alt="Introducing your 24/7 AI scheduling assistant"
+                      className="h-auto w-full rounded-xl object-contain shadow-md"
+                    />
                   </div>
                 </motion.div>
               )}
@@ -406,23 +414,13 @@ export function LandingPage() {
                     </Link>
                   </div>
 
-                  <div className="rounded-2xl bg-[#EAF5FE] p-6 sm:p-8 border border-[#CCE7FC]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#0B1A2C]">Amount to collect</span>
-                        <span className="text-xs font-semibold text-gray-500">USD</span>
-                      </div>
-                      <div className="flex items-center rounded-xl border border-gray-200 px-3 py-2">
-                        <span className="text-sm font-bold text-gray-400 mr-2">$</span>
-                        <span className="text-lg font-bold text-[#0B1A2C]">150.00</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-100">
-                        <span className="font-semibold text-gray-600">Payment processor</span>
-                        <span className="font-bold text-[#0069FF] flex items-center gap-1">
-                          Stripe <Check className="size-3 text-emerald-600" />
-                        </span>
-                      </div>
-                    </div>
+                  {/* Generated Showcase Illustration */}
+                  <div className="relative overflow-hidden rounded-2xl border border-[#CCE7FC] bg-gradient-to-tr from-[#EAF5FE] via-white to-[#ECFDF5] p-2 shadow-inner">
+                    <img
+                      src="/landing/showcase-payments.jpg"
+                      alt="Flexible, built-in payment tools"
+                      className="h-auto w-full rounded-xl object-contain shadow-md"
+                    />
                   </div>
                 </motion.div>
               )}
@@ -454,27 +452,13 @@ export function LandingPage() {
                     </Link>
                   </div>
 
-                  <div className="rounded-2xl bg-[#FFF8EB] p-6 sm:p-8 border border-[#FEE6C6]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-3">
-                      <div className="flex items-center justify-between text-xs font-bold text-gray-500">
-                        <span>Synced Calendars</span>
-                        <span className="text-emerald-600">3 Connected</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">Google Calendar (Work)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">Outlook (Clinic)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-xs">
-                          <span className="font-semibold text-gray-800">iCloud (Personal)</span>
-                          <Check className="size-3.5 text-emerald-600" />
-                        </div>
-                      </div>
-                    </div>
+                  {/* Generated Showcase Illustration */}
+                  <div className="relative overflow-hidden rounded-2xl border border-[#FEE6C6] bg-gradient-to-tr from-[#FFF8EB] via-white to-[#E8F3FF] p-2 shadow-inner">
+                    <img
+                      src="/landing/showcase-sync.jpg"
+                      alt="Multi-calendar real-time sync"
+                      className="h-auto w-full rounded-xl object-contain shadow-md"
+                    />
                   </div>
                 </motion.div>
               )}
@@ -506,17 +490,13 @@ export function LandingPage() {
                     </Link>
                   </div>
 
-                  <div className="rounded-2xl bg-[#F5F3FF] p-6 sm:p-8 border border-[#DDD6FE]">
-                    <div className="rounded-xl bg-white p-5 shadow-lg border border-[#E2E8F0] space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-[#7E22CE]">
-                        <Mic className="size-3.5 animate-pulse text-red-500" />
-                        <span>Transcription in progress · 32:15</span>
-                      </div>
-                      <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
-                        <p className="font-bold text-[#0B1A2C]">Key Takeaway:</p>
-                        <p>Dr. Benkacem approved follow-up check on Friday 2:00 PM. Patient agreed to review lab results beforehand.</p>
-                      </div>
-                    </div>
+                  {/* Generated Showcase Illustration */}
+                  <div className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-gradient-to-tr from-[#F5F3FF] via-white to-[#EBF7EE] p-2 shadow-inner">
+                    <img
+                      src="/landing/showcase-notes.jpg"
+                      alt="Never lose track of meeting decisions"
+                      className="h-auto w-full rounded-xl object-contain shadow-md"
+                    />
                   </div>
                 </motion.div>
               )}
@@ -590,126 +570,82 @@ export function LandingPage() {
       </section>
 
       {/* 6. Sticky Split Interactive Feature Showcase ("that fit your business" - Frame 7, 8, 10, 12) */}
-      <section className="px-3 sm:px-6 py-16 sm:py-24 border-y border-white/60">
-        <div className="mx-auto max-w-7xl grid gap-12 lg:grid-cols-2 lg:items-center">
+      <section ref={billingSectionRef} className="min-h-[400vh] border-y border-white/60 px-3 py-16 sm:px-6 sm:py-24">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:sticky lg:top-8 lg:grid-cols-2 lg:items-center">
           {/* Left: Dynamic UI Graphic based on activeFeatureIndex */}
           <div className="relative rounded-3xl bg-gradient-to-tr from-[#EBF5FE] via-[#F3E8FF] to-[#ECFDF5] p-6 sm:p-10 border border-[#E2E8F0]">
             <AnimatePresence mode="wait">
               {activeFeatureIndex === 0 && (
                 <motion.div
                   key="feat-0"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-2xl bg-white p-6 shadow-xl border border-gray-100"
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-2xl border border-gray-100/80 bg-white shadow-xl"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="size-12 rounded-full bg-blue-100 text-[#0069FF] font-bold grid place-items-center">
-                      IB
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#0B1A2C]">Ibrahim Benkacem</p>
-                      <p className="text-xs text-gray-500">Initial Consultation</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center gap-4 text-xs font-semibold text-gray-600 border-y border-gray-100 py-3">
-                    <span className="flex items-center gap-1"><Clock className="size-3.5 text-[#0069FF]" /> 45 min</span>
-                    <span className="flex items-center gap-1"><Video className="size-3.5 text-[#0069FF]" /> Google Meet</span>
-                    <span className="flex items-center gap-1 font-bold text-emerald-600">$100 USD</span>
-                  </div>
-                  <div className="mt-4 rounded-xl bg-gray-50 p-3 text-xs">
-                    <p className="font-semibold text-gray-700">Payment Processor</p>
-                    <div className="mt-2 flex gap-2">
-                      <span className="rounded-lg bg-white px-3 py-1.5 font-bold shadow-xs border border-gray-200">Stripe ✓</span>
-                      <span className="rounded-lg bg-white px-3 py-1.5 font-bold shadow-xs border border-gray-200">PayPal</span>
-                    </div>
-                  </div>
+                  <img
+                    src="/landing/billing-upfront.svg"
+                    alt="Upfront meeting payments"
+                    className="h-auto w-full object-cover"
+                  />
                 </motion.div>
               )}
 
               {activeFeatureIndex === 1 && (
                 <motion.div
                   key="feat-1"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-2xl bg-white p-6 shadow-xl border border-gray-100"
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-2xl border border-gray-100/80 bg-white shadow-xl"
                 >
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                    <p className="text-sm font-bold text-[#0B1A2C]">5-Session Health Bundle</p>
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">Save 15%</span>
-                  </div>
-                  <p className="mt-3 text-xs text-gray-500">Includes 5 full 60-minute therapy or consultation sessions with automated tracking.</p>
-                  <div className="mt-4 flex items-baseline justify-between">
-                    <div>
-                      <span className="text-2xl font-bold text-[#0B1A2C]">$425.00</span>
-                      <span className="text-xs text-gray-400 line-through ml-2">$500.00</span>
-                    </div>
-                    <span className="text-xs font-semibold text-[#0069FF]">5 Credits included</span>
-                  </div>
-                  <button className="mt-4 w-full rounded-xl bg-[#0069FF] py-2.5 text-xs font-bold text-white shadow-sm">
-                    Purchase Package & Book
-                  </button>
+                  <img
+                    src="/landing/billing-packages.svg"
+                    alt="Meeting packages"
+                    className="h-auto w-full object-cover"
+                  />
                 </motion.div>
               )}
 
               {activeFeatureIndex === 2 && (
                 <motion.div
                   key="feat-2"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-2xl bg-white p-6 shadow-xl border border-gray-100"
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-2xl border border-gray-100/80 bg-white shadow-xl"
                 >
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Invoice #INV-2026-084</p>
-                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0069FF]">Ready to send</span>
-                  </div>
-                  <div className="mt-4 space-y-2 text-xs">
-                    <div className="flex justify-between py-1 border-b border-gray-50">
-                      <span>Clinical Assessment & Follow-up</span>
-                      <span className="font-bold">$250.00</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-gray-50">
-                      <span>Diagnostic Lab Review</span>
-                      <span className="font-bold">$150.00</span>
-                    </div>
-                    <div className="flex justify-between pt-2 font-bold text-sm text-[#0B1A2C]">
-                      <span>Amount Due:</span>
-                      <span>$400.00</span>
-                    </div>
-                  </div>
-                  <button className="mt-4 w-full rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-2">
-                    <Send className="size-3.5" /> Send Invoice
-                  </button>
+                  <img
+                    src="/landing/billing-invoices.svg"
+                    alt="Professional invoices"
+                    className="h-auto w-full object-cover"
+                  />
                 </motion.div>
               )}
 
               {activeFeatureIndex === 3 && (
                 <motion.div
                   key="feat-3"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-2xl bg-white p-6 shadow-xl border border-gray-100 text-center"
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-2xl border border-gray-100/80 bg-white shadow-xl"
                 >
-                  <div className="mx-auto size-12 rounded-full bg-[#0069FF]/10 text-[#0069FF] grid place-items-center">
-                    <Zap className="size-6" />
-                  </div>
-                  <p className="mt-3 text-sm font-bold text-[#0B1A2C]">Instant Payment Link</p>
-                  <p className="mt-1 text-xs text-gray-500">slotly.com/pay/ibrahim/consultation</p>
-                  <div className="mt-4 rounded-xl bg-gray-50 p-3 text-xs font-mono text-gray-600">
-                    Supports Apple Pay, Google Pay & Card
-                  </div>
-                  <button className="mt-4 w-full rounded-xl bg-[#0B1A2C] py-2.5 text-xs font-bold text-white shadow-sm">
-                    Copy One-Click Link
-                  </button>
+                  <img
+                    src="/landing/billing-links.svg"
+                    alt="Instant payment links"
+                    className="h-auto w-full object-cover"
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Right: Feature Accordion with Animated Progress Underline */}
+          {/* Right: Scroll-driven billing message */}
           <div className="space-y-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#0069FF]">Monetization & Billing</span>
@@ -718,56 +654,24 @@ export function LandingPage() {
               </h2>
             </div>
 
-            <div className="space-y-4">
-              {[
-                {
-                  title: "Upfront meeting payments",
-                  desc: "Collect payment when clients book with you, so you can get paid sooner and eliminate no-shows.",
-                },
-                {
-                  title: "Meeting packages",
-                  desc: "Sell multi-appointment bundles upfront and let clients schedule as they need with automated credit counters.",
-                },
-                {
-                  title: "Invoices",
-                  desc: "Send professional branded invoices for post-appointment billing, installments, or project-based work.",
-                },
-                {
-                  title: "Payment links",
-                  desc: "Share direct links via chat, SMS, or email for quick frictionless checkouts without friction.",
-                },
-              ].map((item, index) => {
-                const isActive = activeFeatureIndex === index;
-                return (
-                  <div
-                    key={item.title}
-                    onClick={() => setActiveFeatureIndex(index)}
-                    className={cn(
-                      "cursor-pointer rounded-2xl p-5 transition-all border",
-                      isActive
-                        ? "bg-[#FAF8F5] border-[#E8E8E8] shadow-xs"
-                        : "border-transparent hover:bg-neutral-50"
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className={cn("text-base font-bold", isActive ? "text-[#0069FF]" : "text-[#0B1A2C]")}>
-                        {item.title}
-                      </h3>
-                      <ExternalLink className={cn("size-4 transition-transform", isActive ? "text-[#0069FF] translate-x-0.5" : "text-gray-400")} />
-                    </div>
-                    <p className="mt-2 text-xs sm:text-sm text-[#4A5568] leading-relaxed">
-                      {item.desc}
-                    </p>
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeFeatureBar"
-                        className="mt-3 h-0.5 w-full bg-[#0069FF] rounded-full"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={billingFeatures[activeFeatureIndex].title}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-2xl border border-[#E8E8E8] bg-[#FAF8F5] p-5 shadow-xs"
+              >
+                <h3 className="text-base font-bold text-[#0069FF]">
+                  {billingFeatures[activeFeatureIndex].title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#4A5568] sm:text-sm">
+                  {billingFeatures[activeFeatureIndex].desc}
+                </p>
+                <motion.div className="mt-3 h-0.5 w-full rounded-full bg-[#0069FF]" />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </section>
@@ -1237,75 +1141,26 @@ function WorkflowStageCard({
 }
 
 function WorkflowVisual({ visual }: { visual: "book" | "prep" | "capture" | "follow-up" }) {
+  const meta = {
+    book: { src: "/landing/lifecycle-book.jpg", alt: "Book appointment stage" },
+    prep: { src: "/landing/lifecycle-prep.jpg", alt: "Prep meeting stage" },
+    capture: { src: "/landing/lifecycle-capture.svg", alt: "Capture live notes stage" },
+    "follow-up": { src: "/landing/lifecycle-follow-up.svg", alt: "Automated follow-up stage" },
+  }[visual];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28, scale: 0.92 }}
+      initial={{ opacity: 0, y: 20, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 18, scale: 0.94 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="absolute inset-x-4 bottom-4"
+      exit={{ opacity: 0, y: 14, scale: 0.96 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="absolute inset-x-3 bottom-3 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-md"
     >
-      {visual === "book" && (
-        <div className="rounded-2xl bg-gradient-to-br from-[#c2f0dd] via-[#e0f9ed] to-[#68d8af] p-2.5 shadow-[0_18px_35px_rgba(40,139,103,.24)]">
-          <div className="rounded-xl bg-white p-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="grid size-6 place-items-center rounded-full bg-[#d8f7e9] text-[9px] font-bold text-[#16885d]">S</div>
-              <div>
-                <p className="text-[10px] font-bold text-[#17324d]">Slotly AI</p>
-                <p className="text-[9px] text-[#7890a6]">Scheduling assistant</p>
-              </div>
-            </div>
-            <p className="mt-2 text-[10px] leading-snug text-[#294866]">I found times that work for everyone. Which one should I book?</p>
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              {["10:00 AM", "2:30 PM", "3:00 PM"].map((time) => <span key={time} className="rounded-md bg-[#eef8ff] px-1 py-1 text-center text-[8px] font-bold text-[#0069ff]">{time}</span>)}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {visual === "prep" && (
-        <div className="rounded-2xl bg-gradient-to-br from-[#fdeaa4] via-[#fff6d8] to-[#b7e8dc] p-2.5 shadow-[0_18px_35px_rgba(166,127,35,.18)]">
-          <div className="rounded-xl bg-white p-3 shadow-sm">
-            <p className="text-[10px] font-bold text-[#17324d]">Get answers instantly ✨</p>
-            <p className="mt-1 text-[8px] text-[#7890a6]">Suggested questions</p>
-            <div className="mt-2 space-y-1.5">
-              <div className="rounded-lg bg-[#f6f9fc] px-2 py-1.5 text-[9px] text-[#405a73]">What has changed since the last call?</div>
-              <div className="rounded-lg bg-[#f6f9fc] px-2 py-1.5 text-[9px] text-[#405a73]">What are their top priorities today?</div>
-            </div>
-            <div className="mt-2 flex items-center justify-between rounded-lg border border-[#e5edf5] px-2 py-1.5 text-[8px] text-[#7890a6]">
-              <span>Help me prepare for my next meeting</span><Send className="size-3 text-[#0069ff]" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {visual === "capture" && (
-        <div className="rounded-2xl bg-gradient-to-br from-[#e1d8ff] via-[#f2eaff] to-[#be9cf4] p-2.5 shadow-[0_18px_35px_rgba(112,72,177,.23)]">
-          <div className="relative h-32 overflow-hidden rounded-xl bg-[#251c45] p-3">
-            <div className="absolute -left-4 -top-5 size-24 rounded-full bg-[#5c4a93] blur-xl" />
-            <div className="absolute -bottom-8 -right-4 size-24 rounded-full bg-[#9d71e6] blur-xl" />
-            <div className="relative flex h-full items-end gap-2">
-              <div className="flex flex-1 flex-col items-center justify-end rounded-lg bg-[linear-gradient(135deg,#edc4ae,#845269)] pb-2 pt-10 shadow-lg"><span className="size-8 rounded-full bg-[#f3d3bf]" /><span className="mt-1 text-[8px] font-bold text-white">Maya</span></div>
-              <div className="flex flex-1 flex-col items-center justify-end rounded-lg bg-[linear-gradient(135deg,#a5d4df,#345878)] pb-2 pt-10 shadow-lg"><span className="size-8 rounded-full bg-[#c5e7e6]" /><span className="mt-1 text-[8px] font-bold text-white">Noah</span></div>
-            </div>
-            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[8px] font-bold text-[#6d3bc2]"><Mic className="size-2.5" /> Recording</div>
-          </div>
-        </div>
-      )}
-
-      {visual === "follow-up" && (
-        <div className="rounded-2xl bg-gradient-to-br from-[#cbdfff] via-[#e7e3ff] to-[#9cf0d5] p-2.5 shadow-[0_18px_35px_rgba(66,100,170,.22)]">
-          <div className="rounded-xl bg-white p-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-[#17324d]">Follow-up draft</span>
-              <span className="grid size-5 place-items-center rounded-full bg-[#f2f7ff] text-[9px] font-bold text-[#4285f4]">M</span>
-            </div>
-            <p className="mt-2 text-[9px] font-semibold text-[#405a73]">Thanks again for your time today</p>
-            <p className="mt-1 text-[9px] leading-snug text-[#7890a6]">Callie can help schedule the next conversation and share the recap.</p>
-            <div className="mt-2 flex gap-1"><span className="rounded-md bg-[#eef5ff] px-2 py-1 text-[8px] font-bold text-[#0069ff]">View recap</span><span className="rounded-md bg-[#f0faf5] px-2 py-1 text-[8px] font-bold text-[#16885d]">Book next call</span></div>
-          </div>
-        </div>
-      )}
+      <img
+        src={meta.src}
+        alt={meta.alt}
+        className="h-44 w-full object-cover object-top"
+      />
     </motion.div>
   );
 }

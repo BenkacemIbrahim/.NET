@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="b-up-bg" x1="0" y1="0" x2="900" y2="650" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EBF5FE"/>
+      <stop offset="50%" stop-color="#F3E8FF"/>
+      <stop offset="100%" stop-color="#ECFDF5"/>
+    </linearGradient>
+    <linearGradient id="card-sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0069FF"/>
+      <stop offset="100%" stop-color="#0047AB"/>
+    </linearGradient>
+    <filter id="shadow-b" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0B1A2C" flood-opacity="0.10"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0B1A2C" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="650" rx="28" fill="url(#b-up-bg)"/>
+
+  <g filter="url(#shadow-b)" transform="translate(100, 60)">
+    <rect width="700" height="530" rx="26" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <!-- Top Client Profile Bar -->
+    <g transform="translate(36, 32)">
+      <circle cx="28" cy="28" r="28" fill="#DBEAFE"/>
+      <text x="28" y="35" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#0069FF" text-anchor="middle">IB</text>
+      
+      <g transform="translate(72, 14)">
+        <text x="0" y="14" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#0B1A2C">Ibrahim Benkacem</text>
+        <text x="0" y="32" font-family="system-ui, sans-serif" font-size="13" font-weight="500" fill="#64748B">Strategy &amp; Healthcare Consultation</text>
+      </g>
+
+      <g transform="translate(480, 14)">
+        <rect width="148" height="34" rx="17" fill="#ECFDF5" stroke="#A7F3D0"/>
+        <circle cx="18" cy="17" r="4.5" fill="#10B981"/>
+        <text x="32" y="22" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#047857">Deposit Secured</text>
+      </g>
+    </g>
+
+    <!-- Appointment Specs Ribbon -->
+    <g transform="translate(36, 116)">
+      <rect width="628" height="64" rx="16" fill="#F8FAFC" stroke="#E2E8F0"/>
+      
+      <g transform="translate(24, 22)">
+        <circle cx="10" cy="10" r="10" fill="#E0F2FE"/>
+        <path d="M10 6 V10 H14" stroke="#0284C7" stroke-width="2" stroke-linecap="round"/>
+        <text x="30" y="15" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0F172A">45 Minutes</text>
+      </g>
+
+      <g transform="translate(180, 22)">
+        <circle cx="10" cy="10" r="10" fill="#E0E7FF"/>
+        <path d="M6 7 H14 V13 H6 Z" stroke="#4338CA" stroke-width="1.8"/>
+        <path d="M14 8.5 L17 7 V13 L14 11.5" fill="#4338CA"/>
+        <text x="30" y="15" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0F172A">Google Meet Video</text>
+      </g>
+
+      <g transform="translate(420, 16)">
+        <text x="0" y="12" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748B">Upfront Amount</text>
+        <text x="0" y="34" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="#059669">$100.00 USD</text>
+      </g>
+    </g>
+
+    <!-- Payment Processor Selection -->
+    <g transform="translate(36, 206)">
+      <text x="0" y="16" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0B1A2C">Select Payment Method</text>
+      <text x="0" y="32" font-family="system-ui, sans-serif" font-size="11" font-weight="500" fill="#64748B">Guaranteed booking. Zero no-shows.</text>
+
+      <g transform="translate(0, 48)">
+        <!-- Stripe Card -->
+        <rect width="300" height="74" rx="16" fill="#F0F7FF" stroke="#0069FF" stroke-width="2"/>
+        <rect x="20" y="18" width="46" height="38" rx="8" fill="#635BFF"/>
+        <text x="43" y="42" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">S</text>
+        <text x="78" y="34" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0069FF">Stripe Instant Checkout</text>
+        <text x="78" y="48" font-family="system-ui, sans-serif" font-size="11" font-weight="500" fill="#64748B">Cards, Apple Pay &amp; Google Pay</text>
+        <circle cx="270" cy="37" r="10" fill="#0069FF"/>
+        <path d="M266 37 L269 40 L274 34" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- PayPal / Alternative -->
+        <g transform="translate(328, 0)">
+          <rect width="300" height="74" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+          <rect x="20" y="18" width="46" height="38" rx="8" fill="#003087"/>
+          <text x="43" y="42" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">P</text>
+          <text x="78" y="34" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0B1A2C">PayPal Express</text>
+          <text x="78" y="48" font-family="system-ui, sans-serif" font-size="11" font-weight="500" fill="#64748B">Direct digital wallet</text>
+          <circle cx="270" cy="37" r="10" stroke="#CBD5E1" stroke-width="2"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- Credit Card Preview -->
+    <g transform="translate(36, 356)">
+      <rect width="628" height="66" rx="16" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="20" y="18" width="42" height="30" rx="6" fill="#1E293B"/>
+      <rect x="26" y="24" width="10" height="8" rx="2" fill="#F59E0B"/>
+      <text x="76" y="38" font-family="monospace" font-size="13" font-weight="700" fill="#334155">•••• •••• •••• 4242</text>
+      <text x="260" y="38" font-family="system-ui, sans-serif" font-size="11" font-weight="500" fill="#64748B">Expires 08/28</text>
+      <rect x="520" y="18" width="88" height="30" rx="8" fill="#ECFDF5"/>
+      <text x="564" y="38" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#059669" text-anchor="middle">Verified</text>
+    </g>
+
+    <!-- Primary CTA -->
+    <g transform="translate(36, 444)">
+      <rect width="628" height="52" rx="26" fill="url(#card-sheen)"/>
+      <text x="314" y="32" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">Confirm &amp; Pay $100.00 Deposit</text>
+    </g>
+  </g>
+</svg>

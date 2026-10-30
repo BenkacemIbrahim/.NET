@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="b-lk-bg" x1="0" y1="0" x2="900" y2="650" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EFF6FF"/>
+      <stop offset="50%" stop-color="#FAF5FF"/>
+      <stop offset="100%" stop-color="#F0FDF4"/>
+    </linearGradient>
+    <linearGradient id="zap-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0069FF"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <filter id="shadow-b" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0B1A2C" flood-opacity="0.10"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0B1A2C" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="650" rx="28" fill="url(#b-lk-bg)"/>
+
+  <g filter="url(#shadow-b)" transform="translate(100, 60)">
+    <rect width="700" height="530" rx="26" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <!-- Zap Icon & Title -->
+    <g transform="translate(0, 36)">
+      <circle cx="350" cy="38" r="34" fill="url(#zap-grad)"/>
+      <path d="M352 20 L340 38 H352 L348 56 L362 36 H350 Z" fill="#FFFFFF"/>
+
+      <text x="350" y="104" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="#0B1A2C" text-anchor="middle">Instant One-Click Payment Link</text>
+      <text x="350" y="128" font-family="system-ui, sans-serif" font-size="13" font-weight="500" fill="#64748B" text-anchor="middle">Share frictionless links via SMS, chat, or email for instant checkout.</text>
+    </g>
+
+    <!-- URL Box Container -->
+    <g transform="translate(36, 186)">
+      <rect width="628" height="68" rx="18" fill="#F8FAFC" stroke="#0069FF" stroke-width="1.5"/>
+      <circle cx="34" cy="34" r="14" fill="#DBEAFE"/>
+      <path d="M30 34 H38 M34 30 V38" stroke="#0069FF" stroke-width="2" stroke-linecap="round"/>
+      
+      <text x="60" y="39" font-family="monospace" font-size="14" font-weight="700" fill="#0069FF">slotly.com/pay/ibrahim/consultation</text>
+
+      <g transform="translate(488, 14)">
+        <rect width="124" height="40" rx="20" fill="#0069FF"/>
+        <text x="62" y="25" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">Copy Link</text>
+      </g>
+    </g>
+
+    <!-- Sharing Channels -->
+    <g transform="translate(36, 282)">
+      <text x="0" y="16" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#64748B">DIRECT SHARING CHANNELS</text>
+      
+      <g transform="translate(0, 32)">
+        <!-- Channel 1 -->
+        <rect width="144" height="44" rx="12" fill="#F1F5F9"/>
+        <circle cx="22" cy="22" r="8" fill="#25D366"/>
+        <text x="38" y="27" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">WhatsApp</text>
+
+        <!-- Channel 2 -->
+        <g transform="translate(160, 0)">
+          <rect width="144" height="44" rx="12" fill="#F1F5F9"/>
+          <circle cx="22" cy="22" r="8" fill="#007AFF"/>
+          <text x="38" y="27" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">iMessage / SMS</text>
+        </g>
+
+        <!-- Channel 3 -->
+        <g transform="translate(320, 0)">
+          <rect width="144" height="44" rx="12" fill="#F1F5F9"/>
+          <circle cx="22" cy="22" r="8" fill="#EA4335"/>
+          <text x="38" y="27" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Email Thread</text>
+        </g>
+
+        <!-- Channel 4 -->
+        <g transform="translate(480, 0)">
+          <rect width="148" height="44" rx="12" fill="#F1F5F9"/>
+          <circle cx="22" cy="22" r="8" fill="#4A154B"/>
+          <text x="38" y="27" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Slack Workspace</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Payment Wallets Badge Row -->
+    <g transform="translate(36, 386)">
+      <rect width="628" height="56" rx="16" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="24" y="33" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#64748B">Seamless 1-Tap Checkout:</text>
+      <g transform="translate(200, 16)">
+        <rect width="84" height="26" rx="6" fill="#000000"/>
+        <text x="42" y="17" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Apple Pay</text>
+        
+        <g transform="translate(94, 0)">
+          <rect width="84" height="26" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/>
+          <text x="42" y="17" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#4285F4" text-anchor="middle">G Pay</text>
+        </g>
+
+        <g transform="translate(188, 0)">
+          <rect width="84" height="26" rx="6" fill="#635BFF"/>
+          <text x="42" y="17" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Stripe</text>
+        </g>
+
+        <g transform="translate(282, 0)">
+          <rect width="84" height="26" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/>
+          <text x="42" y="17" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0B1A2C" text-anchor="middle">Card</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Bottom Action Button -->
+    <g transform="translate(36, 460)">
+      <rect width="628" height="46" rx="23" fill="#0B1A2C"/>
+      <text x="314" y="28" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">Open Client Checkout Preview</text>
+    </g>
+  </g>
+</svg>
