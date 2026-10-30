@@ -814,7 +814,7 @@ export function DashboardPage() {
             >
               {label}
               {activeTab === key && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />
               )}
             </button>
           ))}
@@ -2402,7 +2402,7 @@ export function StaffPage() {
           )}
         >
           Practitioners & Staff ({staff.data?.length ?? 0})
-          {subTab === "staff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+          {subTab === "staff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />}
         </button>
 
         <button
@@ -2413,7 +2413,7 @@ export function StaffPage() {
           )}
         >
           Client Contacts ({clientContacts.length})
-          {subTab === "clients" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+          {subTab === "clients" && <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />}
         </button>
       </div>
 
@@ -2851,7 +2851,7 @@ export function SchedulePage() {
           )}
         >
           Weekly Working Hours
-          {scheduleTab === "hours" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+          {scheduleTab === "hours" && <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />}
         </button>
 
         <button
@@ -2862,7 +2862,7 @@ export function SchedulePage() {
           )}
         >
           Time Off & Blackouts ({timeOff.data?.length ?? 0})
-          {scheduleTab === "timeoff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+          {scheduleTab === "timeoff" && <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />}
         </button>
 
         <button
@@ -2873,7 +2873,7 @@ export function SchedulePage() {
           )}
         >
           Automated Reminders
-          {scheduleTab === "automations" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0069FF] rounded-full" />}
+          {scheduleTab === "automations" && <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--brand-primary, #0069FF)" }} />}
         </button>
       </div>
 
