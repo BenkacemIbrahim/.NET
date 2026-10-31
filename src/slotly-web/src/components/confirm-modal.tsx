@@ -102,22 +102,24 @@ export function ConfirmModal({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100 dark:border-[#1C283A]/60">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="rounded-xl border border-gray-200 dark:border-[#1C283A] px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#162234] transition-colors"
-          >
-            {cancelText}
-          </button>
           <Button
             type="button"
+            size="sm"
+            onClick={onClose}
+            disabled={isPending}
+            className="rounded-xl border border-gray-200 dark:border-[#1C283A] bg-white dark:bg-transparent px-5 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#162234] transition-colors shadow-none"
+          >
+            {cancelText}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
             onClick={onConfirm}
             disabled={isPending}
             className={
               variant === "danger"
-                ? "rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2 shadow-sm transition-colors border-0"
-                : "rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 shadow-sm transition-colors border-0"
+                ? "rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold px-5 shadow-sm transition-colors border-0"
+                : "rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 shadow-sm transition-colors border-0"
             }
           >
             {isPending ? "Processing…" : confirmText}
