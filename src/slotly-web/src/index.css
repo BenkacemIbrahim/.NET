@@ -475,7 +475,6 @@ html:not(.dark) {
     [class*="bg-[#0069FF]"]:not([class*="/10"]):not([class*="/20"]):not([class*="/5"]),
     [class*="bg-[#0056D6]"],
     [class*="bg-[#0B1A2C]"],
-    [class*="bg-[#0B111A]"],
     [class*="bg-gray-900"],
     [class*="bg-slate-900"],
     [class*="bg-black"],

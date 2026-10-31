@@ -1481,15 +1481,15 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
           </div>
         </div>
 
-        <div className="border-t border-[#1C283A] pt-4">
-          <h4 className="text-xs font-bold text-white mb-2">Team Members Participating ({staff.length})</h4>
+        <div className="border-t border-gray-200 dark:border-[#1C283A] pt-4">
+          <h4 className="text-xs font-bold text-gray-900 dark:text-white mb-2">Team Members Participating ({staff.length})</h4>
           <div className="flex flex-wrap gap-2">
             {staff.map((s) => (
               <span
                 key={s.id}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#1C283A] bg-[#0B111A] px-2.5 py-1 text-xs text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-[#1C283A] bg-gray-50 dark:bg-[#0B111A] px-2.5 py-1 text-xs font-semibold text-gray-800 dark:text-gray-200 shadow-2xs"
               >
-                <span className="size-1.5 rounded-full bg-emerald-400" />
+                <span className="size-1.5 rounded-full bg-emerald-500" />
                 {s.displayName}
               </span>
             ))}
