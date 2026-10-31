@@ -29,20 +29,12 @@ interface Message {
   liked?: boolean | null;
 }
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: "welcome-1",
-    sender: "bot",
-    text: "Hello! 👋 I'm your Slotly AI Assistant. I can help you schedule appointments, explore features, or guide you through team availability.",
-    timestamp: "Just now",
-  },
-  {
-    id: "welcome-2",
-    sender: "bot",
-    text: "How can I assist your business today?",
-    timestamp: "Just now",
-  },
-];
+const STARTER_MESSAGE: Message = {
+  id: "welcome-1",
+  sender: "bot",
+  text: "Hello! 👋 I'm your Slotly AI Assistant. How can I assist your business today?",
+  timestamp: "Just now",
+};
 
 const SUGGESTED_PROMPTS = [
   { emoji: "🤖", text: "What is Slotly?" },
@@ -118,11 +110,38 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
     if (onOpenChange) onOpenChange(val);
     setInternalOpen(val);
   };
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (messages.length === 0) {
+        setIsTyping(true);
+        typingTimerRef.current = setTimeout(() => {
+          setMessages([
+            {
+              ...STARTER_MESSAGE,
+              id: `welcome-${Date.now()}`,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsTyping(false);
+        }, 750);
+      }
+    } else {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      setMessages([]);
+      setIsTyping(false);
+    }
+
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -131,6 +150,11 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
   }, [messages, isTyping, isOpen]);
 
   const handleSendMessage = (textToSend?: string) => {
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+
     const text = (textToSend || inputValue).trim();
     if (!text) return;
 
@@ -178,7 +202,19 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
   };
 
   const handleResetChat = () => {
-    setMessages(INITIAL_MESSAGES);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    setMessages([]);
+    setIsTyping(true);
+    typingTimerRef.current = setTimeout(() => {
+      setMessages([
+        {
+          ...STARTER_MESSAGE,
+          id: `welcome-${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      setIsTyping(false);
+    }, 600);
   };
 
   return (
@@ -196,9 +232,9 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
               boxShadow: "0 16px 36px -8px rgba(79, 70, 229, 0.22), 0 6px 18px -4px rgba(0, 0, 0, 0.1)",
             }}
           >
-            {/* Header: Royal Indigo Gradient with Bot Avatar & Status */}
+            {/* Header: Royal Indigo Gradient with Bot Avatar & Title */}
             <div
-              className="relative bg-gradient-to-r from-[#2563EB] via-[#4338CA] to-[#4F46E5] px-4 py-2.5 shadow-sm flex items-center justify-between shrink-0"
+              className="relative bg-gradient-to-r from-[#2563EB] via-[#4338CA] to-[#4F46E5] px-4 py-3 shadow-sm flex items-center justify-between shrink-0"
               style={{ color: "white" }}
             >
               <div className="flex items-center gap-2.5">
@@ -208,18 +244,7 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
                 >
                   <Bot className="size-4" style={{ color: "white", stroke: "white" }} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold tracking-tight" style={{ color: "white" }}>Slotly AI</h3>
-                    <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>
-                      Assistant
-                    </span>
-                  </div>
-                  <p className="flex items-center gap-1 text-[11px] font-medium leading-none" style={{ color: "#6EE7B7" }}>
-                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Online · Ready to help
-                  </p>
-                </div>
+                <h3 className="text-sm font-bold tracking-tight" style={{ color: "white" }}>Slotly AI</h3>
               </div>
 
               {/* Header Actions (Minimize, Reset, Close) */}
@@ -262,7 +287,7 @@ export function AiChatWidget({ open, onOpenChange }: AiChatWidgetProps) {
                   <div
                     key={message.id}
                     className={cn(
-                      "flex gap-2 max-w-[88%]",
+                      "flex gap-2 max-w-[88%] animate-in fade-in slide-in-from-bottom-2 duration-200",
                       isBot ? "self-start items-end" : "self-end ml-auto flex-row-reverse items-end"
                     )}
                   >
