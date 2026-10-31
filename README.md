@@ -45,11 +45,19 @@
 | :---: | :---: |
 | ![Slotly Admin Dashboard Light](docs/screenshots/admin-desktop-light.png) | ![Slotly Admin Dashboard Dark](docs/screenshots/admin-desktop-dark.png) |
 
-### Mobile-First Responsive Experience (390px Viewport)
+### Interactive FullCalendar Schedule View
 
-| Mobile Customer Booking | Mobile Workspace Sign-in | Mobile Admin Operations |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/booking-mobile-light.png" width="240" alt="Mobile Booking" /> | <img src="docs/screenshots/login-mobile-light.png" width="240" alt="Mobile Sign-in" /> | <img src="docs/screenshots/admin-mobile-light.png" width="240" alt="Mobile Admin" /> |
+![Slotly Interactive FullCalendar Schedule](docs/screenshots/calendar-desktop.png)
+
+### 24/7 AI Scheduling Assistant
+
+![Slotly 24/7 AI Scheduling Assistant](docs/screenshots/ai-chat-desktop.png)
+
+### Workspace Operations & Services
+
+| Event Types & Services | Scheduled Events & Notetaker |
+| :---: | :---: |
+| ![Slotly Services Management](docs/screenshots/services-desktop.png) | ![Slotly Bookings](docs/screenshots/bookings-desktop.png) |
 
 </div>
 
@@ -288,7 +296,7 @@ Get-Content scripts/load-test.js -Raw | docker run --rm -i --network=slotly_defa
 - **Domain Tests** (`tests/Slotly.Domain.Tests`): 36 unit tests validating entity invariants, lifecycle state machines, daylight saving offsets, and overlap rules.
 - **Application Tests** (`tests/Slotly.Application.Tests`): 25 unit tests covering FluentValidation request rules and availability calculations.
 - **Integration Tests** (`tests/Slotly.Api.IntegrationTests`): 27 integration tests running real PostgreSQL instances via **Testcontainers** verifying tenant boundary leaks, JWT refresh reuse detection, concurrent bookings, and transactional outbox idempotency.
-- **E2E Tests** (`src/slotly-web/e2e`): 31 Playwright journeys and viewport captures verifying booking completion, admin navigation, authentication, and every product screen at 390px and 1440px.
+- **E2E Tests** (`src/slotly-web/e2e`): Playwright visual baseline captures and user journey tests verifying booking completion, admin operations, authentication, and the 24/7 AI chat assistant.
 - **k6 Load Tests** (`scripts/load-test.js`): Verified **13,412 requests** at 334+ req/sec with sub-25ms cached responses and **0 double bookings**. See [docs/performance.md](docs/performance.md).
 
 ---
@@ -306,7 +314,7 @@ Get-Content scripts/load-test.js -Raw | docker run --rm -i --network=slotly_defa
 │   ├── deployment.md          # Cloud deployment guide and free hosting evaluation
 │   ├── design-system.md       # Visual tokens, accessible components, and theme rules
 │   ├── performance.md         # k6 benchmark metrics and latency percentiles
-│   └── screenshots/           # Visual baselines (light/dark, mobile/desktop)
+│   └── screenshots/           # Visual baselines (desktop light/dark, operations, AI chat)
 ├── scripts/                   # Load testing scripts and PowerShell automation
 ├── src/
 │   ├── Slotly.Domain/         # Scheduling domain entities, value objects, domain events
