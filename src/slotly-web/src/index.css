@@ -463,7 +463,7 @@ html:not(.dark) {
   }
 
   .text-\[\#4D9BFF\] {
-    color: #0069FF !important;
+    color: var(--brand-primary, #0069FF) !important;
   }
 
   /* Text-white inside Admin: switch to dark text unless it's on a solid saturated button/badge */

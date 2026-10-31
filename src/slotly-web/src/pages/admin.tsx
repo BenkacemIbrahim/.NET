@@ -415,11 +415,16 @@ function AdminShell() {
           <Link
             to="/admin/services"
             className={cn(
-              "flex h-10 items-center justify-center gap-1.5 rounded-full border border-gray-200 dark:border-white/20 bg-white dark:bg-transparent text-xs font-bold text-gray-900 dark:text-white shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-300 dark:hover:border-white transition-all",
+              "flex h-10 items-center justify-center gap-1.5 rounded-full border text-xs font-bold shadow-sm transition-all hover:opacity-90",
               collapsed ? "w-10 px-0 mx-auto" : "w-full px-4"
             )}
+            style={{
+              borderColor: `${brandColor}60`,
+              backgroundColor: `${brandColor}18`,
+              color: brandColor,
+            }}
           >
-            <Plus className="size-3.5 text-primary" style={{ color: brandColor }} />
+            <Plus className="size-3.5" style={{ color: brandColor }} />
             {!collapsed && <span>Create</span>}
           </Link>
         </div>
@@ -438,14 +443,14 @@ function AdminShell() {
                   "flex h-10 items-center rounded-xl text-xs font-semibold transition-colors",
                   collapsed ? "justify-center size-10 mx-auto" : "gap-3 px-3",
                   isActive
-                    ? "font-bold text-white shadow-sm"
+                    ? "font-bold shadow-sm"
                     : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
                 )
               }
               style={({ isActive }) =>
                 isActive
                   ? {
-                      backgroundColor: `${brandColor}22`,
+                      backgroundColor: `${brandColor}25`,
                       color: brandColor,
                     }
                   : undefined
@@ -453,7 +458,7 @@ function AdminShell() {
             >
               <Icon
                 className="size-4 shrink-0 transition-colors"
-                style={{ color: undefined }}
+                style={{ color: "inherit" }}
               />
               {!collapsed && <span>{label}</span>}
             </NavLink>
@@ -512,20 +517,20 @@ function AdminShell() {
               "flex h-9 items-center rounded-xl text-xs font-semibold transition-colors",
               collapsed ? "justify-center size-9 mx-auto" : "gap-3 px-3 w-full",
               settingsOpen
-                ? "font-bold text-white shadow-sm"
+                ? "font-bold shadow-sm"
                 : "text-[#8B9CB0] hover:bg-[#111A28] hover:text-white"
             )}
             style={
               settingsOpen
                 ? {
-                    backgroundColor: `${brandColor}22`,
+                    backgroundColor: `${brandColor}25`,
                     color: brandColor,
                   }
                 : undefined
             }
           >
-            <Settings className="size-4 shrink-0" />
-            {!collapsed && <span>Settings</span>}
+            <Settings className="size-4 shrink-0" style={settingsOpen ? { color: brandColor } : undefined} />
+            {!collapsed && <span style={settingsOpen ? { color: brandColor } : undefined}>Settings</span>}
           </button>
 
           <button
@@ -637,9 +642,10 @@ function DashboardMetricCard({
       className={cn(
         "relative overflow-hidden rounded-2xl border p-4 shadow-sm transition-transform duration-200 hover:-translate-y-0.5",
         isBrand
-          ? "border-[#2C7CFF] bg-[#0069FF] shadow-[0_12px_28px_rgba(0,105,255,.28)]"
+          ? "border-transparent text-white shadow-lg"
           : "border-[#1C283A] bg-[#111A28] hover:border-[#2A3C52]"
       )}
+      style={isBrand ? { backgroundColor: "var(--brand-primary, #0069FF)", borderColor: "var(--brand-primary, #0069FF)" } : undefined}
     >
       {isBrand && <div className="absolute -right-8 -top-8 size-28 rounded-full bg-white/10 blur-2xl" />}
       <div className="relative flex items-start justify-between gap-3">
@@ -841,7 +847,10 @@ export function DashboardPage() {
             {/* User Row */}
             <div className="flex items-center justify-between border-b border-[#1C283A] pb-3 pt-1">
               <div className="flex items-center gap-3">
-                <div className="grid size-7 place-items-center rounded-full bg-[#00897B] font-bold text-xs text-white">
+                <div
+                  className="grid size-7 place-items-center rounded-full font-bold text-xs text-white"
+                  style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
+                >
                   {userName.charAt(0)}
                 </div>
                 <span className="text-sm font-bold text-white">{userName}</span>
@@ -852,7 +861,8 @@ export function DashboardPage() {
                   href={`/book/${tenantSlug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1 text-xs font-semibold text-[#4D9BFF] hover:underline"
+                  className="flex items-center gap-1 text-xs font-semibold hover:underline"
+                  style={{ color: "var(--brand-primary, #0069FF)" }}
                 >
                   <span>View landing page</span>
                   <ExternalLink className="size-3" />
@@ -1153,7 +1163,8 @@ function SingleUseLinksSection({
 
           <Button
             onClick={generateLink}
-            className="rounded-xl bg-[#0069FF] px-4 text-xs font-bold text-white hover:bg-[#0056D6]"
+            className="rounded-xl px-4 text-xs font-bold text-white shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
           >
             <Plus className="size-3.5 mr-1.5" />
             Generate Link
@@ -1301,7 +1312,8 @@ function MeetingPollsSection({ tenantSlug }: { tenantSlug: string }) {
 
           <Button
             onClick={createPoll}
-            className="rounded-xl bg-[#0069FF] px-4 text-xs font-bold text-white hover:bg-[#0056D6]"
+            className="rounded-xl px-4 text-xs font-bold text-white shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
           >
             <Plus className="size-3.5 mr-1.5" />
             Create Poll
@@ -1424,9 +1436,17 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
             className={cn(
               "cursor-pointer rounded-xl border p-4 transition-all",
               ruleType === "round-robin"
-                ? "border-[#0069FF] bg-[#0069FF]/10 text-white"
+                ? "text-white shadow-sm"
                 : "border-[#1C283A] bg-[#0B111A] text-gray-400 hover:border-gray-600"
             )}
+            style={
+              ruleType === "round-robin"
+                ? {
+                    borderColor: "var(--brand-primary, #0069FF)",
+                    backgroundColor: "color-mix(in srgb, var(--brand-primary, #0069FF) 12%, transparent)",
+                  }
+                : undefined
+            }
           >
             <h4 className="font-bold text-xs">Round-Robin Assignment</h4>
             <p className="text-[11px] mt-1 opacity-80">
@@ -1442,9 +1462,17 @@ function RoutingFormsSection({ staff }: { staff: StaffMember[] }) {
             className={cn(
               "cursor-pointer rounded-xl border p-4 transition-all",
               ruleType === "specialty"
-                ? "border-[#0069FF] bg-[#0069FF]/10 text-white"
+                ? "text-white shadow-sm"
                 : "border-[#1C283A] bg-[#0B111A] text-gray-400 hover:border-gray-600"
             )}
+            style={
+              ruleType === "specialty"
+                ? {
+                    borderColor: "var(--brand-primary, #0069FF)",
+                    backgroundColor: "color-mix(in srgb, var(--brand-primary, #0069FF) 12%, transparent)",
+                  }
+                : undefined
+            }
           >
             <h4 className="font-bold text-xs">Practitioner Specialty Matching</h4>
             <p className="text-[11px] mt-1 opacity-80">
@@ -1614,7 +1642,8 @@ function ServiceModal({
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="bg-[#0069FF] text-white hover:bg-[#0056D6]"
+              className="text-white shadow-md hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
             >
               {mutation.isPending ? "Saving…" : service ? "Save Changes" : "Create Event Type"}
             </Button>
@@ -1706,9 +1735,16 @@ export function BookingsPage() {
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
               filter === key
-                ? "bg-[#152B46] text-[#4D9BFF]"
+                ? "shadow-sm font-bold text-white"
                 : "text-[#8B9CB0] hover:text-white"
             )}
+            style={
+              filter === key
+                ? {
+                    backgroundColor: "var(--brand-primary, #0069FF)",
+                  }
+                : undefined
+            }
           >
             {label}
           </button>
@@ -1975,7 +2011,8 @@ function RescheduleModal({
           <Button
             onClick={() => rescheduleMutation.mutate()}
             disabled={rescheduleMutation.isPending}
-            className="bg-[#0069FF] text-white hover:bg-[#0056D6]"
+            className="text-white shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
           >
             {rescheduleMutation.isPending ? "Rescheduling…" : "Confirm Reschedule"}
           </Button>
@@ -2104,7 +2141,11 @@ function NotetakerModal({
           <Button variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
             Close
           </Button>
-          <Button onClick={saveNotes} className="bg-[#0069FF] text-white hover:bg-[#0056D6]">
+          <Button
+            onClick={saveNotes}
+            className="text-white shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
+          >
             Save Notes
           </Button>
         </div>
@@ -2384,7 +2425,8 @@ export function StaffPage() {
           </button>
           <Button
             onClick={() => setInviteModalOpen(true)}
-            className="rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6] text-xs font-bold"
+            className="rounded-xl text-white shadow-md hover:opacity-90 transition-opacity text-xs font-bold"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
           >
             <Plus className="size-3.5 mr-1.5" />
             Invite Team Member
@@ -2426,7 +2468,13 @@ export function StaffPage() {
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4"
               >
                 <div className="flex items-center gap-4">
-                  <div className="grid size-10 place-items-center rounded-full bg-[#0069FF]/20 font-bold text-sm text-[#4D9BFF]">
+                  <div
+                    className="grid size-10 place-items-center rounded-full font-bold text-sm"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--brand-primary, #0069FF) 20%, transparent)",
+                      color: "var(--brand-primary, #0069FF)",
+                    }}
+                  >
                     {p.displayName?.slice(0, 1)}
                   </div>
                   <div>
@@ -2623,7 +2671,12 @@ function InviteStaffModal({
             <Button type="button" variant="outline" onClick={onClose} className="border-[#1C283A] text-white">
               Cancel
             </Button>
-            <Button type="submit" disabled={invite.isPending} className="bg-[#0069FF] text-white hover:bg-[#0056D6]">
+            <Button
+              type="submit"
+              disabled={invite.isPending}
+              className="text-white shadow-md hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
+            >
               {invite.isPending ? "Inviting…" : "Send Invitation"}
             </Button>
           </div>
@@ -2950,7 +3003,8 @@ export function SchedulePage() {
               <Button
                 type="submit"
                 disabled={addHours.isPending}
-                className="w-full rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6]"
+                className="w-full rounded-xl text-white shadow-md hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
               >
                 {addHours.isPending ? "Adding…" : "Add Working Hours"}
               </Button>
@@ -3025,7 +3079,8 @@ export function SchedulePage() {
               <Button
                 type="submit"
                 disabled={addTimeOff.isPending}
-                className="w-full rounded-xl bg-[#0069FF] text-white hover:bg-[#0056D6]"
+                className="w-full rounded-xl text-white shadow-md hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
               >
                 {addTimeOff.isPending ? "Adding…" : "Register Time Off"}
               </Button>
@@ -3157,6 +3212,9 @@ export function SettingsModal({
 
   const settings = useTenantSettings();
   const tenantSlug = settings.data?.slug || "northstar-health";
+  const [selectedColor, setSelectedColor] = useState<string>(
+    settings.data?.primaryColor || "#0069FF"
+  );
 
   const schema = z.object({
     name: z.string().min(2, "Workspace name must be at least 2 characters."),
@@ -3176,7 +3234,7 @@ export function SettingsModal({
 
   const form = useForm<Form>({
     resolver: zodResolver(schema),
-    values: {
+    defaultValues: {
       name: settings.data?.name || userName,
       timeZoneId: settings.data?.timeZoneId || "Africa/Casablanca",
       cancellationWindowHours: settings.data?.cancellationWindowHours ?? 24,
@@ -3185,11 +3243,36 @@ export function SettingsModal({
     },
   });
 
-  const watchedPrimaryColor = form.watch("primaryColor") || "#0069FF";
+  useEffect(() => {
+    if (settings.data) {
+      form.reset({
+        name: settings.data.name || userName,
+        timeZoneId: settings.data.timeZoneId || "Africa/Casablanca",
+        cancellationWindowHours: settings.data.cancellationWindowHours ?? 24,
+        primaryColor: settings.data.primaryColor || "#0069FF",
+        logoUrl: settings.data.logoUrl || "",
+      });
+      setSelectedColor(settings.data.primaryColor || "#0069FF");
+    }
+  }, [settings.data, userName, form]);
+
+  const handleColorChange = (hex: string) => {
+    const upper = hex.toUpperCase();
+    setSelectedColor(upper);
+    form.setValue("primaryColor", upper, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    // Immediately apply preview to document root
+    document.documentElement.style.setProperty("--primary", upper);
+    document.documentElement.style.setProperty("--brand-primary", upper);
+  };
+
+  const watchedPrimaryColor = selectedColor || form.watch("primaryColor") || "#0069FF";
 
   const save = useMutation({
     mutationFn: async (v: Form) => {
-      const hex = (v.primaryColor || "#0069FF").toUpperCase();
+      const hex = (selectedColor || v.primaryColor || "#0069FF").toUpperCase();
       const { data, error } = await api.PUT("/api/v1/settings", {
         body: {
           name: v.name.trim(),
@@ -3208,7 +3291,9 @@ export function SettingsModal({
         document.documentElement.style.setProperty("--primary", data.primaryColor);
         document.documentElement.style.setProperty("--brand-primary", data.primaryColor);
       }
+      qc.setQueryData(["tenant-settings"], data);
       void qc.invalidateQueries({ queryKey: ["tenant-settings"] });
+      setTimeout(() => onClose(), 600);
     },
     onError: (e) => toast.error(apiMessage(e, "Could not save settings.")),
   });
@@ -3410,26 +3495,16 @@ export function SettingsModal({
                   <div className="space-y-2">
                     <Label className="text-xs text-white font-semibold">Brand Primary Color</Label>
                     <div className="flex flex-wrap items-center gap-3">
+                      <input type="hidden" {...form.register("primaryColor")} />
                       <input
                         type="color"
                         value={watchedPrimaryColor}
-                        onChange={(e) => {
-                          const hex = e.target.value.toUpperCase();
-                          form.setValue("primaryColor", hex, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }}
+                        onChange={(e) => handleColorChange(e.target.value)}
                         className="size-10 rounded-lg border-0 bg-transparent cursor-pointer"
                       />
                       <Input
                         value={watchedPrimaryColor}
-                        onChange={(e) => {
-                          form.setValue("primaryColor", e.target.value, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }}
+                        onChange={(e) => handleColorChange(e.target.value)}
                         placeholder="#0069FF"
                         className="bg-[#0B111A] border-[#1C283A] text-white h-10 rounded-xl w-36 uppercase font-mono text-xs"
                       />
@@ -3438,12 +3513,7 @@ export function SettingsModal({
                           <button
                             key={c}
                             type="button"
-                            onClick={() => {
-                              form.setValue("primaryColor", c, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                              });
-                            }}
+                            onClick={() => handleColorChange(c)}
                             className={cn(
                               "size-7 rounded-full border border-white/20 transition-all hover:scale-110 cursor-pointer",
                               watchedPrimaryColor.toUpperCase() === c.toUpperCase() &&
@@ -3623,10 +3693,11 @@ export function SettingsModal({
                 Cancel
               </button>
               <button
-                type="submit"
-                form="settingsForm"
+                type="button"
+                onClick={() => onSaveSubmit()}
                 disabled={save.isPending}
-                className="rounded-full bg-white px-5 py-2 text-xs font-bold text-[#0B1A2C] shadow-md hover:bg-neutral-100 transition-colors"
+                className="rounded-full px-6 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:opacity-90 cursor-pointer"
+                style={{ backgroundColor: selectedColor }}
               >
                 {save.isPending ? "Saving changes…" : "Save changes"}
               </button>
@@ -3701,7 +3772,11 @@ function QuickForm<T extends FieldValues>({
               />
             </div>
           ))}
-          <Button className="w-full rounded-full bg-[#0069FF] text-white hover:bg-[#0056D6]" disabled={pending}>
+          <Button
+            className="w-full rounded-full text-white shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "var(--brand-primary, #0069FF)" }}
+            disabled={pending}
+          >
             <Plus className="size-4" />
             {pending ? "Saving…" : "Add"}
           </Button>
